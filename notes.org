@@ -1,0 +1,21 @@
+#+TITLE: Notes
+
+* =chicago=
+Immediate observation: ggplot kind of "just knows" what to do with dates or
+strings (or perhaps this is part of the csv reader?) whereas w/ =plot= I am
+currently in the process of digging up how to get dates to work and I had to
+=map string->number=
+
+I had to wrangle the CSV by hand -- there isn't interoperation between =plot=
+and =csv-reading=. Also it looks like =csv= on the Racket package index is...
+almost useless
+
+There's nothing to parse dates, and since I'm currently attempting to turn my
+brain off and think in the mind of an R programmer, I'm using the =gregor=
+library for this. Also note that I actually, again, have to parse the date
+whereas it's magically(tm) handled in ggplot2
+
+The font family names in racket/draw don't really make any sense (why is
+monospace "modern"?)
+
+Subtitle? Caption? Figure tag?
