@@ -9,12 +9,9 @@
 ; given a dataframe, the data to use for the x-axis, the data to use
 ; for the y-axis, and conversion functions for both, plot it
 (define (df-plot df x-axis y-axis x-conv y-conv)
-  (define x-axis* (string-append x-axis "*"))
-  (define y-axis* (string-append y-axis "*"))
-
-  (df-add-derived df x-axis* `(,x-axis) (compose x-conv first))
-  (df-add-derived df y-axis* `(,y-axis) (compose y-conv first))
-  (plot (points (df-select* df x-axis* y-axis*))))
+  (plot (points
+         (for/vector ([(x y) (in-data-frame df x-axis y-axis)])
+           (vector (x-conv x) (y-conv y))))))
 
 (module+ main
   (plot-new-window? #t) ; #f for drracket
