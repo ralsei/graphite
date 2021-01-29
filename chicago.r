@@ -1,3 +1,5 @@
+library(tidyverse)
+
 chic <- readr::read_csv("https://raw.githubusercontent.com/Z3tt/R-Tutorials/master/ggplot2/chicago-nmmaps.csv")
 
 ggplot(chic, aes(x = date, y = temp)) +
