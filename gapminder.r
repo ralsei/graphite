@@ -1,7 +1,7 @@
 library(tidyverse)
 
 gdp_messy <- readr::read_csv("~/src/viz/data/gdppercapita_us_inflation_adjusted.csv")
-gdp <- gapminder_messy %>% 
+gdp <- gdp_messy %>%
   gather(key = year, value = gdpPerCapita, -country) %>%
   filter(year >= 2000, year <= 2019)
 
