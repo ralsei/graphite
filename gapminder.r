@@ -23,3 +23,5 @@ ggplot(data = full,
   scale_y_continuous(limits = c(40, 90)) +
   labs(x = "GDP per capita (USD)", y = "Life expectancy (years)",
        title = "GDP per capita vs life expectancy from 2000-2019")
+
+write.csv(full, file = "~/whatever.csv")

@@ -19,3 +19,21 @@ The font family names in racket/draw don't really make any sense (why is
 monospace "modern"?)
 
 Subtitle? Caption? Figure tag?
+* =gapminder=
+Data wrangling in Racket with =data-frame= is like pulling teeth, let's not do
+that. It probably shouldn't be like pulling teeth though...
+
+The =data-frame= library doesn't read the literal string "NA" as an NA value --
+should it? (probably not)
+
+=in-data-frame= should have a =#:filter= like =df-select=. Actually, there should
+be better filtering in general here --- with ggplot, you don't even have to think
+about stratifying on a variable, it just happens
+
+=df-series-names= might want to be in the order they appear in the table
+
+The =geom_smooth= method in R with the =gam= fit works very well for this data, but
+it isn't available here
+
+In general, stratification of data along a variable (and thereby adding a legend)
+could be a lot better

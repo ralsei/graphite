@@ -18,6 +18,6 @@
                  [point-color 'firebrick]
                  [point-sym 'bullet]
                  [plot-x-ticks (date-ticks)])
-    (df-plot chic-raw
-             "date" #:x-conv (compose ->posix iso8601->date)
-             "temp")))
+    (plot (dataframe chic-raw
+                     "date" #:x-conv (compose ->posix iso8601->date)
+                     "temp"))))
