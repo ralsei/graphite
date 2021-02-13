@@ -60,13 +60,17 @@
                #:y-ticks [y-ticks (plot-y-ticks)]
                #:y-conv [y-conv values]
                . render-fns)
-  (parameterize ([plot-x-transform x-transform]
+  (parameterize ([plot-title (hash-ref mapping 'title (plot-title))]
+                 [plot-x-label (hash-ref mapping 'x-label (plot-x-label))]
+                 [plot-y-label (hash-ref mapping 'y-label (plot-y-label))]
+                 [plot-x-transform x-transform]
                  [plot-x-ticks x-ticks]
                  [plot-y-transform y-transform]
                  [plot-y-ticks y-ticks]
                  ; better defaults
                  [plot-font-face "Arial"]
-                 [point-sym 'bullet])
+                 [point-sym 'bullet]
+                 [plot-pen-color-map (hash-ref mapping 'colormap 'set1)])
     (plot
      (for/list ([render-fn (in-list render-fns)])
        (render-fn data mapping x-conv y-conv)))))

@@ -10,22 +10,12 @@
       df-read/csv))
 
 (module+ main
-  (plot-new-window? #t) ; #f for drracket
-
+  (plot-new-window? #t)
   (pplot #:data chic-raw
-         #:mapping (hash 'x "date" 'y "temp")
+         #:mapping (hash 'x "date" 'y "temp"
+                         'title "Temperatures in Chicago"
+                         'x-label "Year"
+                         'y-label "Temperature (degrees F)")
          #:x-ticks (date-ticks)
          #:x-conv (compose ->posix iso8601->date)
-         (ppoints))
-
-  #;
-  (parameterize ([plot-title "Temperatures in Chicago"]
-                 [plot-x-label "Year"]
-                 [plot-y-label "Temperature (degrees F)"]
-                 [plot-font-face "Arial"]
-                 [point-color 'firebrick]
-                 [point-sym 'bullet]
-                 [plot-x-ticks (date-ticks)])
-    (plot (dataframe chic-raw
-                     "date" #:x-conv (compose ->posix iso8601->date)
-                     "temp"))))
+         (ppoints)))
