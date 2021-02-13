@@ -11,6 +11,14 @@
 
 (module+ main
   (plot-new-window? #t) ; #f for drracket
+
+  (pplot #:data chic-raw
+         #:mapping (hash 'x "date" 'y "temp")
+         #:x-ticks (date-ticks)
+         #:x-conv (compose ->posix iso8601->date)
+         (ppoints))
+
+  #;
   (parameterize ([plot-title "Temperatures in Chicago"]
                  [plot-x-label "Year"]
                  [plot-y-label "Temperature (degrees F)"]

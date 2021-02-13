@@ -1,6 +1,7 @@
 #lang racket
 (require data-frame plot fancy-app
-         "common.rkt" plot/utils)
+         "common.rkt"
+         plot/utils)
 (provide (all-defined-out))
 
 (define all-data (df-read/csv "./data/gapminder.csv"))
@@ -25,6 +26,7 @@
   ret)
 
 (module+ main
+  #;
   (define fit
     (df-least-squares-fit all-data "gdpPerCapita" "lifeExpectancy"
                           #:mode 'polynomial #:polynomial-degree 3))
@@ -50,21 +52,32 @@
           #:x-ticks (currency-ticks)
           (points)
           (fit #:method 'loess))
+
+    #;#;
     (define tbl (make-hash))
     (for ([(x y con) (in-data-frame all-data "gdpPerCapita" "lifeExpectancy" "continent")]
           #:when (and x y))
       (hash-update! tbl con (cons (vector x y) _) null))
 
+    #;
     (plot
      (cons (function fit #:width 3 #:color 'blue)
            (let ([color-n -1])
-           (hash-map tbl
-                     (lambda (con pts)
-                       (set! color-n (add1 color-n))
-                       (points pts #:color (->pen-color color-n) #:label con))
-                     #t))))
+             (hash-map tbl
+                       (lambda (con pts)
+                         (set! color-n (add1 color-n))
+                         (points pts #:color (->pen-color color-n) #:label con))
+                       #t))))
+
+    (pplot #:data all-data
+           #:mapping (hash 'x "gdpPerCapita" 'y "lifeExpectancy" 'discrete-color "continent")
+           #:x-transform log-transform
+           #:x-ticks (currency-ticks)
+           (ppoints)
+           (fit #:method 'polynomial #:poly-degree 3 #:mapping (hash 'width 3)))
+
     #;
-   (plot
+    (plot
      ; this could be abstracted
      (list (dataframe (df-filter all-data (curry vector-member "Africa"))
                       "gdpPerCapita" "lifeExpectancy"
