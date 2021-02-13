@@ -16,6 +16,17 @@
      (vector (x-conv x) (y-conv y)))
    #:color color #:label label))
 
+(define keyword->symbol (compose string->symbol keyword->string))
+
+(define aes
+  (make-keyword-procedure
+   (λ (kws kw-args . rst)
+     (when (not (empty? rst))
+       (error "aes called with non-keyword argument"))
+     (for/hash ([kw (in-list kws)]
+                [kwa (in-list kw-args)])
+       (values (keyword->symbol kw) kwa)))))
+
 (define ((ppoints #:mapping [local-mapping (make-hash)])
          data mapping x-conv y-conv)
   ; overwrite using the local mapping
