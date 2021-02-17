@@ -12,10 +12,10 @@
 (module+ main
   (plot-new-window? #t)
   (pplot #:data chic-raw
-         #:mapping (aes #:x "date" #:y "temp"
-                        #:title "Temperatures in Chicago"
-                        #:x-label "Year"
-                        #:y-label "Temperature (degrees F)")
+         #:title "Temperatures in Chicago"
+         #:x-label "Year"
+         #:y-label "Temperature (degrees F)"
+         #:mapping (aes #:x "date" #:y "temp")
          #:x-ticks (date-ticks)
          #:x-conv (compose ->posix iso8601->date)
          (ppoints)))

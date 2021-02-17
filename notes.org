@@ -37,3 +37,5 @@ it isn't available here
 
 In general, stratification of data along a variable (and thereby adding a legend)
 could be a lot better
+* 2021-02-15
+Fix whatever's going on with =log-transform=

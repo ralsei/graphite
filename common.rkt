@@ -1,7 +1,6 @@
 #lang racket
 (require racket/hash
-         data-frame plot fancy-app
-         plot/utils)
+         bestfit data-frame fancy-app plot plot/utils)
 (provide (all-defined-out))
 
 ; dataframe : [A B C D] dataframe string string (A -> B) (C -> D) -> renderer2d
@@ -53,27 +52,38 @@
                        #:when (and x y))
             (vector (x-conv x) (y-conv y))))]))
 
-(define ((fit #:method [method 'linear] #:mapping [local-mapping (make-hash)]
-              #:poly-degree [polynomial-degree 2])
+(define ((fit #:method [method 'linear] #:mapping [local-mapping (make-hash)])
          data mapping x-conv y-conv)
   (define aes (hash-union mapping local-mapping #:combine (λ (x y) x)))
-  (define fit-line (df-least-squares-fit data
-                                         (hash-ref aes 'x) (hash-ref aes 'y)
-                                         #:mode method #:polynomial-degree polynomial-degree))
+  (define fit-function
+    (match method
+      ['linear linear-fit]
+      ['exp exp-fit]
+      ['power power-fit]
+      ['log log-fit]))
+  (define fit-line
+    (for/fold ([xs '()] [ys '()]
+               #:result (fit-function xs ys))
+              ([(x y) (in-data-frame data (hash-ref aes 'x) (hash-ref aes 'y))]
+               #:when (and x y))
+      (values (cons (exact->inexact (x-conv x)) xs) (cons (exact->inexact (y-conv y)) ys))))
   (function fit-line #:width (hash-ref aes 'width 1)))
 
 
 (define (pplot #:data data #:mapping mapping
+               #:title [title (plot-title)]
+               #:x-label [x-label (plot-x-label)]
                #:x-transform [x-transform (plot-x-transform)]
                #:x-ticks [x-ticks (plot-x-ticks)]
                #:x-conv [x-conv values]
+               #:y-label [y-label (plot-y-label)]
                #:y-transform [y-transform (plot-y-transform)]
                #:y-ticks [y-ticks (plot-y-ticks)]
                #:y-conv [y-conv values]
                . render-fns)
-  (parameterize ([plot-title (hash-ref mapping 'title (plot-title))]
-                 [plot-x-label (hash-ref mapping 'x-label (plot-x-label))]
-                 [plot-y-label (hash-ref mapping 'y-label (plot-y-label))]
+  (parameterize ([plot-title title]
+                 [plot-x-label x-label]
+                 [plot-y-label y-label]
                  [plot-x-transform x-transform]
                  [plot-x-ticks x-ticks]
                  [plot-y-transform y-transform]
