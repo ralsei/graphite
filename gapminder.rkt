@@ -13,6 +13,7 @@
          #:mapping (aes #:x "gdpPercap" #:y "lifeExp" #:discrete-color "continent")
          ;#:x-transform log-transform
          #:x-conv (log _ 10)
-         #:x-ticks (ticks-scale (plot-x-ticks) (invertible-function (expt 10 _) (log _ 10)))
+         #:x-ticks (ticks-scale (linear-ticks #:scientific? #f)
+                                (invertible-function (expt 10 _) (log _ 10)))
          (ppoints)
          (fit #:method 'power #:mapping (aes #:width 3))))

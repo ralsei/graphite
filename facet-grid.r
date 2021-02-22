@@ -8,3 +8,7 @@ p + geom_point(alpha = 0.2) +
   geom_smooth(method = "loess") + 
   labs(x = "Age (yrs)", y = "# of children", 
        title = "Age vs. number of children among different genders and races")
+
+g <- ggplot(data = gss_sm,
+            mapping = aes(x = religion, fill = religion))
+g + geom_bar() + guides(fill = FALSE) 
