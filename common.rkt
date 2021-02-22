@@ -82,9 +82,9 @@
   (discrete-histogram
    (vector-sort
     (for/vector ([(var cnt) (in-hash tbl)])
-      (vector var cnt)))
-   string-ci<? ; XXX: don't assume string here
-    #:key (vector-ref _ 0)))
+      (vector var cnt))
+    string-ci<? ; XXX: don't assume string here
+    #:key (vector-ref _ 0))))
 
 (define (pplot #:data data #:mapping mapping
                #:title [title (plot-title)]
