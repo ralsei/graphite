@@ -11,7 +11,8 @@
          #:x-label "GDP per capita (USD)"
          #:y-label "Life expectancy (years)"
          #:mapping (aes #:x "gdpPercap" #:y "lifeExp" #:discrete-color "continent")
-         #:x-conv (log _ 10)
-         #:x-ticks (log-ticks)
+         #:x-transform log-transform
+         ;#:x-conv (log _ 10)
+         ;#:x-ticks (ticks-scale (linear-ticks) (invertible-function (expt _ 10) (log _ 10)))
          (ppoints)
-         (fit #:method 'linear #:mapping (aes #:width 3))))
+         (fit #:method 'power #:mapping (aes #:width 3))))

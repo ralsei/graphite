@@ -31,6 +31,7 @@
   ; overwrite using the local mapping
   (define aes (hash-union mapping local-mapping #:combine (λ (x y) x)))
   (define discrete-color (hash-ref aes 'discrete-color #f))
+  (define alpha (hash-ref aes 'alpha 1))
   (cond [discrete-color
          (define tbl (make-hash))
          (for ([(x y strat) (in-data-frame data
@@ -44,13 +45,14 @@
            (hash-map tbl
                      (λ (strat pts)
                        (set! color-n (add1 color-n))
-                       (points pts #:color (->pen-color color-n) #:label strat))
+                       (points pts #:color (->pen-color color-n) #:label strat #:alpha alpha))
                      #t))]
         [else
          (points
           (for/vector ([(x y) (in-data-frame data (hash-ref aes 'x) (hash-ref aes 'y))]
                        #:when (and x y))
-            (vector (x-conv x) (y-conv y))))]))
+            (vector (x-conv x) (y-conv y)))
+          #:alpha alpha)]))
 
 (define ((fit #:method [method 'linear] #:mapping [local-mapping (make-hash)])
          data mapping x-conv y-conv)
@@ -69,6 +71,20 @@
       (values (cons (exact->inexact (x-conv x)) xs) (cons (exact->inexact (y-conv y)) ys))))
   (function fit-line #:width (hash-ref aes 'width 1)))
 
+(define ((bar #:mapping [local-mapping (make-hash)])
+         data mapping x-conv y-conv)
+  (define aes (hash-union mapping local-mapping #:combine (λ (x y) x)))
+
+  (define tbl (make-hash))
+  (for ([(strat) (in-data-frame data (hash-ref aes 'x))]
+        #:when strat)
+    (hash-update! tbl strat add1 1))
+  (discrete-histogram
+   (vector-sort
+    (for/vector ([(var cnt) (in-hash tbl)])
+      (vector var cnt)))
+   string-ci<? ; XXX: don't assume string here
+    #:key (vector-ref _ 0)))
 
 (define (pplot #:data data #:mapping mapping
                #:title [title (plot-title)]
