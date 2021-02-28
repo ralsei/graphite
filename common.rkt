@@ -1,6 +1,6 @@
 #lang racket
 (require racket/hash
-         bestfit data-frame fancy-app plot plot/utils)
+         bestfit data-frame fancy-app pict plot/pict plot/utils)
 (provide (all-defined-out))
 
 ; dataframe : [A B C D] dataframe string string (A -> B) (C -> D) -> renderer2d
@@ -71,20 +71,31 @@
       (values (cons (exact->inexact (x-conv x)) xs) (cons (exact->inexact (y-conv y)) ys))))
   (function fit-line #:width (hash-ref aes 'width 1)))
 
-(define ((bar #:mapping [local-mapping (make-hash)])
+(define ((bar #:mode [mode 'count] #:mapping [local-mapping (make-hash)])
          data mapping x-conv y-conv)
   (define aes (hash-union mapping local-mapping #:combine (λ (x y) x)))
 
-  (define tbl (make-hash))
+  (define count-tbl (make-hash))
   (for ([(strat) (in-data-frame data (hash-ref aes 'x))]
         #:when strat)
-    (hash-update! tbl strat add1 1))
+    (hash-update! count-tbl strat add1 1))
+
+  (define tbl
+    (match mode
+      ['count count-tbl]
+      ['prop
+       (define total (for/sum ([(_ v) (in-hash count-tbl)]) v))
+       (for/hash ([(k c) (in-hash count-tbl)])
+         (values k (/ c total)))]))
+
   (discrete-histogram
-   (vector-sort
-    (for/vector ([(var cnt) (in-hash tbl)])
-      (vector var cnt))
-    string-ci<? ; XXX: don't assume string here
-    #:key (vector-ref _ 0))))
+   (for/vector ([(var cnt) (in-hash tbl)])
+     (vector var cnt))))
+
+(define (facet-plot data mapping facet-x facet-y render-fns)
+  ; so the issue here is that all of our render functions expect a data-frame.
+  ; should we do conversions in pplot, then?
+  3)
 
 (define (pplot #:data data #:mapping mapping
                #:title [title (plot-title)]
@@ -110,6 +121,13 @@
                  [plot-font-face "Arial"]
                  [point-sym 'bullet]
                  [plot-pen-color-map (hash-ref mapping 'colormap 'set1)])
-    (plot
-     (for/list ([render-fn (in-list render-fns)])
-       (render-fn data mapping x-conv y-conv)))))
+    (define facet-x (hash-ref mapping 'facet-x #f))
+    (define facet-y (hash-ref mapping 'facet-y #f))
+    (cond [(or facet-x facet-y) (facet-plot data mapping facet-x facet-y render-fns)]
+          [else
+           (plot
+            (for/list ([render-fn (in-list render-fns)])
+              (render-fn data mapping x-conv y-conv)))])))
+
+(define (save-pict pict path)
+  (send (pict->bitmap pict) save-file path 'png))

@@ -1,11 +1,10 @@
 #lang racket
-(require data-frame fancy-app plot "common.rkt")
+(require data-frame fancy-app plot/pict "common.rkt")
 (provide (all-defined-out))
 
 (define all-data (df-read/csv "./data/all_gapminder.csv"))
 
 (module+ main
-  (plot-new-window? #t)
   (pplot #:data all-data
          #:title "GDP per capita vs life expectancy"
          #:x-label "GDP per capita (USD)"
@@ -13,7 +12,7 @@
          #:mapping (aes #:x "gdpPercap" #:y "lifeExp" #:discrete-color "continent")
          ;#:x-transform log-transform
          #:x-conv (log _ 10)
-         #:x-ticks (ticks-scale (linear-ticks #:scientific? #f)
+         #:x-ticks (ticks-scale (log-ticks)
                                 (invertible-function (expt 10 _) (log _ 10)))
-         (ppoints)
-         (fit #:method 'power #:mapping (aes #:width 3))))
+         (ppoints #:mapping (aes #:alpha 0.4))
+         (fit #:method 'linear #:mapping (aes #:width 3))))
