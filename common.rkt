@@ -1,6 +1,6 @@
 #lang racket
-(require racket/hash
-         bestfit data-frame fancy-app pict plot/pict plot/utils)
+(require racket/hash racket/set
+         bestfit data-frame fancy-app pict plot/pict plot/utils threading)
 (provide (all-defined-out))
 
 ; dataframe : [A B C D] dataframe string string (A -> B) (C -> D) -> renderer2d
@@ -71,31 +71,49 @@
       (values (cons (exact->inexact (x-conv x)) xs) (cons (exact->inexact (y-conv y)) ys))))
   (function fit-line #:width (hash-ref aes 'width 1)))
 
+(define (vector-remove-duplicates vec)
+  (define seen (mutable-set))
+  (for/vector ([v (in-vector vec)]
+               #:unless (set-member? seen v))
+    (set-add! seen v)
+    v))
+
+(define (possibilities data group)
+  (~> (df-select data group)
+      vector-remove-duplicates
+      (vector-filter (λ (x) (and x #t)) _)))
+
+(define (bar-stratify data mode mapping)
+  (define strats (possibilities data (hash-ref mapping 'group)))
+  (for/list ([s (in-vector strats)]
+             [i (in-naturals)])
+    ((bar #:mode mode) data mapping values values (+ (vector-length strats) 0.5) i s)))
+
 (define ((bar #:mode [mode 'count] #:mapping [local-mapping (make-hash)])
-         data mapping x-conv y-conv)
+         data mapping x-conv y-conv [skip (discrete-histogram-skip)] [x-min 0] [grp #f])
   (define aes (hash-union mapping local-mapping #:combine (λ (x y) x)))
+  (cond [(and (not grp) (hash-ref aes 'group #f)) (bar-stratify data mode aes)]
+        [else
+         (define count-tbl (make-hash))
+         (cond [grp
+                (for ([(x strat) (in-data-frame data (hash-ref aes 'x) (hash-ref aes 'group))]
+                      #:when (and x (equal? strat grp)))
+                  (hash-update! count-tbl x add1 1))]
+               [else
+                (for ([(x) (in-data-frame data (hash-ref aes 'x))]
+                      #:when x)
+                  (hash-update! count-tbl x add1 1))])
 
-  (define count-tbl (make-hash))
-  (for ([(strat) (in-data-frame data (hash-ref aes 'x))]
-        #:when strat)
-    (hash-update! count-tbl strat add1 1))
-
-  (define tbl
-    (match mode
-      ['count count-tbl]
-      ['prop
-       (define total (for/sum ([(_ v) (in-hash count-tbl)]) v))
-       (for/hash ([(k c) (in-hash count-tbl)])
-         (values k (/ c total)))]))
-
-  (discrete-histogram
-   (for/vector ([(var cnt) (in-hash tbl)])
-     (vector var cnt))))
-
-(define (facet-plot data mapping facet-x facet-y render-fns)
-  ; so the issue here is that all of our render functions expect a data-frame.
-  ; should we do conversions in pplot, then?
-  3)
+         (define tbl
+           (match mode
+             ['count count-tbl]
+             ['prop (define total (for/sum ([(_ v) (in-hash count-tbl)]) v))
+                    (for/hash ([(k c) (in-hash count-tbl)])
+                      (values k (/ c total)))]))
+         (discrete-histogram
+          #:skip skip #:x-min x-min #:label grp
+          (for/vector ([(var cnt) (in-hash tbl)])
+            (vector var cnt)))]))
 
 (define (pplot #:data data #:mapping mapping
                #:title [title (plot-title)]
@@ -121,13 +139,11 @@
                  [plot-font-face "Arial"]
                  [point-sym 'bullet]
                  [plot-pen-color-map (hash-ref mapping 'colormap 'set1)])
-    (define facet-x (hash-ref mapping 'facet-x #f))
-    (define facet-y (hash-ref mapping 'facet-y #f))
-    (cond [(or facet-x facet-y) (facet-plot data mapping facet-x facet-y render-fns)]
-          [else
-           (plot
-            (for/list ([render-fn (in-list render-fns)])
-              (render-fn data mapping x-conv y-conv)))])))
+    ; (define facet-x (hash-ref mapping 'facet-x #f))
+    ; (define facet-y (hash-ref mapping 'facet-y #f))
+    (plot
+     (for/list ([render-fn (in-list render-fns)])
+       (render-fn data mapping x-conv y-conv)))))
 
 (define (save-pict pict path)
   (send (pict->bitmap pict) save-file path 'png))
