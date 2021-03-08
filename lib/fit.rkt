@@ -11,10 +11,9 @@
      ['exp exp-fit]
      ['power power-fit]
      ['log log-fit]))
- (define fit-line
-   (for/fold ([xs '()] [ys '()]
-              #:result (fit-function xs ys))
-             ([(x y) (in-data-frame data (hash-ref aes 'x) (hash-ref aes 'y))]
-              #:when (and x y))
-     (values (cons (exact->inexact (x-conv x)) xs) (cons (exact->inexact (y-conv y)) ys))))
+  (define fit-line
+    (for/lists (xs ys #:result (fit-function xs ys))
+               ([(x y) (in-data-frame data (hash-ref aes 'x) (hash-ref aes 'y))]
+                #:when (and x y))
+      (values (exact->inexact (x-conv x)) (exact->inexact (y-conv y)))))
  (function fit-line #:width (hash-ref aes 'width 1)))

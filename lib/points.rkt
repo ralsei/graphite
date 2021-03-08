@@ -9,19 +9,23 @@
   (define discrete-color (hash-ref aes 'discrete-color #f))
   (define alpha (hash-ref aes 'alpha 1))
 
+  (define facet #f)
+  (define facet-predicate (lambda _ #t))
+  
   (define tbl (make-hash))
-  (cond [discrete-color
-         (for ([(x y strat) (in-data-frame data
-                                           (hash-ref aes 'x)
-                                           (hash-ref aes 'y)
-                                           discrete-color)]
-               #:when (and x y))
-           (hash-update! tbl strat (cons (vector (x-conv x) (y-conv y)) _) null))]
-        [else
-         (for ([(x y) (in-data-frame data (hash-ref aes 'x) (hash-ref aes 'y))]
-               #:when (and x y))
-           (hash-update! tbl #f (cons (vector (x-conv x) (y-conv y)) _) null))])
-
+  (define disc-color (if discrete-color
+                         (in-data-frame data discrete-color)
+                         (in-cycle (in-value #f))))
+  (define facets (if facet
+                    (apply in-data-frame/list data facet)
+                    (in-sequence-forever null null)))
+  (for ([(x y) (in-data-frame data (hash-ref aes 'x) (hash-ref aes 'y))]
+        [strat disc-color]
+        [facets facets]
+        #:when (and x y)
+        #:when (apply facet-predicate facets))
+    (hash-update! tbl strat (cons (vector (x-conv x) (y-conv y)) _) null))
+  
   (let ([color-n -1])
     (hash-map tbl
               (λ (strat pts)

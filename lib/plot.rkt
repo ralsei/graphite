@@ -65,4 +65,11 @@
                   #:y-conv (invertible-function-f y-conv))))))
 
 (define (save-pict pict path)
-  (send (pict->bitmap pict) save-file path 'png))
+  (match (path-get-extension path)
+    [(or #".png" #".pdf" #".svg")
+     (with-output-to-file path
+       (lambda () (write-bytes (convert pict
+                                        (string->symbol
+                                         (string-append (bytes->string/utf-8 (subbytes ext 1))
+                                                        "-bytes"))))))]
+    [_ (error 'save-pict "unsupported extension")]))

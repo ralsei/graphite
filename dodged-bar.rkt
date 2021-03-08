@@ -14,4 +14,4 @@
            #:mapping (aes #:x "bigregion")
            #:width 1200 #:height 600
            (bar #:mode 'prop #:mapping (aes #:group "religion" #:group-gap 2))))
-  (save-pict plt "./dbar.png"))
+  plt #;(save-pict plt "./dbar.png"))
