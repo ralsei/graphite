@@ -1,5 +1,5 @@
 #lang racket
-(require data-frame fancy-app pict plot/pict "common.rkt")
+(require data-frame fancy-app pict plot/pict "lib/plot.rkt")
 (provide (all-defined-out))
 
 (define all-data (df-read/csv "./data/gss_sm.csv"))
@@ -12,4 +12,4 @@
            #:y-label "% of total"
            #:mapping (aes #:x "bigregion")
            (bar #:mode 'prop)))
-  (save-pict plt "/home/hazel/bar.png"))
+  (save-pict plt "./bar.png"))

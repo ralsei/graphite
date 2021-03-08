@@ -1,5 +1,5 @@
 #lang racket
-(require data-frame fancy-app plot "common.rkt")
+(require data-frame fancy-app plot "lib/plot.rkt")
 (provide (all-defined-out))
 
 (define all-data (df-read/csv "./data/gss_sm.csv"))
