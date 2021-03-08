@@ -23,18 +23,26 @@
                #:x-transform [x-transform (plot-x-transform)]
                #:x-ticks [x-ticks (plot-x-ticks)]
                #:x-conv [x-conv id-function]
+               #:x-conv-ticks? [x-conv-ticks? #f]
                #:y-label [y-label (plot-y-label)]
                #:y-transform [y-transform (plot-y-transform)]
                #:y-ticks [y-ticks (plot-y-ticks)]
                #:y-conv [y-conv id-function]
+               #:y-conv-ticks? [y-conv-ticks? #f]
                . render-fns)
   (parameterize ([plot-title title]
                  [plot-x-label x-label]
                  [plot-y-label y-label]
                  [plot-x-transform x-transform]
-                 [plot-x-ticks x-ticks]
+                 [plot-x-ticks
+                  (if x-conv-ticks?
+                      (ticks-scale x-ticks (invertible-inverse x-conv))
+                      x-ticks)]
                  [plot-y-transform y-transform]
-                 [plot-y-ticks y-ticks]
+                 [plot-y-ticks
+                  (if y-conv-ticks?
+                      (ticks-scale y-ticks (invertible-inverse y-conv))
+                      y-ticks)]
                  ; better defaults
                  [plot-x-far-ticks no-ticks]
                  [plot-y-far-ticks no-ticks]
@@ -47,8 +55,8 @@
      (for/list ([render-fn (in-list render-fns)])
        (render-fn #:data data
                   #:gmapping mapping ; "global mapping"
-                  #:x-conv x-conv
-                  #:y-conv y-conv)))))
+                  #:x-conv (invertible-function-f x-conv)
+                  #:y-conv (invertible-function-f y-conv))))))
 
 (define (save-pict pict path)
   (send (pict->bitmap pict) save-file path 'png))
