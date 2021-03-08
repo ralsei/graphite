@@ -1,5 +1,6 @@
 #lang racket
-(require data-frame fancy-app pict plot/pict "common.rkt")
+(require data-frame fancy-app plot/pict
+         "lib/plot.rkt")
 (provide (all-defined-out))
 
 (define all-data (df-read/csv "./data/gss_sm.csv"))
@@ -11,5 +12,6 @@
            #:x-label "Region"
            #:y-label "% of total"
            #:mapping (aes #:x "bigregion")
-           (bar #:mode 'prop #:mapping (aes #:group "religion"))))
-  (save-pict plt "/home/hazel/dbar.png"))
+           #:width 1200 #:height 600
+           (bar #:mode 'prop #:mapping (aes #:group "religion" #:group-gap 2))))
+  (save-pict plt "./dbar.png"))

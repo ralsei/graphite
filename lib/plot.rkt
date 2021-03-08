@@ -1,8 +1,10 @@
 #lang racket
 (require pict plot/pict
+         "bar.rkt"
          "fit.rkt"
          "points.rkt")
 (provide pplot aes save-pict
+         (all-from-out "bar.rkt")
          (all-from-out "fit.rkt")
          (all-from-out "points.rkt"))
 
@@ -18,6 +20,8 @@
        (values (keyword->symbol kw) kwa)))))
 
 (define (pplot #:data data #:mapping mapping
+               #:width [width (plot-width)]
+               #:height [height (plot-height)]
                #:title [title (plot-title)]
                #:x-label [x-label (plot-x-label)]
                #:x-transform [x-transform (plot-x-transform)]
@@ -31,6 +35,8 @@
                #:y-conv-ticks? [y-conv-ticks? #f]
                . render-fns)
   (parameterize ([plot-title title]
+                 [plot-width width]
+                 [plot-height height]
                  [plot-x-label x-label]
                  [plot-y-label y-label]
                  [plot-x-transform x-transform]
