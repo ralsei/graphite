@@ -1,5 +1,6 @@
 #lang racket
-(require data-frame fancy-app plot/pict "common.rkt")
+(require data-frame fancy-app plot/pict
+         "lib/plot.rkt")
 (provide (all-defined-out))
 
 (define all-data (df-read/csv "./data/all_gapminder.csv"))
@@ -16,4 +17,4 @@
                                   (invertible-function (expt 10 _) (log _ 10)))
            (ppoints #:mapping (aes #:alpha 0.4))
            (fit #:method 'linear #:mapping (aes #:width 3))))
-  (save-pict pct "/home/hazel/gapminder.png"))
+  (save-pict pct "./gapminder.png"))
