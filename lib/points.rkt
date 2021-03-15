@@ -1,5 +1,5 @@
 #lang racket
-(require data-frame fancy-app plot/pict plot/utils
+(require fancy-app plot/pict plot/utils
          "util.rkt")
 (provide ppoints)
 
@@ -7,19 +7,12 @@
          #:data data #:gmapping mapping #:x-conv x-conv #:y-conv y-conv #:group group)
   (define aes (mapping-override mapping local-mapping))
   (define discrete-color (hash-ref aes 'discrete-color #f))
+  (define facet-on (hash-ref aes 'facet #f))
   (define alpha (hash-ref aes 'alpha 1))
   
   (define tbl (make-hash))
-  (define disc-color (if discrete-color
-                         (in-data-frame data discrete-color)
-                         (in-infinite #f)))
-  (define facets (if (hash-ref aes 'facet #f)
-                     (in-data-frame data (hash-ref aes 'facet))
-                     (in-infinite null)))
-
-  (for ([(x y) (in-data-frame data (hash-ref aes 'x) (hash-ref aes 'y))]
-        [strat disc-color]
-        [facet facets]
+  (for ([(x y strat facet)
+         (in-data-frame* data (hash-ref aes 'x) (hash-ref aes 'y) discrete-color facet-on)]
         #:when (and x y)
         #:when (if group (equal? facet group) #t))
     (hash-update! tbl strat (cons (vector (x-conv x) (y-conv y)) _) null))

@@ -1,6 +1,6 @@
 #lang racket
 (require data-frame threading racket/hash)
-(provide vector-remove-duplicates possibilities mapping-override in-infinite)
+(provide (all-defined-out))
 
 (define (vector-remove-duplicates vec)
   (define seen (mutable-set))
@@ -21,4 +21,10 @@
   (in-cycle (in-value val)))
 
 (define (in-data-frame* data . series)
-  3)
+  (define generators
+    (for/list ([s (in-list series)])
+      (cond [s (in-data-frame data s)]
+            [else (in-infinite s)])))
+
+  (cond [(empty? generators) (in-parallel '())]
+        [else (apply in-parallel generators)]))

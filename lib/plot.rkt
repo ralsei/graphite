@@ -21,6 +21,7 @@
        (values (keyword->symbol kw) kwa)))))
 
 (define (facet-plot #:data data #:mapping mapping #:x-conv x-conv #:y-conv y-conv
+                    #:x-transform x-transform #:y-transform y-transform
                     render-fns)
   (define facet (hash-ref mapping 'facet))
   (for/fold ([plt (blank)])
@@ -30,7 +31,8 @@
                (apply (curry pplot
                              #:data data #:mapping mapping
                              #:x-conv x-conv #:y-conv y-conv #:group grp
-                             #:title grp)
+                             #:x-transform x-transform #:y-transform y-transform
+                             #:title (~a grp))
                       render-fns))))
 
 (define (pplot #:data data #:mapping mapping
@@ -40,11 +42,11 @@
                #:x-label [x-label (plot-x-label)]
                #:x-transform [x-transform #f]
                #:x-ticks [x-ticks (plot-x-ticks)]
-               #:x-conv [x-conv identity]
+               #:x-conv [x-conv #f]
                #:y-label [y-label (plot-y-label)]
                #:y-transform [y-transform #f]
                #:y-ticks [y-ticks (plot-y-ticks)]
-               #:y-conv [y-conv identity]
+               #:y-conv [y-conv #f]
                #:group [group #f]
                . render-fns)
   (parameterize ([plot-title title]
@@ -69,13 +71,18 @@
     (define facet (hash-ref mapping 'facet #f))
     (cond [(and (not group) facet) (facet-plot #:data data #:mapping mapping
                                                #:x-conv x-conv #:y-conv y-conv
+                                               #:x-transform x-transform #:y-transform y-transform
                                                render-fns)]
           [else (plot
                  (for/list ([render-fn (in-list render-fns)])
                    (render-fn #:data data
                               #:gmapping mapping ; "global mapping"
-                              #:x-conv (or x-transform x-conv)
-                              #:y-conv (or y-transform y-conv)
+                              #:x-conv (or x-conv
+                                           (and x-transform (invertible-function-f x-transform))
+                                           identity)
+                              #:y-conv (or y-conv
+                                           (and y-transform (invertible-function-f y-transform))
+                                           identity)
                               #:group group)))])))
 
 (define (save-pict pict path)
