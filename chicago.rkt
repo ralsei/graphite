@@ -10,7 +10,6 @@
       df-read/csv))
 
 (module+ main
-  (plot-new-window? #t)
   (pplot #:data chic-raw
          #:title "Temperatures in Chicago"
          #:x-label "Year"
