@@ -2,12 +2,14 @@
 (require file/convertible pict plot/pict
          "bar.rkt"
          "density.rkt"
+         "histogram.rkt"
          "fit.rkt"
          "points.rkt"
          "util.rkt")
 (provide pplot aes save-pict
          (all-from-out "bar.rkt")
          (all-from-out "density.rkt")
+         (all-from-out "histogram.rkt")
          (all-from-out "fit.rkt")
          (all-from-out "points.rkt"))
 
