@@ -1,11 +1,13 @@
 #lang racket
 (require file/convertible pict plot/pict
          "bar.rkt"
+         "density.rkt"
          "fit.rkt"
          "points.rkt"
          "util.rkt")
 (provide pplot aes save-pict
          (all-from-out "bar.rkt")
+         (all-from-out "density.rkt")
          (all-from-out "fit.rkt")
          (all-from-out "points.rkt"))
 
@@ -20,6 +22,7 @@
                 [kwa (in-list kw-args)])
        (values (keyword->symbol kw) kwa)))))
 
+; XXX: should we support multiple facets? n facets?
 (define (facet-plot #:data data #:mapping mapping #:x-conv x-conv #:y-conv y-conv
                     #:x-transform x-transform #:y-transform y-transform
                     render-fns)

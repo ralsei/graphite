@@ -1,26 +1,30 @@
 #lang racket
-(require racket/hash data-frame fancy-app plot/pict plot/utils "util.rkt")
+(require fancy-app plot/pict plot/utils "util.rkt")
 (provide bar)
 
-(define (bar-dodged #:data data #:mode mode #:mapping mapping #:group-by grp)
-  (define strats (possibilities data grp))
+(define (bar-dodged #:data data #:mode mode #:mapping mapping #:x-conv x-conv
+                    #:group-by grp #:facet-group group)
+  (define strats (possibilities data (hash-ref mapping 'group)))
   (for/list ([var (in-vector strats)]
              [i (in-naturals)])
     (parameterize ([rectangle-color (->pen-color i)])
       (bar-simple #:data data #:mode mode #:mapping mapping
                   #:skip (+ (vector-length strats) (hash-ref mapping 'group-gap 1))
                   #:x-min i
-                  #:group var))))
+                  #:group var
+                  #:facet-group group))))
 
-(define (bar-simple #:data data #:mode mode #:mapping mapping
-                    #:skip [skip (discrete-histogram-skip)] #:x-min [x-min 0] #:group [group #f])
+(define (bar-simple #:data data #:mode mode #:mapping mapping #:x-conv x-conv
+                    #:skip [skip (discrete-histogram-skip)] #:x-min [x-min 0]
+                    #:group [group #f] #:facet-group facet-group)
   (define count-tbl (make-hash))
-  (cond [group (for ([(x strat) (in-data-frame data (hash-ref mapping 'x) (hash-ref mapping 'group))]
-                     #:when (and x (equal? strat group)))
-                 (hash-update! count-tbl x add1 1))]
-        [else (for ([(x) (in-data-frame data (hash-ref mapping 'x))]
-                    #:when x)
-                (hash-update! count-tbl x add1 1))])
+  (for ([(x strat facet) (in-data-frame* data (hash-ref mapping 'x)
+                                         (hash-ref mapping 'group #f)
+                                         (hash-ref mapping 'facet #f))]
+        #:when x
+        #:when (if group (equal? strat group) #t)
+        #:when (if facet-group (equal? facet facet-group) #t))
+    (hash-update! count-tbl (x-conv x) add1 1))
 
   (define tbl
     (match mode
@@ -35,8 +39,10 @@
      (vector var cnt))))
 
 (define ((bar #:mode [mode 'count] #:mapping [local-mapping (make-hash)])
-         #:data data #:gmapping mapping #:x-conv x-conv #:y-conv y-conv)
-  (define aes (hash-union mapping local-mapping #:combine (λ (x y) x)))
-  (cond [(hash-ref aes 'group #f) => (bar-dodged #:data data #:mode mode
-                                                 #:mapping aes #:group-by _)]
-        [else (bar-simple #:data data #:mode mode #:mapping aes)]))
+         #:data data #:gmapping mapping #:x-conv x-conv #:y-conv y-conv #:group group)
+  (define aes (mapping-override mapping local-mapping))
+  (cond [(hash-ref aes 'group #f) (bar-dodged #:data data #:mode mode
+                                              #:x-conv x-conv #:mapping aes
+                                              #:facet-group group)]
+        [else (bar-simple #:data data #:mode mode #:x-conv x-conv
+                          #:mapping aes #:facet-group group)]))

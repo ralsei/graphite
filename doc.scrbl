@@ -10,5 +10,4 @@
 @section{Chicago}
 
 @examples[#:eval ev
-(plot (function (lambda (x) x)))
-]
+          (plot (function (lambda (x) x)))]

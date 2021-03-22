@@ -12,4 +12,4 @@
            #:y-label "% of total"
            #:mapping (aes #:x "bigregion")
            (bar #:mode 'prop)))
-  (save-pict plt "./bar.png"))
+  plt)
