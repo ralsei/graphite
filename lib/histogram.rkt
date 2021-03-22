@@ -14,10 +14,12 @@
 
   (define min-data (for/fold ([m +inf.0]) ([x (in-vector xs)]) (min m x)))
   (define max-data (for/fold ([m -inf.0]) ([x (in-vector xs)]) (max m x)))
-  (define bin-width (/ (- max-data min-data) bins))
 
+  ; NOTE: in-range is exclusive, hence the add1. we subtract bin-width as
+  ; we're continually adding bin-width in the #:when.
+  (define bin-width (/ (- max-data min-data) (add1 bins)))
   (define count-tbl (make-hash))
-  (for* ([i (in-range min-data max-data bin-width)]
+  (for* ([i (in-range min-data (- max-data bin-width) bin-width)]
          [x (in-vector xs)]
          #:when (<= i x (+ i bin-width)))
     (hash-update! count-tbl i add1 1))
