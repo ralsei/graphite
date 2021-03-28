@@ -3,9 +3,8 @@
          "util.rkt")
 (provide fit)
 
-(define ((fit #:method [method 'linear] #:mapping [local-mapping (make-hash)])
-         #:data data #:gmapping mapping #:x-conv x-conv #:y-conv y-conv #:group group)
- (define aes (hash-union mapping local-mapping #:combine (λ (x y) x)))
+(define ((fit #:method [method 'linear] #:mapping [local-mapping (make-hash)]))
+ (define aes (mapping-override (gr-global-mapping) local-mapping))
  (define facet-on (hash-ref aes 'facet #f))
  (define fit-function
    (match method
@@ -15,8 +14,8 @@
      ['log log-fit]))
  (define fit-line
    (for/lists (xs ys #:result (fit-function xs ys))
-              ([(x y facet) (in-data-frame* data (hash-ref aes 'x) (hash-ref aes 'y) facet-on)]
+              ([(x y facet) (in-data-frame* (gr-data) (hash-ref aes 'x) (hash-ref aes 'y) facet-on)]
                #:when (and x y)
-               #:when (if group (equal? group facet) #t))
-     (values (exact->inexact (x-conv x)) (exact->inexact (y-conv y)))))
+               #:when (equal? facet (gr-group)))
+     (values (exact->inexact ((gr-x-conv) x)) (exact->inexact ((gr-y-conv) y)))))
  (function fit-line #:width (hash-ref aes 'width 1)))

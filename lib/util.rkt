@@ -1,6 +1,20 @@
 #lang racket
-(require data-frame threading racket/hash)
+(require data-frame threading racket/hash
+         (for-syntax syntax/parse))
 (provide (all-defined-out))
+
+(define-syntax (define-parameter stx)
+  (syntax-parse stx
+    [(_ NAME VALUE) #'(define NAME (make-parameter VALUE))]
+    [(_ NAME) #'(define NAME (make-parameter #f))]
+    [_ (raise-syntax-error 'define-parameter
+                           (format "expected a name and a value, or just a name"))]))
+
+(define-parameter gr-data)
+(define-parameter gr-global-mapping)
+(define-parameter gr-x-conv)
+(define-parameter gr-y-conv)
+(define-parameter gr-group)
 
 (define (vector-remove-duplicates vec)
   (define seen (mutable-set))
@@ -15,7 +29,7 @@
       (vector-filter (λ (x) (and x #t)) _)))
 
 (define (mapping-override mapping local-mapping)
-  (hash-union mapping local-mapping #:combine (λ (x y) x)))
+  (hash-union mapping local-mapping #:combine (λ (x y) y)))
 
 (define (in-infinite val)
   (in-cycle (in-value val)))

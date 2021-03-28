@@ -34,11 +34,16 @@
     ; all other arguments should be handled by the initial parameterize call
     (hc-append plt
                (apply (curry pplot
-                             #:data data #:mapping mapping
-                             #:x-conv x-conv #:y-conv y-conv #:group grp
-                             #:x-transform x-transform #:y-transform y-transform
-                             #:title (~a grp))
+                             #:data (gr-data) #:mapping (gr-global-mapping)
+                             #:x-conv (gr-x-conv) #:y-conv (gr-y-conv)
+                             #:group grp #:title (~a grp))
                       render-fns))))
+
+(define (get-conversion-function conv transform)
+  (cond [(and conv transform) (compose (invertible-function-f transform) conv)]
+        [conv conv]
+        [transform (invertible-function-f transform)]
+        [else identity]))
 
 (define (pplot #:data data #:mapping mapping
                #:width [width (plot-width)]
@@ -72,23 +77,18 @@
                  [plot-y-far-ticks no-ticks]
                  [plot-font-face "Arial"]
                  [point-sym 'bullet]
-                 [plot-pen-color-map (hash-ref mapping 'colormap 'set1)])
+                 [plot-pen-color-map (hash-ref mapping 'colormap 'set1)]
+                 ; our settings
+                 [gr-data data]
+                 [gr-global-mapping mapping]
+                 [gr-x-conv (get-conversion-function x-conv x-transform)]
+                 [gr-y-conv (get-conversion-function y-conv y-transform)]
+                 [gr-group group])
     (define facet (hash-ref mapping 'facet #f))
-    (cond [(and (not group) facet) (facet-plot #:data data #:mapping mapping
-                                               #:x-conv x-conv #:y-conv y-conv
-                                               #:x-transform x-transform #:y-transform y-transform
-                                               render-fns)]
+    (cond [(and (not group) facet) (facet-plot render-fns)]
           [else (plot
                  (for/list ([render-fn (in-list render-fns)])
-                   (render-fn #:data data
-                              #:gmapping mapping ; "global mapping"
-                              #:x-conv (or x-conv
-                                           (and x-transform (invertible-function-f x-transform))
-                                           identity)
-                              #:y-conv (or y-conv
-                                           (and y-transform (invertible-function-f y-transform))
-                                           identity)
-                              #:group group)))])))
+                   (render-fn)))])))
 
 (define (save-pict pict path)
   (define ext (path-get-extension path))

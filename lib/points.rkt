@@ -3,19 +3,18 @@
          "util.rkt")
 (provide ppoints)
 
-(define ((ppoints #:mapping [local-mapping (make-hash)])
-         #:data data #:gmapping mapping #:x-conv x-conv #:y-conv y-conv #:group group)
-  (define aes (mapping-override mapping local-mapping))
+(define ((ppoints #:mapping [local-mapping (make-hash)]))
+  (define aes (mapping-override (gr-global-mapping) local-mapping))
   (define discrete-color (hash-ref aes 'discrete-color #f))
   (define facet-on (hash-ref aes 'facet #f))
   (define alpha (hash-ref aes 'alpha 1))
   
   (define tbl (make-hash))
   (for ([(x y strat facet)
-         (in-data-frame* data (hash-ref aes 'x) (hash-ref aes 'y) discrete-color facet-on)]
+         (in-data-frame* (gr-data) (hash-ref aes 'x) (hash-ref aes 'y) discrete-color facet-on)]
         #:when (and x y)
-        #:when (if group (equal? facet group) #t))
-    (hash-update! tbl strat (cons (vector (x-conv x) (y-conv y)) _) null))
+        #:when (equal? facet (gr-group)))
+    (hash-update! tbl strat (cons (vector ((gr-x-conv) x) ((gr-y-conv) y)) _) null))
   
   (let ([color-n -1])
     (hash-map tbl

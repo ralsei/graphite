@@ -7,4 +7,4 @@
   (pplot #:data midwest
          #:mapping (aes #:x "area")
          #:width 640 #:height 480
-         (histogram #:bins 5)))
+         (histogram #:bins 30)))

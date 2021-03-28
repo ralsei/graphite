@@ -1,5 +1,5 @@
 #lang racket
-(require data-frame fancy-app plot/pict
+(require data-frame fancy-app
          "lib/plot.rkt")
 (provide (all-defined-out))
 
