@@ -12,4 +12,4 @@
         #:y-label "% of total"
         #:mapping (aes #:x "bigregion")
         #:width 1200 #:height 600
-        (bar #:mode 'count)))
+        (stacked-bar #:mode 'count #:mapping (aes #:group "religion"))))

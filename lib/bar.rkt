@@ -57,7 +57,7 @@
   (define to-plot
     (for/list ([x (in-vector xs)])
       ; this looks like a comical 211-ish error. it's not.
-      (list x (list (for/sum ([tbl (in-list tables)])
-                     (hash-ref tbl x 0))))))
+      (list x (for/list ([tbl (in-list tables)])
+                (hash-ref tbl x 0)))))
 
   (stacked-histogram to-plot #:labels (vector->list strats)))
