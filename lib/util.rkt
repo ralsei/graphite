@@ -1,5 +1,6 @@
 #lang racket
-(require data-frame threading racket/hash
+(require data-frame threading racket/dict racket/hash
+         kw-utils/kw-hash-lambda
          (for-syntax syntax/parse))
 (provide (all-defined-out))
 
@@ -42,3 +43,20 @@
 
   (cond [(empty? generators) (in-parallel '())]
         [else (apply in-parallel generators)]))
+
+(define (symbol->keyword s)
+  (string->keyword (symbol->string s)))
+
+(define used-names
+  (set 'x 'y 'facet 'discrete-color))
+
+(define run-renderer
+  (kw-hash-lambda args #:kws kw-hash
+    (match-define `(,renderer ,mapping . ,rst) args)
+    (keyword-apply/dict
+     renderer
+     (mapping-override (for/hash ([(k v) (in-hash mapping)]
+                                  #:when (not (set-member? used-names k)))
+                         (values (symbol->keyword k) v))
+                       kw-hash)
+     rst)))

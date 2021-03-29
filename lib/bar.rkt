@@ -56,8 +56,7 @@
   (define xs (possibilities (gr-data) (hash-ref aes 'x)))
   (define to-plot
     (for/list ([x (in-vector xs)])
-      ; this looks like a comical 211-ish error. it's not.
-      (list x (for/list ([tbl (in-list tables)])
-                (hash-ref tbl x 0)))))
+      (vector x (for/list ([tbl (in-list tables)])
+                  (hash-ref tbl x 0)))))
 
   (stacked-histogram to-plot #:labels (vector->list strats)))

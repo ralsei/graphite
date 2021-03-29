@@ -7,7 +7,6 @@
   (define aes (mapping-override (gr-global-mapping) local-mapping))
   (define discrete-color (hash-ref aes 'discrete-color #f))
   (define facet-on (hash-ref aes 'facet #f))
-  (define alpha (hash-ref aes 'alpha 1))
   
   (define tbl (make-hash))
   (for ([(x y strat facet)
@@ -20,5 +19,6 @@
     (hash-map tbl
               (λ (strat pts)
                 (set! color-n (add1 color-n))
-                (points pts #:color (->pen-color color-n) #:label strat #:alpha alpha))
+                (run-renderer points aes pts #:color (->pen-color color-n) #:label strat))
+                ;(points pts #:color (->pen-color color-n) #:label strat #:alpha alpha))
               #t)))

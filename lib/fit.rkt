@@ -1,5 +1,5 @@
 #lang racket
-(require racket/hash bestfit data-frame plot/pict
+(require bestfit plot/pict
          "util.rkt")
 (provide fit)
 
@@ -18,4 +18,4 @@
                #:when (and x y)
                #:when (equal? facet (gr-group)))
      (values (exact->inexact ((gr-x-conv) x)) (exact->inexact ((gr-y-conv) y)))))
- (function fit-line #:width (hash-ref aes 'width 1)))
+ (run-renderer function aes fit-line))

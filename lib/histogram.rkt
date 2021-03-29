@@ -2,15 +2,14 @@
 (require plot/pict "util.rkt")
 (provide histogram)
 
-(define ((histogram #:bins [bins 30] #:mapping [local-mapping (make-hash)])
-         #:data data #:gmapping mapping #:x-conv x-conv #:y-conv y-conv #:group group)
-  (define aes (mapping-override mapping local-mapping))
+(define ((histogram #:bins [bins 30] #:mapping [local-mapping (make-hash)]))
+  (define aes (mapping-override (gr-global-mapping) local-mapping))
   (define xs
-    (for/vector ([(x facet) (in-data-frame* data (hash-ref aes 'x)
+    (for/vector ([(x facet) (in-data-frame* (gr-data) (hash-ref aes 'x)
                                             (hash-ref aes 'facet #f))]
                  #:when x
-                 #:when (if group (equal? facet group) #t))
-      (x-conv x)))
+                 #:when (equal? facet (gr-group)))
+      ((gr-x-conv) x)))
 
   (define min-data (for/fold ([m +inf.0]) ([x (in-vector xs)]) (min m x)))
   (define max-data (for/fold ([m -inf.0]) ([x (in-vector xs)]) (max m x)))
