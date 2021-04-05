@@ -18,11 +18,6 @@
          (hash-ref* (hash-ref hsh fst) rst failure)
          (do-failure))]))
 
-; set in .envrc
-(define raw-data (aoc-fetch-leaderboard (getenv "AOC_YEAR")
-                                        (getenv "AOC_LEADERBOARD")
-                                        (getenv "AOC_SESSION")))
-
 (define (generate-leaderboard-df raw)
   (define members (hash-ref raw 'members))
   (define max-pts (hash-count members))
