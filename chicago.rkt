@@ -17,4 +17,4 @@
          #:mapping (aes #:x "date" #:y "temp")
          #:x-ticks (date-ticks)
          #:x-conv (compose ->posix iso8601->date)
-         (ppoints)))
+         (plines)))

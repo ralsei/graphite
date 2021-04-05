@@ -18,5 +18,7 @@
     (hash-map tbl
               (λ (strat pts)
                 (set! color-n (add1 color-n))
-                (density pts #:color (->pen-color color-n) #:label strat #:alpha alpha))
+                (run-renderer #:renderer density #:mapping aes
+                              #:color (->pen-color color-n) #:label strat #:alpha alpha
+                              pts))
               #t)))

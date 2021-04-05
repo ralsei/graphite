@@ -44,19 +44,25 @@
   (cond [(empty? generators) (in-parallel '())]
         [else (apply in-parallel generators)]))
 
+(define (keyword->symbol s)
+  (string->symbol (keyword->string s)))
 (define (symbol->keyword s)
   (string->keyword (symbol->string s)))
 
-(define used-names
-  (set 'x 'y 'facet 'discrete-color))
+(define (hash-remove* hsh keys)
+  (for/fold ([ret hsh])
+            ([k (in-list keys)])
+    (hash-remove ret k)))
 
 (define run-renderer
   (kw-hash-lambda args #:kws kw-hash
-    (match-define `(,renderer ,mapping . ,rst) args)
+    (define renderer (hash-ref kw-hash '#:renderer))
+    (define mapping (hash-ref kw-hash '#:mapping))
+    (define-values (_ kws) (procedure-keywords renderer))
     (keyword-apply/dict
      renderer
      (mapping-override (for/hash ([(k v) (in-hash mapping)]
-                                  #:when (not (set-member? used-names k)))
+                                  #:when (member (symbol->keyword k) kws))
                          (values (symbol->keyword k) v))
-                       kw-hash)
-     rst)))
+                       (hash-remove* kw-hash '(#:renderer #:mapping)))
+     args)))

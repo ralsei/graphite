@@ -23,6 +23,6 @@
          #:when (<= i x (+ i bin-width)))
     (hash-update! count-tbl i add1 1))
 
-  (rectangles
-   (for/vector ([(k v) (in-hash count-tbl)])
-     (vector (ivl k (+ bin-width k)) (ivl 0 v)))))
+  (run-renderer #:renderer rectangles #:mapping aes
+                (for/vector ([(k v) (in-hash count-tbl)])
+                  (vector (ivl k (+ bin-width k)) (ivl 0 v)))))

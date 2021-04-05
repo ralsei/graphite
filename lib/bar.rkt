@@ -32,7 +32,9 @@
                     #:x-min [x-min 0] #:group [group #f])
   (define tbl (make-count-table mode group))
 
-  (discrete-histogram
+  (run-renderer
+   #:renderer discrete-histogram
+   #:mapping (gr-global-mapping)
    #:skip skip #:x-min x-min #:label group
    (for/vector ([(var cnt) (in-hash tbl)])
      (vector var cnt))))
@@ -59,4 +61,7 @@
       (vector x (for/list ([tbl (in-list tables)])
                   (hash-ref tbl x 0)))))
 
-  (stacked-histogram to-plot #:labels (vector->list strats)))
+  (run-renderer #:renderer stacked-histogram
+                #:mapping (gr-global-mapping)
+                #:labels (vector->list strats)
+                to-plot))

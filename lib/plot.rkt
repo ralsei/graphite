@@ -4,6 +4,7 @@
          "density.rkt"
          "histogram.rkt"
          "fit.rkt"
+         "lines.rkt"
          "points.rkt"
          "util.rkt")
 (provide pplot aes save-pict
@@ -11,9 +12,8 @@
          (all-from-out "density.rkt")
          (all-from-out "histogram.rkt")
          (all-from-out "fit.rkt")
+         (all-from-out "lines.rkt")
          (all-from-out "points.rkt"))
-
-(define keyword->symbol (compose string->symbol keyword->string))
 
 (define aes
   (make-keyword-procedure
@@ -25,12 +25,10 @@
        (values (keyword->symbol kw) kwa)))))
 
 ; XXX: should we support multiple facets? n facets?
-(define (facet-plot #:data data #:mapping mapping #:x-conv x-conv #:y-conv y-conv
-                    #:x-transform x-transform #:y-transform y-transform
-                    render-fns)
-  (define facet (hash-ref mapping 'facet))
+(define (facet-plot render-fns)
+  (define facet (hash-ref (gr-global-mapping) 'facet))
   (for/fold ([plt (blank)])
-            ([grp (possibilities data facet)])
+            ([grp (possibilities (gr-data) facet)])
     ; all other arguments should be handled by the initial parameterize call
     (hc-append plt
                (apply (curry pplot
@@ -53,10 +51,12 @@
                #:x-transform [x-transform #f]
                #:x-ticks [x-ticks (plot-x-ticks)]
                #:x-conv [x-conv #f]
+               #:x-max [x-max #f]
                #:y-label [y-label (plot-y-label)]
                #:y-transform [y-transform #f]
                #:y-ticks [y-ticks (plot-y-ticks)]
                #:y-conv [y-conv #f]
+               #:y-max [y-max #f]
                #:group [group #f]
                . render-fns)
   (parameterize ([plot-title title]
@@ -86,9 +86,9 @@
                  [gr-group group])
     (define facet (hash-ref mapping 'facet #f))
     (cond [(and (not group) facet) (facet-plot render-fns)]
-          [else (plot
-                 (for/list ([render-fn (in-list render-fns)])
-                   (render-fn)))])))
+          [else (plot #:x-max x-max #:y-max y-max
+                      (for/list ([render-fn (in-list render-fns)])
+                        (render-fn)))])))
 
 (define (save-pict pict path)
   (define ext (path-get-extension path))
