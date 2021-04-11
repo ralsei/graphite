@@ -1,5 +1,5 @@
 #lang racket
-(require file/convertible pict plot/pict fancy-app
+(require file/convertible racket/dict pict plot/pict fancy-app
          "bar.rkt"
          "density.rkt"
          "histogram.rkt"
@@ -24,39 +24,41 @@
                 [kwa (in-list kw-args)])
        (values (keyword->symbol kw) kwa)))))
 
+(define (pplot-list render-fns grp)
+  (keyword-apply/dict
+   (curry pplot
+          #:data (gr-data)
+          #:mapping (if grp (gr-global-mapping) (hash-remove (gr-global-mapping) 'facet))
+          #:x-conv (gr-x-conv) #:y-conv (gr-y-conv))
+   (if grp
+       (hash '#:group grp '#:title (~a grp))
+       (hash))
+   render-fns))
+
 ; XXX: should we support multiple facets? n facets?
 (define (facet-plot render-fns)
   (define facet (hash-ref (gr-global-mapping) 'facet))
-  (define groups (vector-sort (possibilities (gr-data) facet) string-ci<?))
+  (define groups (vector-sort (possibilities (gr-data) facet)
+                              (λ (x y) (string-ci<? (~a x) (~a y)))))
 
-  (define (all-plots [y-min #f] [y-max #f])
-    (for/list ([grp (in-vector groups)])
-      (apply (curry pplot
-                    #:data (gr-data) #:mapping (gr-global-mapping)
-                    #:x-conv (gr-x-conv) #:y-conv (gr-y-conv)
-                    #:group grp #:title (~a grp)
-                    #:y-min y-min #:y-max y-max)
-             render-fns)))
+  (define init-plot (pplot-list render-fns #f))
+  (match-define (vector (vector x-min x-max)
+                        (vector y-min y-max))
+    (plot-pict-bounds init-plot))
+  (match-define (vector x-left _) ((plot-pict-plot->dc init-plot) (vector x-min y-min)))
+  (match-define (vector x-right _) ((plot-pict-plot->dc init-plot) (vector x-max y-max)))
 
-  (define all-y-bounds (map (compose (vector-ref _ 1) plot-pict-bounds) (all-plots)))
-  (define y-min (apply min (map (vector-ref _ 0) all-y-bounds)))
-  (define y-max (apply max (map (vector-ref _ 1) all-y-bounds)))
-
-  (define initial-plot
-    (apply (curry pplot
-                  #:data (gr-data) #:mapping (gr-global-mapping)
-                  #:x-conv (gr-x-conv) #:y-conv (gr-y-conv)
-                  #:group (vector-ref groups 0) #:title (~a (vector-ref groups 0))
-                  #:y-min y-min #:y-max y-max)
-           render-fns))
-
-  (for/fold ([plt initial-plot])
-            ([app
-              (parameterize ([plot-y-ticks no-ticks]
-                             [plot-y-label #f])
-                (rest (all-plots y-min y-max)))])
-    ; all other arguments should be handled by the initial parameterize call
-    (hc-append plt app)))
+  (parameterize ([gr-x-min (if (not (gr-x-min)) x-min (gr-x-min))]
+                 [gr-x-max (if (not (gr-x-max)) x-max (gr-x-max))]
+                 [gr-y-min (if (not (gr-y-min)) y-min (gr-y-min))]
+                 [gr-y-max (if (not (gr-y-max)) y-max (gr-y-max))])
+    (for/fold ([plt (pplot-list render-fns (vector-ref groups 0))])
+              ([grp (vector-drop groups 1)])
+      ; all other arguments should be handled by the initial parameterize call
+      (parameterize ([plot-y-ticks no-ticks]
+                     [plot-y-label #f]
+                     [plot-width (inexact->exact (- x-right x-left))])
+        (hc-append plt (pplot-list render-fns grp))))))
 
 (define (get-conversion-function conv transform)
   (cond [(and conv transform) (compose (invertible-function-f transform) conv)]

@@ -12,7 +12,8 @@
          #:x-label "Year" #:y-label "GDP per capita (USD)"
          #:y-transform (invertible-function (log _ 10) (expt 10 _))
          #:y-ticks (log-ticks #:scientific? #f)
-         #:width 300 #:height 400
+         #:y-max 5.2
+         #:width 400 #:height 400
          #:legend-anchor 'no-legend
          (plines #:mapping (aes #:color "gray"))
          (fit #:method 'linear #:mapping (aes #:width 2))))
