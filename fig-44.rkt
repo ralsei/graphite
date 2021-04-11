@@ -1,0 +1,18 @@
+#lang racket
+(require data-frame fancy-app plot/pict
+         "lib/plot.rkt")
+(provide (all-defined-out))
+
+(define all-data (df-read/csv "./data/all_gapminder.csv"))
+
+(module+ main
+  (pplot #:data all-data
+         #:mapping (aes #:x "year" #:y "gdpPercap"
+                        #:discrete-color "country" #:facet "continent")
+         #:x-label "Year" #:y-label "GDP per capita (USD)"
+         #:y-transform (invertible-function (log _ 10) (expt 10 _))
+         #:y-ticks (log-ticks #:scientific? #f)
+         #:width 300 #:height 400
+         #:legend-anchor 'no-legend
+         (plines #:mapping (aes #:color "gray"))
+         (fit #:method 'linear #:mapping (aes #:width 2))))

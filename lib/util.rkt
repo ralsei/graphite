@@ -17,6 +17,11 @@
 (define-parameter gr-y-conv)
 (define-parameter gr-group)
 
+(define-parameter gr-x-min)
+(define-parameter gr-x-max)
+(define-parameter gr-y-min)
+(define-parameter gr-y-max)
+
 (define (vector-remove-duplicates vec)
   (define seen (mutable-set))
   (for/vector ([v (in-vector vec)]
@@ -61,8 +66,9 @@
     (define-values (_ kws) (procedure-keywords renderer))
     (keyword-apply/dict
      renderer
-     (mapping-override (for/hash ([(k v) (in-hash mapping)]
+     (mapping-override (hash-remove* kw-hash '(#:renderer #:mapping))
+                       (for/hash ([(k v) (in-hash mapping)]
                                   #:when (member (symbol->keyword k) kws))
-                         (values (symbol->keyword k) v))
-                       (hash-remove* kw-hash '(#:renderer #:mapping)))
+                         (values (symbol->keyword k) v)))
+
      args)))
