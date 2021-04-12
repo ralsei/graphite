@@ -1,6 +1,6 @@
 #lang racket
 (require data-frame gregor net/http-easy plot threading
-         "lib/plot.rkt")
+         graphite)
 (provide (all-defined-out))
 
 (define chic-url "https://raw.githubusercontent.com/Z3tt/R-Tutorials/master/ggplot2/chicago-nmmaps.csv")

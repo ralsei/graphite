@@ -1,5 +1,5 @@
 #lang racket
-(require data-frame "lib/plot.rkt")
+(require data-frame graphite)
 
 (define midwest (df-read/csv "./data/midwest.csv"))
 

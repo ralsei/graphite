@@ -1,6 +1,6 @@
 #lang racket
 (require data-frame fancy-app plot/pict
-         "lib/plot.rkt")
+         graphite)
 (provide (all-defined-out))
 
 (define all-data (df-read/csv "./data/all_gapminder.csv"))
