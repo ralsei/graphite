@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/base
 (require data-frame graphite)
 
 (define midwest (df-read/csv "./data/midwest.csv"))

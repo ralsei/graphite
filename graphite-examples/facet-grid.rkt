@@ -1,5 +1,6 @@
-#lang racket
-(require data-frame fancy-app plot/pict graphite)
+#lang racket/base
+(require data-frame graphite fancy-app)
+
 (provide (all-defined-out))
 
 (define all-data (df-read/csv "./data/gss_sm.csv"))
