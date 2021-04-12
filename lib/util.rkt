@@ -68,7 +68,7 @@
      renderer
      (mapping-override (hash-remove* kw-hash '(#:renderer #:mapping))
                        (for/hash ([(k v) (in-hash mapping)]
-                                  #:when (member (symbol->keyword k) kws))
+                                  #:when (and (member (symbol->keyword k) kws)
+                                              (not (member (symbol->keyword k) '(#:x #:y)))))
                          (values (symbol->keyword k) v)))
-
      args)))

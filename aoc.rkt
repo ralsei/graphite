@@ -1,5 +1,5 @@
 #lang racket
-(require data-frame fancy-app gregor plot/pict "aoc-lib.rkt" "lib/plot.rkt")
+(require data-frame fancy-app gregor plot/pict "extern/aoc-lib.rkt" "lib/plot.rkt")
 (provide (all-defined-out))
 
 (define (hash-ref* hsh path [failure (thunk (error "no such key" path))])
