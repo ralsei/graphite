@@ -1,6 +1,6 @@
 #lang racket
 (require fancy-app plot/pict plot/utils
-         "../extern/box-and-whiskers.rkt" "util.rkt")
+         "extern/box-and-whiskers.rkt" "util.rkt")
 (provide boxplot)
 
 (define (make-stat-table mapping iqr-scale)
