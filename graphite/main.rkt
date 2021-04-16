@@ -9,6 +9,7 @@
          "points.rkt"
          "util.rkt")
 (provide pplot aes save-pict
+         no-transform logarithmic-transform
          (all-from-out "bar.rkt")
          (all-from-out "boxplot.rkt")
          (all-from-out "density.rkt")
@@ -16,6 +17,9 @@
          (all-from-out "fit.rkt")
          (all-from-out "lines.rkt")
          (all-from-out "points.rkt"))
+
+(define no-transform (invertible-function identity identity))
+(define logarithmic-transform (invertible-function (log _ 10) (expt 10 _)))
 
 (define aes
   (make-keyword-procedure
