@@ -1,5 +1,5 @@
 #lang racket
-(require file/convertible racket/dict pict fancy-app
+(require file/convertible pict fancy-app data-frame
          (except-in plot/pict density lines points)
          "bar.rkt"
          "boxplot.rkt"
@@ -31,24 +31,15 @@
                 [kwa (in-list kw-args)])
        (values (keyword->symbol kw) kwa)))))
 
-(define (graph-list render-fns grp)
-  (keyword-apply/dict
-   (curry graph
-          #:data (gr-data)
-          #:mapping (if grp (gr-global-mapping) (hash-remove (gr-global-mapping) 'facet))
-          #:x-conv (gr-x-conv) #:y-conv (gr-y-conv))
-   (if grp
-       (hash '#:group grp '#:title (~a grp))
-       (hash))
-   render-fns))
-
 ; XXX: should we support multiple facets? n facets?
 (define (facet-plot render-fns)
   (define facet (hash-ref (gr-global-mapping) 'facet))
   (define groups (vector-sort (possibilities (gr-data) facet)
                               (λ (x y) (string-ci<? (~a x) (~a y)))))
 
-  (define init-plot (graph-list render-fns #f))
+  (define init-plot
+    (parameterize ([gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
+      (graph-internal #f render-fns)))
   (match-define (vector (vector x-min x-max)
                         (vector y-min y-max))
     (plot-pict-bounds init-plot))
@@ -63,19 +54,32 @@
                  [gr-y-min (if (not (gr-y-min)) y-min (gr-y-min))]
                  [gr-y-max (if (not (gr-y-max)) y-max (gr-y-max))]
                  [plot-aspect-ratio aspect-ratio])
-    (for/fold ([plt (graph-list render-fns (vector-ref groups 0))])
+    (for/fold ([plt (graph-internal (vector-ref groups 0) render-fns)])
               ([grp (vector-drop groups 1)])
       ; all other arguments should be handled by the initial parameterize call
       (parameterize ([plot-y-ticks no-ticks]
                      [plot-y-label #f]
                      [plot-width (inexact->exact (- x-right x-left))])
-        (hc-append plt (graph-list render-fns grp))))))
+        (hc-append plt (graph-internal grp render-fns))))))
 
 (define (get-conversion-function conv transform)
   (cond [(and conv transform) (compose (invertible-function-f transform) conv)]
         [conv conv]
         [transform (invertible-function-f transform)]
         [else identity]))
+
+(define (graph-internal group render-fns)
+  (define facet (and (hash-ref (gr-global-mapping) 'facet #f) #t))
+  (cond [(and (not group) facet) (facet-plot render-fns)]
+        [else
+         (plot-pict #:x-min (gr-x-min)
+                    #:x-max (gr-x-max)
+                    #:y-min (gr-y-min)
+                    #:y-max (gr-y-max)
+                    #:title (or group (plot-title))
+                    (parameterize ([gr-group group])
+                      (for/list ([render-fn (in-list render-fns)])
+                        (render-fn))))]))
 
 (define (graph #:data data #:mapping mapping
                #:width [width (plot-width)]
@@ -94,7 +98,6 @@
                #:y-min [y-min (gr-y-min)]
                #:y-max [y-max (gr-y-max)]
                #:legend-anchor [legend-anchor (plot-legend-anchor)]
-               #:group [group (gr-group)]
                . render-fns)
   (parameterize ([plot-title title]
                  [plot-width width]
@@ -121,19 +124,11 @@
                  [gr-global-mapping mapping]
                  [gr-x-conv (get-conversion-function x-conv x-transform)]
                  [gr-y-conv (get-conversion-function y-conv y-transform)]
-                 [gr-group group]
                  [gr-x-min x-min]
                  [gr-x-max x-max]
                  [gr-y-min y-min]
                  [gr-y-max y-max])
-    (define facet (hash-ref mapping 'facet #f))
-    (cond [(and (not group) facet) (facet-plot render-fns)]
-          [else (plot-pict #:x-min x-min
-                           #:x-max x-max
-                           #:y-min y-min
-                           #:y-max y-max
-                           (for/list ([render-fn (in-list render-fns)])
-                             (render-fn)))])))
+    (graph-internal #f render-fns)))
 
 (define (save-pict pict path)
   (define ext (path-get-extension path))
