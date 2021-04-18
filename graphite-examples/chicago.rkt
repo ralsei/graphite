@@ -1,5 +1,6 @@
 #lang racket
-(require data-frame gregor net/http-easy plot threading
+(require data-frame gregor net/http-easy threading
+         plot/utils
          graphite)
 (provide (all-defined-out))
 
@@ -10,11 +11,11 @@
       df-read/csv))
 
 (module+ main
-  (pplot #:data chic-raw
+  (graph #:data chic-raw
          #:title "Temperatures in Chicago"
          #:x-label "Year"
          #:y-label "Temperature (degrees F)"
          #:mapping (aes #:x "date" #:y "temp")
          #:x-ticks (date-ticks)
          #:x-conv (compose ->posix iso8601->date)
-         (plines)))
+         (lines)))

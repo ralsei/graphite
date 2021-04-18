@@ -1,5 +1,7 @@
 #lang racket
-(require data-frame fancy-app gregor plot/pict "aoc-lib.rkt" graphite)
+(require data-frame fancy-app graphite
+         (only-in plot date-ticks)
+         "aoc-lib.rkt")
 (provide (all-defined-out))
 
 (define (hash-ref* hsh path [failure (thunk (error "no such key" path))])
@@ -112,7 +114,7 @@
                                           (getenv "AOC_LEADERBOARD")
                                           (getenv "AOC_SESSION")))
 
-  (define result (pplot #:data (generate-leaderboard-df raw-data)
+  (define result (graph #:data (generate-leaderboard-df raw-data)
                         #:width 2400
                         #:height 1200
                         #:x-label "date/time"
@@ -120,5 +122,5 @@
                         #:mapping (aes #:x "time" #:y "points" #:discrete-color "name")
                         #:x-max 1609005817
                         #:x-ticks (date-ticks)
-                        (plines #:mapping (aes #:width 2))))
+                        (lines #:mapping (aes #:width 2))))
   (save-pict result "./aoc.png"))

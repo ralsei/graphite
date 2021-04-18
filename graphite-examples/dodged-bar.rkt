@@ -7,7 +7,7 @@
 
 (module+ main
   (define plt
-    (pplot #:data all-data
+    (graph #:data all-data
            #:title "Where people live, I guess?"
            #:x-label "Region"
            #:y-label "% of total"

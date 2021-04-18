@@ -6,7 +6,7 @@
 (define all-data (df-read/csv "./data/gss_sm.csv"))
 
 (module+ main
-  (pplot #:data all-data
+  (graph #:data all-data
         #:title "Where people live, I guess?"
         #:x-label "Region"
         #:y-label "% of total"

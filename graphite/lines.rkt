@@ -1,8 +1,10 @@
 #lang racket
-(require fancy-app plot/pict plot/utils "util.rkt")
-(provide plines)
+(require fancy-app plot/utils
+         (prefix-in plot: plot/pict)
+         "util.rkt")
+(provide lines)
 
-(define ((plines #:mapping [local-mapping (make-hash)]))
+(define ((lines #:mapping [local-mapping (make-hash)]))
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 
   (define tbl (make-hash))
@@ -17,7 +19,7 @@
     (hash-map tbl
               (λ (strat pts)
                 (set! color-n (add1 color-n))
-                (run-renderer #:renderer lines #:mapping aes
+                (run-renderer #:renderer plot:lines #:mapping aes
                               #:color (->pen-color color-n) #:label strat
                               pts))
               #t)))

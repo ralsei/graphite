@@ -1,5 +1,6 @@
 #lang racket
-(require file/convertible racket/dict pict plot/pict fancy-app
+(require file/convertible racket/dict pict fancy-app
+         (except-in plot/pict density lines points)
          "bar.rkt"
          "boxplot.rkt"
          "density.rkt"
@@ -8,7 +9,7 @@
          "lines.rkt"
          "points.rkt"
          "util.rkt")
-(provide pplot aes save-pict
+(provide graph aes save-pict
          no-transform logarithmic-transform
          (all-from-out "bar.rkt")
          (all-from-out "boxplot.rkt")
@@ -30,9 +31,9 @@
                 [kwa (in-list kw-args)])
        (values (keyword->symbol kw) kwa)))))
 
-(define (pplot-list render-fns grp)
+(define (graph-list render-fns grp)
   (keyword-apply/dict
-   (curry pplot
+   (curry graph
           #:data (gr-data)
           #:mapping (if grp (gr-global-mapping) (hash-remove (gr-global-mapping) 'facet))
           #:x-conv (gr-x-conv) #:y-conv (gr-y-conv))
@@ -47,7 +48,7 @@
   (define groups (vector-sort (possibilities (gr-data) facet)
                               (λ (x y) (string-ci<? (~a x) (~a y)))))
 
-  (define init-plot (pplot-list render-fns #f))
+  (define init-plot (graph-list render-fns #f))
   (match-define (vector (vector x-min x-max)
                         (vector y-min y-max))
     (plot-pict-bounds init-plot))
@@ -62,13 +63,13 @@
                  [gr-y-min (if (not (gr-y-min)) y-min (gr-y-min))]
                  [gr-y-max (if (not (gr-y-max)) y-max (gr-y-max))]
                  [plot-aspect-ratio aspect-ratio])
-    (for/fold ([plt (pplot-list render-fns (vector-ref groups 0))])
+    (for/fold ([plt (graph-list render-fns (vector-ref groups 0))])
               ([grp (vector-drop groups 1)])
       ; all other arguments should be handled by the initial parameterize call
       (parameterize ([plot-y-ticks no-ticks]
                      [plot-y-label #f]
                      [plot-width (inexact->exact (- x-right x-left))])
-        (hc-append plt (pplot-list render-fns grp))))))
+        (hc-append plt (graph-list render-fns grp))))))
 
 (define (get-conversion-function conv transform)
   (cond [(and conv transform) (compose (invertible-function-f transform) conv)]
@@ -76,7 +77,7 @@
         [transform (invertible-function-f transform)]
         [else identity]))
 
-(define (pplot #:data data #:mapping mapping
+(define (graph #:data data #:mapping mapping
                #:width [width (plot-width)]
                #:height [height (plot-height)]
                #:title [title (plot-title)]

@@ -1,9 +1,10 @@
 #lang racket
-(require fancy-app plot/pict plot/utils
+(require fancy-app plot/utils
+         (prefix-in plot: plot)
          "util.rkt")
-(provide ppoints)
+(provide points)
 
-(define ((ppoints #:mapping [local-mapping (make-hash)]))
+(define ((points #:mapping [local-mapping (make-hash)]))
   (define aes (mapping-override (gr-global-mapping) local-mapping))
   (define discrete-color (hash-ref aes 'discrete-color #f))
   (define facet-on (hash-ref aes 'facet #f))
@@ -19,7 +20,7 @@
     (hash-map tbl
               (λ (strat pts)
                 (set! color-n (add1 color-n))
-                (run-renderer #:renderer points
+                (run-renderer #:renderer plot:points
                               #:mapping aes
                               #:color (->pen-color color-n) #:label strat
                               pts))

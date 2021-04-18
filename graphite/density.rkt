@@ -1,10 +1,11 @@
 #lang racket
-(require fancy-app plot/pict plot/utils "util.rkt")
-(provide pdensity)
+(require fancy-app plot/utils
+         (prefix-in plot: plot/pict)
+         "util.rkt")
+(provide density)
 
-(define ((pdensity #:mapping [local-mapping (make-hash)]))
+(define ((density #:mapping [local-mapping (make-hash)]))
   (define aes (mapping-override (gr-global-mapping) local-mapping))
-  (define alpha (hash-ref aes 'alpha 1))
 
   (define tbl (make-hash))
   (for ([(x strat facet)
@@ -18,7 +19,7 @@
     (hash-map tbl
               (λ (strat pts)
                 (set! color-n (add1 color-n))
-                (run-renderer #:renderer density #:mapping aes
-                              #:color (->pen-color color-n) #:label strat #:alpha alpha
+                (run-renderer #:renderer plot:density #:mapping aes
+                              #:color (->pen-color color-n) #:label strat
                               pts))
               #t)))

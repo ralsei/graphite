@@ -4,6 +4,6 @@
 (define organdata (df-read/csv "./data/organdata.csv" #:na "NA"))
 
 (module+ main
-  (pplot #:data organdata
+  (graph #:data organdata
          #:mapping (aes #:x "country" #:y "donors")
          (boxplot)))
