@@ -1,5 +1,6 @@
 #lang scribble/manual
-@(require scribble/example (for-label racket plot/utils pict data-frame graphite))
+@(require scribble/example (for-label racket plot/utils pict data-frame graphite
+                                      (except-in plot density lines points)))
 @declare-exporting[graphite]
 
 @title{Graphite: A data visualization library}
