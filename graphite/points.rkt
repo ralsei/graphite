@@ -1,6 +1,6 @@
 #lang racket
 (require fancy-app plot/utils
-         (prefix-in plot: plot)
+         (prefix-in plot: plot/pict)
          "util.rkt")
 (provide points)
 
