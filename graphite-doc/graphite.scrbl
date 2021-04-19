@@ -4,10 +4,13 @@
 
 @title{Graphite: A data visualization library}
 
-@table-of-contents[]
-
 @defmodule[graphite]
 
+A tutorial on @racketmodname[graphite] is also available;
+@other-doc['(lib "graphite-tutorial/graphite-tutorial.scrbl")].
+
+
+@table-of-contents[]
 
 @section[#:tag "graphing-procedures"]{Graphing Procedures}
 
