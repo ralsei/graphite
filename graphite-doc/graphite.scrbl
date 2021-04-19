@@ -1,15 +1,16 @@
 #lang scribble/manual
 @(require scribble/example (for-label racket plot/utils pict data-frame graphite
                                       (except-in plot density lines points)))
-@declare-exporting[graphite]
 
 @title{Graphite: A data visualization library}
 
 @table-of-contents[]
 
+@defmodule[graphite]
+
+
 @section[#:tag "graphing-procedures"]{Graphing Procedures}
 
-@defmodule*/no-declare[(graphite) #:link-target? #f]
 
 @defproc[(graph [#:data data data-frame?]
                 [#:mapping mapping aes?]
