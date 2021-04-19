@@ -1,5 +1,5 @@
 #lang racket
-(require file/convertible pict fancy-app data-frame
+(require file/convertible pict fancy-app kw-utils/kw-hash-lambda
          (except-in plot/pict density lines points)
          "bar.rkt"
          "boxplot.rkt"
@@ -9,7 +9,8 @@
          "lines.rkt"
          "points.rkt"
          "util.rkt")
-(provide graph aes save-pict
+(provide graph save-pict
+         aes aes? aes-with/c aes-containing/c
          no-transform logarithmic-transform
          (all-from-out "bar.rkt")
          (all-from-out "boxplot.rkt")
@@ -22,14 +23,41 @@
 (define no-transform (invertible-function identity identity))
 (define logarithmic-transform (invertible-function (log _ 10) (expt 10 _)))
 
+(define graphite-renderer? (-> renderer2d?))
+
 (define aes
-  (make-keyword-procedure
-   (λ (kws kw-args . rst)
-     (when (not (empty? rst))
-       (error 'aes "called with non-keyword argument"))
-     (for/hash ([kw (in-list kws)]
-                [kwa (in-list kw-args)])
-       (values (keyword->symbol kw) kwa)))))
+  (kw-hash-lambda args #:kws kw-hash
+    (when (not (empty? args))
+      (error 'aes "called with non-keyword argument"))
+    (for/hash ([(k v) (in-hash kw-hash)])
+      (values (keyword->symbol k) v))))
+
+(define aes? (and/c hash? hash-equal? immutable?))
+
+; aes must have these values, with these contracts
+(define aes-with/c
+  (kw-hash-lambda args #:kws kw-hash
+    (when (not (empty? args))
+      (error 'aes-with/c "called with non-keyword argument"))
+    (λ (aes)
+      (and (aes? aes)
+           (for/and ([(k v) (in-hash kw-hash)])
+             (define sym (keyword->symbol k))
+             (and (hash-has-key? aes sym)
+                  ((hash-ref kw-hash sym) v)))))))
+
+; aes optionally has these values, with these contracts
+(define aes-containing/c
+  (kw-hash-lambda args #:kws kw-hash
+    (when (not (empty? args))
+      (error 'aes-containing/c "called with non-keyword argument"))
+    (λ (aes)
+      (and (aes? aes)
+           (for/and ([(k v) (in-hash aes)])
+             (define sym (keyword->symbol k))
+             (if (hash-has-key? kw-hash sym)
+                 ((hash-ref kw-hash sym) v)
+                 #t))))))
 
 ; XXX: should we support multiple facets? n facets?
 (define (facet-plot render-fns)

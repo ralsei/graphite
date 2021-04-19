@@ -14,13 +14,41 @@
 
 @title{Graphite: a mildly opinionated data visualization library}
 
-Graphite is a thin layer over the existing @racket[plot] library, designed to create common types
-of plots with as little effort as possible, and allowing for easy manipulation of the plot around
-the data without having to change the structure of the data itself. The interface is loosely modeled
+Graphite is a library for data visualization, designed to create common types of plots with as little
+effort as possible, and allowing for easy manipulation of the plot around the data without having to
+change the structure of the data itself. The interface is loosely modeled
 around the tidyverse's ggplot2, so if you're familiar with it, you should feel at home.
 
 To facilitate this, we depend on the @racket[data-frame] library as the primary data structure.
 Once your data is read into a data frame, Graphite is able to work with it.
+
+@section{Deciding what library to use}
+
+Graphite is implemented @italic{on top} of @racket[plot], and in no way serves as a replacement to it, instead
+serving as a complement. As a consequence, Graphite's functionality is in no way a strict superset of
+@racket[plot].
+
+If your data visualization satisfies some of the following criteria, Graphite would be a good fit:
+@itemlist[
+  @item{@bold{Your data is comprised of discrete points.} Graphite requires all data to be read into a
+        @racket[data-frame] before creating any visualization. This means that if your plot consists of
+        continuous data (e.g. a function), Graphite is unlikely to fit your needs.}
+  @item{@bold{Your data is tidy, and consists of the data you actually want to show.} Graphite assumes that
+        your data is in "tidy" form, with each variable being a column and each observation being a row. Data
+        wrangling is outside of the scope of Graphite's functionality.}
+  @item{@bold{Your plot is intended for use as an image.} Graphite exports all plots as a @racket[pict].
+        For various reasons, it does not support the interactivity that @racket[plot] snips provide.
+        Graphite's generated plots work great in Scribble, or embedded into any other document by saving
+        the file using @racket[save-pict].}
+  @item{@bold{You don't know what data visualization method you want to use.} Graphite's main goal is to
+        prevent significant structural changes when, for example, switching from a scatter plot to a
+        histogram.}
+]
+
+If your data is untidy, it will require further processing before being read into a @racket[data-frame].
+Anecdotally, this is not particularly easy in Racket.
+
+If your data is primarily continuous or needs to be interactive, @racket[plot] is likely to be a better fit.
 
 @section{Gapminder}
 
@@ -40,9 +68,8 @@ actually have:
   (df-describe gapminder)
 ]
 
-So, we know that we have GDP per capita, and we know that we have life-expectancy in our dataset. Let's
-say we wanted to make a scatterplot of these two variables versus each other. Using Graphite, that would
-look like this:
+So, we know that we have GDP per capita and life-expectancy in our dataset. Let's say we wanted to make a
+scatterplot of these two variables versus each other. Using Graphite, that would look like this:
 @examples[#:eval ev #:label #f
   (graph #:data gapminder
          #:mapping (aes #:x "gdpPercap" #:y "lifeExp")
