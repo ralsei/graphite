@@ -33,22 +33,24 @@ If your data visualization satisfies some of the following criteria, Graphite wo
   @item{@bold{Your data is comprised of discrete points.} Graphite requires all data to be read into a
         @racket[data-frame] before creating any visualization. This means that if your plot consists of
         continuous data (e.g. a function), Graphite is unlikely to fit your needs.}
-  @item{@bold{Your data is tidy, and consists of the data you actually want to show.} Graphite assumes that
-        your data is in "tidy" form, with each variable being a column and each observation being a row. Data
-        wrangling is outside of the scope of Graphite's functionality.}
   @item{@bold{Your plot is intended for use as an image.} Graphite exports all plots as a @racket[pict].
         For various reasons, it does not support the interactivity that @racket[plot] snips provide.
         Graphite's generated plots work great in Scribble, or embedded into any other document by saving
         the file using @racket[save-pict].}
+  @item{@bold{Your intended plot is 2D.} Graphite does not support 3D plots, and it probably never will.}
+  @item{@bold{Your data is tidy, and consists of the data you actually want to show.} Graphite assumes that
+        your data is in "tidy" form, with each variable being a column and each observation being a row. Data
+        wrangling is outside of the scope of Graphite's functionality.}
   @item{@bold{You don't know what data visualization method you want to use.} Graphite's main goal is to
         prevent significant structural changes when, for example, switching from a scatter plot to a
         histogram.}
 ]
 
 If your data is untidy, it will require further processing before being read into a @racket[data-frame].
-Anecdotally, this is not particularly easy in Racket.
+Anecdotally, this is not particularly easy in Racket. All data in this tutorial is already tidy.
 
-If your data is primarily continuous or needs to be interactive, @racket[plot] is likely to be a better fit.
+If your data is primarily continuous, needs to be interactive, or needs to be 3D, @racket[plot] is likely to
+be a better fit.
 
 @section{Gapminder}
 
@@ -93,15 +95,11 @@ already has a log transform predefined:
   (graph #:data gapminder
          #:mapping (aes #:x "gdpPercap" #:y "lifeExp")
          #:x-transform logarithmic-transform
-         #:x-ticks (log-ticks #:scientific? #f)
          (points))
 ]
 
 The @tt{#:x-transform} keyword argument specifies an @racket[invertible-function] that dictates an axis
 transform. In this case, we use the @racket[logarithmic-transform] function, which is already defined.
-Additionally, the @tt{#:x-ticks} argument specifies what ticks we want to use on the x-axis. Since we used
-a log transform, it makes sense we want to use @racket[log-ticks]. Finally, we disable scientific notation,
-as we're working with currency, so it doesn't make much sense.
 
 This plot is starting to look nicer, but it's pretty unenlightening. We don't know anything about each country
 or how they're stratified, we can't figure out how many countries are present at any given point, we can't
@@ -114,7 +112,6 @@ can start by adding labels, and setting the alpha value of the renderer to see w
          #:y-label "Life expectancy (years)"
          #:mapping (aes #:x "gdpPercap" #:y "lifeExp")
          #:x-transform logarithmic-transform
-         #:x-ticks (log-ticks #:scientific? #f)
          (points #:mapping (aes #:alpha 0.4)))
 ]
 
@@ -131,7 +128,6 @@ fit to our plot. Then, we can use the @racket[fit] renderer:
          #:y-label "Life expectancy (years)"
          #:mapping (aes #:x "gdpPercap" #:y "lifeExp")
          #:x-transform logarithmic-transform
-         #:x-ticks (log-ticks #:scientific? #f)
          (points #:mapping (aes #:alpha 0.4))
          (fit #:method 'linear #:mapping (aes #:width 3)))
 ]
@@ -150,7 +146,6 @@ to change the color on, in this case @tt{"continent"}:
          #:y-label "Life expectancy (years)"
          #:mapping (aes #:x "gdpPercap" #:y "lifeExp")
          #:x-transform logarithmic-transform
-         #:x-ticks (log-ticks #:scientific? #f)
          (points #:mapping (aes #:alpha 0.4 #:discrete-color "continent"))
          (fit #:method 'linear #:mapping (aes #:width 3)))
 ]

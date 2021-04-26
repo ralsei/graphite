@@ -1,8 +1,22 @@
 #lang racket
-(require fancy-app plot/utils
+(require fancy-app pict plot/utils
          (prefix-in plot: plot/pict)
-         "util.rkt")
-(provide density)
+         "contracts.rkt" "util.rkt")
+(provide
+ (contract-out [density (->* ()
+                             (#:mapping (aes-containing/c #:x string?
+                                                          #:facet (or/c string? #f)
+                                                          #:x-min (or/c rational? #f)
+                                                          #:x-max (or/c rational? #f)
+                                                          #:y-min (or/c rational? #f)
+                                                          #:y-max (or/c rational? #f)
+                                                          #:samples (and/c exact-integer? (>=/c 2))
+                                                          #:color plot-color/c
+                                                          #:width (>=/c 0)
+                                                          #:style plot-pen-style/c
+                                                          #:alpha (real-in 0 1)
+                                                          #:label (or/c string? pict? #f)))
+                             graphite-renderer?)]))
 
 (define ((density #:mapping [local-mapping (make-hash)]))
   (define aes (mapping-override (gr-global-mapping) local-mapping))

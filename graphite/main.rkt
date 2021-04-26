@@ -1,29 +1,47 @@
 #lang racket
-(require file/convertible pict fancy-app kw-utils/kw-hash-lambda
+(require file/convertible data-frame pict fancy-app kw-utils/kw-hash-lambda
+         plot/utils
          (except-in plot/pict density lines points)
+
+         "contracts.rkt"
+         "transforms.rkt"
+         "util.rkt"
+
          "bar.rkt"
          "boxplot.rkt"
          "density.rkt"
          "histogram.rkt"
          "fit.rkt"
          "lines.rkt"
-         "points.rkt"
-         "util.rkt")
-(provide graph save-pict
-         aes aes? aes-with/c aes-containing/c
-         no-transform logarithmic-transform
-         (all-from-out "bar.rkt")
-         (all-from-out "boxplot.rkt")
-         (all-from-out "density.rkt")
-         (all-from-out "histogram.rkt")
-         (all-from-out "fit.rkt")
-         (all-from-out "lines.rkt")
-         (all-from-out "points.rkt"))
-
-(define no-transform (invertible-function identity identity))
-(define logarithmic-transform (invertible-function (log _ 10) (expt 10 _)))
-
-(define graphite-renderer? (-> renderer2d?))
+         "points.rkt")
+(provide
+ (contract-out [graph (->* (#:data data-frame? #:mapping aes?)
+                           (#:width (or/c rational? #f)
+                            #:height (or/c rational? #f)
+                            #:title (or/c string? pict? #f)
+                            #:x-label (or/c string? pict? #f)
+                            #:x-transform (or/c transform? #f)
+                            #:x-conv (or/c (-> any/c real?) #f)
+                            #:x-min (or/c rational? #f)
+                            #:x-max (or/c rational? #f)
+                            #:y-label (or/c string? pict? #f)
+                            #:y-transform (or/c transform? #f)
+                            #:y-conv (or/c (-> any/c real?) #f)
+                            #:y-min (or/c rational? #f)
+                            #:y-max (or/c rational? #f)
+                            #:legend-anchor legend-anchor/c)
+                           #:rest (non-empty-listof graphite-renderer?)
+                           pict?)])
+ aes save-pict
+ (all-from-out "bar.rkt")
+ (all-from-out "boxplot.rkt")
+ (all-from-out "contracts.rkt")
+ (all-from-out "density.rkt")
+ (all-from-out "histogram.rkt")
+ (all-from-out "fit.rkt")
+ (all-from-out "lines.rkt")
+ (all-from-out "points.rkt")
+ (all-from-out "transforms.rkt"))
 
 (define aes
   (kw-hash-lambda args #:kws kw-hash
@@ -31,33 +49,6 @@
       (error 'aes "called with non-keyword argument"))
     (for/hash ([(k v) (in-hash kw-hash)])
       (values (keyword->symbol k) v))))
-
-(define aes? (and/c hash? hash-equal? immutable?))
-
-; aes must have these values, with these contracts
-(define aes-with/c
-  (kw-hash-lambda args #:kws kw-hash
-    (when (not (empty? args))
-      (error 'aes-with/c "called with non-keyword argument"))
-    (λ (aes)
-      (and (aes? aes)
-           (for/and ([(k v) (in-hash kw-hash)])
-             (define sym (keyword->symbol k))
-             (and (hash-has-key? aes sym)
-                  ((hash-ref kw-hash sym) v)))))))
-
-; aes optionally has these values, with these contracts
-(define aes-containing/c
-  (kw-hash-lambda args #:kws kw-hash
-    (when (not (empty? args))
-      (error 'aes-containing/c "called with non-keyword argument"))
-    (λ (aes)
-      (and (aes? aes)
-           (for/and ([(k v) (in-hash aes)])
-             (define sym (keyword->symbol k))
-             (if (hash-has-key? kw-hash sym)
-                 ((hash-ref kw-hash sym) v)
-                 #t))))))
 
 ; XXX: should we support multiple facets? n facets?
 (define (facet-plot render-fns)
@@ -91,9 +82,9 @@
         (hc-append plt (graph-internal grp render-fns))))))
 
 (define (get-conversion-function conv transform)
-  (cond [(and conv transform) (compose (invertible-function-f transform) conv)]
+  (cond [(and conv transform) (compose (invertible-function-f (transform-function transform)) conv)]
         [conv conv]
-        [transform (invertible-function-f transform)]
+        [transform (invertible-function-f (transform-function transform))]
         [else identity]))
 
 (define (graph-internal group render-fns)
@@ -115,13 +106,11 @@
                #:title [title (plot-title)]
                #:x-label [x-label (plot-x-label)]
                #:x-transform [x-transform #f]
-               #:x-ticks [x-ticks (plot-x-ticks)]
                #:x-conv [x-conv (gr-x-conv)]
                #:x-min [x-min (gr-x-min)]
                #:x-max [x-max (gr-x-max)]
                #:y-label [y-label (plot-y-label)]
                #:y-transform [y-transform #f]
-               #:y-ticks [y-ticks (plot-y-ticks)]
                #:y-conv [y-conv (gr-y-conv)]
                #:y-min [y-min (gr-y-min)]
                #:y-max [y-max (gr-y-max)]
@@ -134,12 +123,12 @@
                  [plot-y-label y-label]
                  [plot-x-ticks
                   (if x-transform
-                      (ticks-scale x-ticks (invertible-inverse x-transform))
-                      x-ticks)]
+                      (get-adjusted-ticks x-transform)
+                      (plot-x-ticks))]
                  [plot-y-ticks
                   (if y-transform
                       (ticks-scale y-ticks (invertible-inverse y-transform))
-                      y-ticks)]
+                      (plot-y-ticks))]
                  [plot-legend-anchor legend-anchor]
                  ; better defaults
                  [plot-x-far-ticks no-ticks]
@@ -163,8 +152,8 @@
   (match ext
     [(or #".png" #".pdf" #".svg")
      (with-output-to-file path
-       (lambda () (write-bytes (convert pict
-                                        (string->symbol
-                                         (string-append (bytes->string/utf-8 (subbytes ext 1))
-                                                        "-bytes"))))))]
+       (λ () (write-bytes (convert pict
+                                   (string->symbol
+                                    (string-append (bytes->string/utf-8 (subbytes ext 1))
+                                                   "-bytes"))))))]
     [_ (error 'save-pict "unsupported extension")]))

@@ -1,8 +1,28 @@
 #lang racket
-(require fancy-app plot/utils
+(require fancy-app pict plot/utils
          (prefix-in plot: plot/pict)
+         "contracts.rkt"
          "util.rkt")
-(provide points)
+(provide
+ (contract-out [points (->* ()
+                            (#:mapping (aes-containing/c #:x string?
+                                                         #:y string?
+                                                         #:facet (or/c string? #f)
+                                                         #:discrete-color (or/c string? #f)
+                                                         #:x-min (or/c rational? #f)
+                                                         #:x-max (or/c rational? #f)
+                                                         #:y-min (or/c rational? #f)
+                                                         #:y-max (or/c rational? #f)
+                                                         #:sym point-sym/c
+                                                         #:color plot-color/c
+                                                         #:fill-color (or/c plot-color/c 'auto)
+                                                         #:x-jitter (>=/c 0)
+                                                         #:y-jitter (>=/c 0)
+                                                         #:size (>=/c 0)
+                                                         #:line-width (>=/c 0)
+                                                         #:alpha (real-in 0 1)
+                                                         #:label (or/c string? pict? #f)))
+                            graphite-renderer?)]))
 
 (define ((points #:mapping [local-mapping (make-hash)]))
   (define aes (mapping-override (gr-global-mapping) local-mapping))

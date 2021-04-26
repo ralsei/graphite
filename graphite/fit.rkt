@@ -1,7 +1,22 @@
 #lang racket
-(require bestfit plot/pict
+(require bestfit pict plot/pict plot/utils
+         "contracts.rkt"
          "util.rkt")
-(provide fit)
+(provide
+ (contract-out [fit (->* ()
+                         (#:method (or/c 'linear 'log 'exp 'power)
+                          #:mapping (aes-containing/c #:x string?
+                                                      #:y string?
+                                                      #:facet (or/c string? #f)
+                                                      #:y-min (or/c rational? #f)
+                                                      #:y-max (or/c rational? #f)
+                                                      #:samples (and/c exact-integer? (>=/c 2))
+                                                      #:color plot-color/c
+                                                      #:width (>=/c 0)
+                                                      #:style plot-pen-style/c
+                                                      #:alpha (real-in 0 1)
+                                                      #:label (or/c string? pict? #f)))
+                         graphite-renderer?)]))
 
 (define ((fit #:method [method 'linear] #:mapping [local-mapping (make-hash)]))
   (define aes (mapping-override (gr-global-mapping) local-mapping))
