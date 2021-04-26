@@ -1,21 +1,14 @@
 #lang racket
-(require data-frame gregor net/http-easy threading
-         plot/utils
-         graphite)
+(require data-frame gregor plot/utils graphite)
 (provide (all-defined-out))
 
-(define chic-url "https://raw.githubusercontent.com/Z3tt/R-Tutorials/master/ggplot2/chicago-nmmaps.csv")
-(define chic-raw
-  (~> (get #:stream? #t chic-url)
-      response-output
-      df-read/csv))
+(define chic-raw (df-read/csv "data/chicago-nmmaps.csv"))
 
-(module+ main
-  (graph #:data chic-raw
-         #:title "Temperatures in Chicago"
-         #:x-label "Year"
-         #:y-label "Temperature (degrees F)"
-         #:mapping (aes #:x "date" #:y "temp")
-         #:x-ticks (date-ticks)
-         #:x-conv (compose ->posix iso8601->date)
-         (lines)))
+(graph #:data chic-raw
+       #:title "Temperatures in Chicago"
+       #:x-label "Year"
+       #:y-label "Temperature (degrees F)"
+       #:mapping (aes #:x "date" #:y "temp")
+       #:x-transform (only-ticks (date-ticks))
+       #:x-conv (compose ->posix iso8601->date)
+       (points))

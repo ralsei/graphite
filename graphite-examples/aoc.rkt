@@ -108,19 +108,17 @@
 
   result)
 
-(module+ main
-  ; set in .envrc
-  (define raw-data (aoc-fetch-leaderboard (getenv "AOC_YEAR")
-                                          (getenv "AOC_LEADERBOARD")
-                                          (getenv "AOC_SESSION")))
+; set in .envrc
+(define raw-data (aoc-fetch-leaderboard (getenv "AOC_YEAR")
+                                        (getenv "AOC_LEADERBOARD")
+                                        (getenv "AOC_SESSION")))
 
-  (define result (graph #:data (generate-leaderboard-df raw-data)
-                        #:width 2400
-                        #:height 1200
-                        #:x-label "date/time"
-                        #:y-label "points"
-                        #:mapping (aes #:x "time" #:y "points" #:discrete-color "name")
-                        #:x-max 1609005817
-                        #:x-ticks (date-ticks)
-                        (lines #:mapping (aes #:width 2))))
-  (save-pict result "./aoc.png"))
+(graph #:data (generate-leaderboard-df raw-data)
+       #:width 2400
+       #:height 1200
+       #:x-label "date/time"
+       #:y-label "points"
+       #:mapping (aes #:x "time" #:y "points" #:discrete-color "name")
+       #:x-max 1609005817
+       #:x-transform (only-ticks (date-ticks))
+       (lines #:mapping (aes #:width 2)))

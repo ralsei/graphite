@@ -10,8 +10,7 @@
          #:mapping (aes #:x "year" #:y "gdpPercap"
                         #:discrete-color "country" #:facet "continent")
          #:x-label "Year" #:y-label "GDP per capita (USD)"
-         #:y-transform (invertible-function (log _ 10) (expt 10 _))
-         #:y-ticks (log-ticks #:scientific? #f)
+         #:y-transform logarithmic-transform
          #:y-max 5.1
          #:width 400 #:height 400
          #:legend-anchor 'no-legend

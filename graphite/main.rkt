@@ -82,9 +82,9 @@
         (hc-append plt (graph-internal grp render-fns))))))
 
 (define (get-conversion-function conv transform)
-  (cond [(and conv transform) (compose (invertible-function-f (transform-function transform)) conv)]
+  (cond [(and conv transform) (compose (transform-function transform)) conv]
         [conv conv]
-        [transform (invertible-function-f (transform-function transform))]
+        [transform (transform-function transform)]
         [else identity]))
 
 (define (graph-internal group render-fns)

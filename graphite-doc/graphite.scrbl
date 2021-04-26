@@ -9,7 +9,6 @@
 A tutorial on @racketmodname[graphite] is also available;
 @other-doc['(lib "graphite-tutorial/graphite-tutorial.scrbl")].
 
-
 @table-of-contents[]
 
 @section[#:tag "graphing-procedures"]{Graphing Procedures}
@@ -221,15 +220,16 @@ A tutorial on @racketmodname[graphite] is also available;
 
 @section[#:tag "transforms"]{Axis Transforms}
 
-@defstruct*[transform ([function invertible-function] [axis-ticks ticks?])]{
+@defstruct*[transform ([function (-> any/c any/c)]
+                       [inverse (-> any/c any/c)]
+                       [axis-ticks ticks?])]{
   Represents an axis transform, to be used in the @tt{#:x-transform} or @tt{#:y-transform}
   argument of @racket[graph].
 
-  Takes a @racket[invertible-function?] to be used to perform the actual transform, and
-  a @racket[ticks?] to transform the axis. For example, for a logarithmic transform, you could
-  use:
+  Takes a function, its inverse, and a @racket[ticks?] to transform the axis.
+  For example, for a logarithmic transform, you could use:
   @racketblock[
-    (transform (invertible-function (λ (x) (log x 10)) (λ (x) (expt 10 x)))
+    (transform (λ (x) (log x 10)) (λ (x) (expt 10 x))
                (log-ticks))
   ]
 }
