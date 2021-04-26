@@ -105,12 +105,12 @@
                #:height [height (plot-height)]
                #:title [title (plot-title)]
                #:x-label [x-label (plot-x-label)]
-               #:x-transform [x-transform #f]
+               #:x-transform [x-transform no-transform]
                #:x-conv [x-conv (gr-x-conv)]
                #:x-min [x-min (gr-x-min)]
                #:x-max [x-max (gr-x-max)]
                #:y-label [y-label (plot-y-label)]
-               #:y-transform [y-transform #f]
+               #:y-transform [y-transform no-transform]
                #:y-conv [y-conv (gr-y-conv)]
                #:y-min [y-min (gr-y-min)]
                #:y-max [y-max (gr-y-max)]
@@ -121,14 +121,8 @@
                  [plot-height height]
                  [plot-x-label x-label]
                  [plot-y-label y-label]
-                 [plot-x-ticks
-                  (if x-transform
-                      (get-adjusted-ticks x-transform)
-                      (plot-x-ticks))]
-                 [plot-y-ticks
-                  (if y-transform
-                      (ticks-scale y-ticks (invertible-inverse y-transform))
-                      (plot-y-ticks))]
+                 [plot-x-ticks (get-adjusted-ticks x-transform)]
+                 [plot-y-ticks (get-adjusted-ticks y-transform)]
                  [plot-legend-anchor legend-anchor]
                  ; better defaults
                  [plot-x-far-ticks no-ticks]

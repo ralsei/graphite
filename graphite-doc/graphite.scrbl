@@ -14,21 +14,18 @@ A tutorial on @racketmodname[graphite] is also available;
 
 @section[#:tag "graphing-procedures"]{Graphing Procedures}
 
-
 @defproc[(graph [#:data data data-frame?]
                 [#:mapping mapping aes?]
                 [#:width width (or/c rational? #f) (plot-width)]
                 [#:height height (or/c rational? #f) (plot-height)]
                 [#:title title (or/c string? pict? #f) (plot-title)]
                 [#:x-label x-label (or/c string? pict? #f) (plot-x-label)]
-                [#:x-transform x-transform (or/c invertible-function? #f) #f]
-                [#:x-ticks x-ticks ticks? (plot-x-ticks)]
+                [#:x-transform x-transform transform? no-transform]
                 [#:x-conv x-conv (or/c (-> any/c real?) #f) #f]
                 [#:x-min x-min (or/c rational? #f) #f]
                 [#:x-max x-max (or/c rational? #f) #f]
                 [#:y-label y-label (or/c string? pict? #f) (plot-y-label)]
-                [#:y-transform y-transform (or/c invertible-function? #f) #f]
-                [#:y-ticks y-ticks ticks? (plot-y-ticks)]
+                [#:y-transform y-transform transform? no-transform]
                 [#:y-conv y-conv (or/c (-> any/c real?) #f) #f]
                 [#:y-min y-min (or/c rational? #f) #f]
                 [#:y-max y-max (or/c rational? #f) #f]
@@ -36,6 +33,12 @@ A tutorial on @racketmodname[graphite] is also available;
                 [renderer graphite-renderer?] ...)
          pict?]{
   Does the thing.
+}
+
+@defproc[(save-pict [pict pict?]
+                    [path path-string?])
+         exact-nonnegative-integer?]{
+  Saves a @racket[pict?] to disk, at the given path. Supports saving as PNG, PDF, or SVG.
 }
 
 @section[#:tag "aesthetics"]{Aesthetic Mappings}
@@ -214,4 +217,39 @@ A tutorial on @racketmodname[graphite] is also available;
                              (make-hash)])
          graphite-renderer?]{
   Maybe
+}
+
+@section[#:tag "transforms"]{Axis Transforms}
+
+@defstruct*[transform ([function invertible-function] [axis-ticks ticks?])]{
+  Represents an axis transform, to be used in the @tt{#:x-transform} or @tt{#:y-transform}
+  argument of @racket[graph].
+
+  Takes a @racket[invertible-function?] to be used to perform the actual transform, and
+  a @racket[ticks?] to transform the axis. For example, for a logarithmic transform, you could
+  use:
+  @racketblock[
+    (transform (invertible-function (λ (x) (log x 10)) (λ (x) (expt 10 x)))
+               (log-ticks))
+  ]
+}
+
+@defproc[(get-adjusted-ticks [transform transform?])
+         ticks?]{
+  Gets the adjusted @racket[ticks?] from the axis transform, for actual usage as @racket[plot-x-ticks]
+  or @racket[plot-y-ticks]. Useful both internally and for interoperation with @racketmodname[plot].
+}
+
+@defproc[(only-ticks [ticks ticks?])
+         transform?]{
+  Constructs a new transform that only changes the axis ticks according to the input ticks, without
+  actually manipulating the data.
+}
+
+@defthing[no-transform transform?]{
+  The dummy axis transform. Does not manipulate the data.
+}
+
+@defthing[logarithmic-transform transform?]{
+  A logarithmic (base 10) axis transform.
 }
