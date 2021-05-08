@@ -4,10 +4,8 @@
 
 (define midwest (df-read/csv "./data/midwest.csv"))
 
-(module+ main
-  (graph #:data midwest
-         #:mapping (aes #:x "area" #:facet "state")
-         #:x-label "area"
-         #:y-label "count"
-         #:y-max 30
-         (histogram #:bins 20)))
+(graph #:data midwest
+       #:mapping (aes #:x "popdensity" #:y "percblack")
+       #:x-label "population density"
+       #:y-label "% black"
+       (histogram #:bins 30))

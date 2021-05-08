@@ -6,6 +6,14 @@
 
 @defmodule[graphite]
 
+Graphite is a library designed for producing specific kinds of common graphs/plots, while
+making decisions about the data being plotted. Graphite is designed to switch between different
+types of plots relatively seamlessly, without changing anything about the underlying data's
+structure.
+
+Graphite is built on top of, and does not replace, @racket[plot]. For many applications (e.g.
+3D plotting, continuous data, interactive plots, etc), @racket[plot] will be a far better fit.
+
 A tutorial on @racketmodname[graphite] is also available;
 @other-doc['(lib "graphite-tutorial/graphite-tutorial.scrbl")].
 
@@ -31,7 +39,7 @@ A tutorial on @racketmodname[graphite] is also available;
                 [#:legend-anchor legend-anchor legend-anchor/c (plot-legend-anchor)]
                 [renderer graphite-renderer?] ...)
          pict?]{
-  Does the thing.
+  The primary graphing procedure, producing a @racket[pict?].
 }
 
 @defproc[(save-pict [pict pict?]

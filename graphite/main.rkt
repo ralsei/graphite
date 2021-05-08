@@ -64,15 +64,11 @@
     (plot-pict-bounds init-plot))
   (match-define (vector x-left y-bottom) ((plot-pict-plot->dc init-plot) (vector x-min y-min)))
   (match-define (vector x-right y-top) ((plot-pict-plot->dc init-plot) (vector x-max y-max)))
-  (define aspect-ratio
-    (abs (/ (- x-right x-left)
-            (- y-top y-bottom))))
 
   (parameterize ([gr-x-min (if (not (gr-x-min)) x-min (gr-x-min))]
                  [gr-x-max (if (not (gr-x-max)) x-max (gr-x-max))]
                  [gr-y-min (if (not (gr-y-min)) y-min (gr-y-min))]
-                 [gr-y-max (if (not (gr-y-max)) y-max (gr-y-max))]
-                 [plot-aspect-ratio aspect-ratio])
+                 [gr-y-max (if (not (gr-y-max)) y-max (gr-y-max))])
     (for/fold ([plt (graph-internal (vector-ref groups 0) render-fns)])
               ([grp (vector-drop groups 1)])
       ; all other arguments should be handled by the initial parameterize call

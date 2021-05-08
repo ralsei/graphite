@@ -4,7 +4,7 @@
 (provide graphite-renderer?
          aes? aes-with/c aes-containing/c)
 
-(define graphite-renderer? (-> (or/c renderer2d? (listof renderer2d?))))
+(define graphite-renderer? (-> (treeof (or/c renderer2d? nonrenderer?))))
 
 (define aes? (and/c hash? hash-equal? immutable?))
 

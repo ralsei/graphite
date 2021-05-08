@@ -12,7 +12,6 @@
         #:when (equal? facet (gr-group)))
     (hash-update! list-tbl ((gr-x-conv) x) (cons ((gr-y-conv) y) _) '()))
 
-
   (for/hash ([(k v) (in-hash list-tbl)])
     (values k (samples->bnw-data v #:iqr-scale iqr-scale))))
 
@@ -21,8 +20,8 @@
 
   (for/list ([(k v) (in-hash (make-stat-table aes iqr-scale))]
              [c (in-naturals)])
-    (displayln c)
-    (run-renderer #:renderer box-and-whiskers
-                  #:mapping aes
-                  #:x c
-                  v)))
+    (list (run-renderer #:renderer box-and-whiskers
+                        #:mapping aes
+                        #:x c
+                        v)
+          (y-ticks (list (tick c #t k))))))

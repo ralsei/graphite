@@ -1,5 +1,5 @@
 #lang racket
-(require plot/pict plot/utils pict
+(require fancy-app plot/pict plot/utils pict
          "util.rkt" "contracts.rkt")
 (provide
  (contract-out [histogram (->* ()
@@ -20,27 +20,38 @@
                                                             #:label (or/c string? pict? #f)))
                                graphite-renderer?)]))
 
+(define (mean lst)
+  (/ (foldr + 0 lst) (length lst)))
+
 (define ((histogram #:bins [bins 30] #:mapping [local-mapping (make-hash)]))
   (define aes (mapping-override (gr-global-mapping) local-mapping))
-  (define xs
-    (for/vector ([(x facet) (in-data-frame* (gr-data) (hash-ref aes 'x)
-                                            (hash-ref aes 'facet #f))]
-                 #:when x
-                 #:when (equal? facet (gr-group)))
-      ((gr-x-conv) x)))
 
-  (define min-data (for/fold ([m +inf.0]) ([x (in-vector xs)]) (min m x)))
-  (define max-data (for/fold ([m -inf.0]) ([x (in-vector xs)]) (max m x)))
+  (define-values (xs ys)
+    (for/lists (l1 l2)
+               ([(x y facet) (in-data-frame* (gr-data) (hash-ref aes 'x)
+                                             (hash-ref aes 'y #f)
+                                             (hash-ref aes 'facet #f))]
+                #:when x
+                #:when (equal? facet (gr-group)))
+      (values ((gr-x-conv) x) ((gr-y-conv) y))))
+
+  (define min-data (for/fold ([m +inf.0]) ([x (in-list xs)]) (min m x)))
+  (define max-data (for/fold ([m -inf.0]) ([x (in-list xs)]) (max m x)))
 
   ; NOTE: in-range is exclusive, hence the add1. we subtract bin-width as
   ; we're continually adding bin-width in the #:when.
   (define bin-width (/ (- max-data min-data) (add1 bins)))
-  (define count-tbl (make-hash))
+  (define binned (make-hash))
   (for* ([i (in-range min-data (- max-data bin-width) bin-width)]
-         [x (in-vector xs)]
+         [(x y) (in-parallel xs ys)]
          #:when (<= i x (+ i bin-width)))
-    (hash-update! count-tbl i add1 1))
+    (hash-update! binned i (cons y _) null))
+
+  (define to-plot
+    (for/hash ([(i ys) (in-hash binned)])
+      (values i (cond [(hash-ref aes 'y #f) (mean ys)]
+                      [else (length ys)]))))
 
   (run-renderer #:renderer rectangles #:mapping aes
-                (for/vector ([(k v) (in-hash count-tbl)])
+                (for/vector ([(k v) (in-hash to-plot)])
                   (vector (ivl k (+ bin-width k)) (ivl 0 v)))))

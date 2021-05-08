@@ -12,7 +12,7 @@
                        threading)))
      eval))
 
-@title{Graphite: a mildly opinionated data visualization library}
+@title{Graphite: a guided tour}
 
 Graphite is a library for data visualization, designed to create common types of plots with as little
 effort as possible, and allowing for easy manipulation of the plot around the data without having to
