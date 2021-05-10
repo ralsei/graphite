@@ -2,6 +2,15 @@
 @(require scribble/example (for-label racket plot/utils pict data-frame graphite
                                       (except-in plot density lines points)))
 
+@(define ev
+   (let ([eval (make-base-eval)])
+     (eval '(begin
+              (require data-frame
+                       graphite
+                       plot/utils
+                       threading)))
+     eval))
+
 @title{Graphite: A data visualization library}
 
 @defmodule[graphite]
@@ -11,8 +20,8 @@ making decisions about the data being plotted. Graphite is designed to switch be
 types of plots relatively seamlessly, without changing anything about the underlying data's
 structure.
 
-Graphite is built on top of, and does not replace, @racket[plot]. For many applications (e.g.
-3D plotting, continuous data, interactive plots, etc), @racket[plot] will be a far better fit.
+Graphite is built on top of, and does not replace, @racketmodname[plot]. For many applications (e.g.
+3D plotting, continuous data, interactive plots, etc), @racketmodname[plot] will be a far better fit.
 
 A tutorial on @racketmodname[graphite] is also available;
 @other-doc['(lib "graphite-tutorial/graphite-tutorial.scrbl")].
@@ -39,19 +48,48 @@ A tutorial on @racketmodname[graphite] is also available;
                 [#:legend-anchor legend-anchor legend-anchor/c (plot-legend-anchor)]
                 [renderer graphite-renderer?] ...)
          pict?]{
-  The primary graphing procedure, producing a @racket[pict?].
+  The primary graphing procedure, producing a @racket[pict?]. All positional arguments are
+  @racket[graphite-renderer?]s to be plotted, as returned by @racket[points], @racket[histogram], et cetera.
+
+  The required argument @tt{#:data} takes a @racket[data-frame?], as provided by the @racketmodname[data-frame]
+  library. Note that the data being fed in must be @italic{tidy}, meaning that:
+  @itemlist[
+    @item{Every column is a variable.}
+    @item{Every row is an observation.}
+    @item{Every cell is a single value.}
+  ]
+
+  The required argument @tt{#:mapping} takes a @racket[aes?] that dictates aesthetics to be applied to
+  every renderer in the specified tree. Generally, you will want at least an x-axis (@tt{#:x}).
+
+  The @tt{x-conv} and @tt{y-conv} arguments, if given, perform pre-processing of the x-axis and y-axis variable
+  (when said variables are not automatically determined). For example, if you wanted to place dates on the
+  x-axis, this could be a function converting your preferred date format to seconds since the UNIX epoch.
+
+  The @tt{x-transform} and @tt{y-transform} arguments, if given, take a @racket[transform?] to adjust the x and
+  y axes, as well as the ticks. For example, if you wanted to place a logarithmic transform on the x-axis, you
+  could specify @racket[logarithmic-transform]. Transforms are applied @italic{after} the respective @tt{x-conv}
+  or @racket{y-conv} function, if present.
+
+  When given, the @tt{x-min} (etc.) arguments determine the bounds of the plot, but not the bounds of the
+  individual renderers. For this, the data should be trimmed before being passed in.
 }
 
 @defproc[(save-pict [pict pict?]
                     [path path-string?])
          exact-nonnegative-integer?]{
-  Saves a @racket[pict?] to disk, at the given path. Supports saving as PNG, PDF, or SVG.
+  Saves a @racket[pict?] to disk, at the given path. Supports saving as PNG, PDF, or SVG, depending on the file
+  extension.
 }
 
 @section[#:tag "aesthetics"]{Aesthetic Mappings}
 
 @defproc[(aes [#:<key> value any/c] ...) aes?]{
   Creates an aesthetic mapping.
+
+  These objects are generally passed with the @tt{#:mapping} keyword to either the @racket[graph] procedure or
+  to each individual @racket[graphite-renderer?] in the render tree. They dictate various aesthetics, dictating
+  how to display the data (such as colors, variables, et cetera), with behavior being dictated by each renderer.
 }
 
 @defproc[(aes? [v any/c]) boolean?]{
@@ -92,9 +130,23 @@ A tutorial on @racketmodname[graphite] is also available;
                                               #:line-width (>=/c 0)
                                               #:alpha (real-in 0 1)
                                               #:label (or/c string? pict? #f))
-                            (make-hash)])
+                            (aes)])
          graphite-renderer?]{
-  Renders some points.
+  Returns a renderer that draws a set of points, for example, to draw a (randomized) scatter plot:
+  @examples[#:eval ev #:label #f
+    (define (random-data)
+      (build-vector 50 (λ (_) (random -50 50))))
+
+    (define df (make-data-frame))
+    (df-add-series df (make-series "x-var" #:data (random-data)))
+    (df-add-series df (make-series "y-var" #:data (random-data)))
+
+    (graph #:data df
+           #:mapping (aes #:x "x-var" #:y "y-var")
+           (points))
+  ]
+
+  The optional @tt{#:discrete-color} aesthetic dictates a variable to split on by color.
 }
 
 @defproc[(fit [#:method method (or/c 'linear 'exp 'power 'log) 'linear]
@@ -110,7 +162,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                            #:style plot-pen-style/c
                                            #:alpha (real-in 0 1)
                                            #:label (or/c string? pict? #f))
-                         (make-hash)])
+                         (aes)])
          graphite-renderer?]{
   Makes a line of best fit.
 }
@@ -129,7 +181,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                              #:style plot-pen-style/c
                                              #:alpha (real-in 0 1)
                                              #:label (or/c string? pict? #f))
-                           (make-hash)])
+                           (aes)])
          graphite-renderer?]{
   You know.
 }
@@ -156,7 +208,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                            #:label (or/c string? pict? #f)
                                            #:add-ticks? boolean?
                                            #:far-ticks? boolean?)
-                         (make-hash)])
+                         (aes)])
          graphite-renderer?]{
   Yea
 }
@@ -182,7 +234,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                                    #:labels (labels/c nat/c)
                                                    #:add-ticks? boolean?
                                                    #:far-ticks? boolean?)
-                                 (make-hash)])
+                                 (aes)])
          graphite-renderer?]{
   Nah
 }
@@ -203,7 +255,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                                  #:line-style plot-pen-style/c
                                                  #:alpha (real-in 0 1)
                                                  #:label (or/c string? pict? #f))
-                               (make-hash)])
+                               (aes)])
          graphite-renderer?]{
   Meh
 }
@@ -221,7 +273,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                                #:style plot-pen-style/c
                                                #:alpha (real-in 0 1)
                                                #:label (or/c string? pict? #f))
-                             (make-hash)])
+                             (aes)])
          graphite-renderer?]{
   Maybe
 }

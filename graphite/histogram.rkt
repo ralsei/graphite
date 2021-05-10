@@ -38,11 +38,9 @@
   (define min-data (for/fold ([m +inf.0]) ([x (in-list xs)]) (min m x)))
   (define max-data (for/fold ([m -inf.0]) ([x (in-list xs)]) (max m x)))
 
-  ; NOTE: in-range is exclusive, hence the add1. we subtract bin-width as
-  ; we're continually adding bin-width in the #:when.
-  (define bin-width (/ (- max-data min-data) (add1 bins)))
+  (define bin-width (/ (- max-data min-data) bins))
   (define binned (make-hash))
-  (for* ([i (in-range min-data (- max-data bin-width) bin-width)]
+  (for* ([i (in-range min-data max-data bin-width)]
          [(x y) (in-parallel xs ys)]
          #:when (<= i x (+ i bin-width)))
     (hash-update! binned i (cons y _) null))
@@ -52,6 +50,7 @@
       (values i (cond [(hash-ref aes 'y #f) (mean ys)]
                       [else (length ys)]))))
 
+  (displayln (hash-count to-plot))
   (run-renderer #:renderer rectangles #:mapping aes
                 (for/vector ([(k v) (in-hash to-plot)])
                   (vector (ivl k (+ bin-width k)) (ivl 0 v)))))

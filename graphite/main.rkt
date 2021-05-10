@@ -78,7 +78,7 @@
         (hc-append plt (graph-internal grp render-fns))))))
 
 (define (get-conversion-function conv transform)
-  (cond [(and conv transform) (compose (transform-function transform)) conv]
+  (cond [(and conv transform) (compose (transform-function transform) conv)]
         [conv conv]
         [transform (transform-function transform)]
         [else identity]))
@@ -100,12 +100,12 @@
                #:width [width (plot-width)]
                #:height [height (plot-height)]
                #:title [title (plot-title)]
-               #:x-label [x-label (plot-x-label)]
+               #:x-label [x-label #f]
                #:x-transform [x-transform no-transform]
                #:x-conv [x-conv (gr-x-conv)]
                #:x-min [x-min (gr-x-min)]
                #:x-max [x-max (gr-x-max)]
-               #:y-label [y-label (plot-y-label)]
+               #:y-label [y-label #f]
                #:y-transform [y-transform no-transform]
                #:y-conv [y-conv (gr-y-conv)]
                #:y-min [y-min (gr-y-min)]
@@ -115,8 +115,8 @@
   (parameterize ([plot-title title]
                  [plot-width width]
                  [plot-height height]
-                 [plot-x-label x-label]
-                 [plot-y-label y-label]
+                 [plot-x-label (if x-label x-label (hash-ref mapping 'x #f))]
+                 [plot-y-label (if y-label y-label (hash-ref mapping 'y #f))]
                  [plot-x-ticks (get-adjusted-ticks x-transform)]
                  [plot-y-ticks (get-adjusted-ticks y-transform)]
                  [plot-legend-anchor legend-anchor]
