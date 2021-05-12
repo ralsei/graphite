@@ -149,7 +149,8 @@ A tutorial on @racketmodname[graphite] is also available;
   The optional @tt{#:discrete-color} aesthetic dictates a variable to split on by color.
 }
 
-@defproc[(fit [#:method method (or/c 'linear 'exp 'power 'log) 'linear]
+@defproc[(fit [#:degree degree positive-integer? 1]
+              [#:show-equation? show-equation? boolean? #f]
               [#:mapping local-mapping
                          (aes-containing/c #:x string?
                                            #:y string?

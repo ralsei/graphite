@@ -1,10 +1,12 @@
 #lang racket
-(require bestfit pict plot/pict plot/utils
+(require pict plot/pict plot/utils
+         simple-polynomial/base simple-polynomial/fit
          "contracts.rkt"
          "util.rkt")
 (provide
  (contract-out [fit (->* ()
-                         (#:method (or/c 'linear 'log 'exp 'power)
+                         (#:degree positive-integer?
+                          #:show-equation? boolean?
                           #:mapping (aes-containing/c #:x string?
                                                       #:y string?
                                                       #:facet (or/c string? #f)
@@ -18,21 +20,20 @@
                                                       #:label (or/c string? pict? #f)))
                          graphite-renderer?)]))
 
-(define ((fit #:method [method 'linear] #:mapping [local-mapping (make-hash)]))
+(define ((fit #:degree [degree 1] #:show-equation? [show-equation? #f]
+              #:mapping [local-mapping (hash)]))
   (define aes (mapping-override (gr-global-mapping) local-mapping))
-  (define facet-on (hash-ref aes 'facet #f))
-  (define fit-function
-    (match method
-       ['linear linear-fit]
-       ['exp exp-fit]
-       ['power power-fit]
-       ['log log-fit]))
   (define fit-line
-    (for/lists (xs ys #:result (fit-function xs ys))
-               ([(x y facet) (in-data-frame* (gr-data) (hash-ref aes 'x) (hash-ref aes 'y) facet-on)]
-                #:when (and x y)
-                #:when (equal? facet (gr-group)))
-      (values (exact->inexact ((gr-x-conv) x)) (exact->inexact ((gr-y-conv) y)))))
+    (for/fold ([pts '()]
+               #:result (points->best-fit-polynomial pts degree))
+              ([(x y facet) (in-data-frame* (gr-data) (hash-ref aes 'x)
+                                            (hash-ref aes 'y)
+                                            (hash-ref aes 'facet #f))]
+               #:when (and x y)
+               #:when (equal? facet (gr-group)))
+      (cons (list ((gr-x-conv) x) ((gr-y-conv) y)) pts)))
   (run-renderer #:renderer function
-                #:mapping aes
+                #:mapping (if show-equation?
+                              (hash-set aes 'label (poly->string fit-line))
+                              aes)
                 fit-line))

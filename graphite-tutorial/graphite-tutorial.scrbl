@@ -129,12 +129,22 @@ fit to our plot. Then, we can use the @racket[fit] renderer:
          #:mapping (aes #:x "gdpPercap" #:y "lifeExp")
          #:x-transform logarithmic-transform
          (points #:mapping (aes #:alpha 0.4))
-         (fit #:method 'linear #:mapping (aes #:width 3)))
+         (fit #:mapping (aes #:width 3)))
 ]
 
-In this case, we have a special argument to @racket[fit], @tt{#:method}, that specifies how we want the fit
-line to be constructed. If we wanted, for example, an (ill-advised) logarithmic fit, we could use the @tt{'log}
-method.
+@racket[fit] defaults to a linear fit (of degree 1), but you can instead do a fit using a higher-degree
+polynomial with the optional @tt{#:degree} argument:
+@examples[#:eval ev #:label #f
+  (graph #:data gapminder
+         #:title "GDP per capita vs life expectancy"
+         #:x-label "GDP per capita (USD)"
+         #:y-label "Life expectancy (years)"
+         #:mapping (aes #:x "gdpPercap" #:y "lifeExp")
+         #:x-transform logarithmic-transform
+         (points #:mapping (aes #:alpha 0.4))
+         (fit #:degree 3 #:mapping (aes #:width 3)))
+]
+but this is ill-advised for the relationship we see here.
 
 Finally, let's try and extrapolate different relationships for each continent. We can stratify the points alone
 by using the aesthetic @tt{#:discrete-color} to @racket[points], which lets us pick a categorical variable
@@ -147,7 +157,7 @@ to change the color on, in this case @tt{"continent"}:
          #:mapping (aes #:x "gdpPercap" #:y "lifeExp")
          #:x-transform logarithmic-transform
          (points #:mapping (aes #:alpha 0.4 #:discrete-color "continent"))
-         (fit #:method 'linear #:mapping (aes #:width 3)))
+         (fit #:mapping (aes #:width 3)))
 ]
 
 Now we're seeing some notable differences from where we've started! We made a scatter plot, transformed its

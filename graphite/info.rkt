@@ -6,8 +6,8 @@
                "fancy-app"
                "kw-utils"
                "math-lib"
-               "pict-lib"
-               "plot-bestfit"
+               "pict-lib"               
                "plot-gui-lib"
                "plot-lib"
-               "threading-lib"))
+               "threading-lib"
+	       "simple-polynomial"))

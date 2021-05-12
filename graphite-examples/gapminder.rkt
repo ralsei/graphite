@@ -10,4 +10,4 @@
        #:mapping (aes #:x "gdpPercap" #:y "lifeExp" #:discrete-color "continent")
        #:x-transform logarithmic-transform
        (points #:mapping (aes #:alpha 0.4))
-       (fit #:method 'linear #:mapping (aes #:width 3)))
+       (fit #:mapping (aes #:width 3)))

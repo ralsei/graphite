@@ -14,4 +14,4 @@
        #:width 400 #:height 400
        #:legend-anchor 'no-legend
        (lines #:mapping (aes #:color "gray"))
-       (fit #:method 'linear #:mapping (aes #:width 2)))
+       (fit #:mapping (aes #:width 2)))
