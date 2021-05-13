@@ -123,7 +123,6 @@
                  ; better defaults
                  [plot-x-far-ticks no-ticks]
                  [plot-y-far-ticks no-ticks]
-                 [plot-font-face "Arial"]
                  [point-sym 'bullet]
                  [plot-pen-color-map (hash-ref mapping 'colormap 'set1)]
                  ; our settings

@@ -9,5 +9,6 @@
 
 (define build-deps '())
 
-(define test-include-paths 'all)
+(define test-omit-paths '("./info.rkt"
+			  "./util.rkt"))
 (define test-responsibles '((all hazel@knightsofthelambdacalcul.us)))

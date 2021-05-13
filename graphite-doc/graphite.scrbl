@@ -1,5 +1,5 @@
 #lang scribble/manual
-@(require scribble/example (for-label racket plot/utils pict data-frame graphite
+@(require scribble/example (for-label racket plot/utils pict data-frame graphite simple-polynomial
                                       (except-in plot density lines points)))
 
 @(define ev
@@ -138,8 +138,8 @@ A tutorial on @racketmodname[graphite] is also available;
       (build-vector 50 (λ (_) (random -50 50))))
 
     (define df (make-data-frame))
-    (df-add-series df (make-series "x-var" #:data (random-data)))
-    (df-add-series df (make-series "y-var" #:data (random-data)))
+    (df-add-series! df (make-series "x-var" #:data (random-data)))
+    (df-add-series! df (make-series "y-var" #:data (random-data)))
 
     (graph #:data df
            #:mapping (aes #:x "x-var" #:y "y-var")
@@ -165,7 +165,27 @@ A tutorial on @racketmodname[graphite] is also available;
                                            #:label (or/c string? pict? #f))
                          (aes)])
          graphite-renderer?]{
-  Makes a line of best fit.
+  Makes a line of best fit. Internally, this uses the @racket[simple-polynomial] library's best
+  fit method. For example:
+  @examples[#:eval ev #:label #f
+    (define noise '(1/9 -1/7 0 1/3 -1 1/9))
+    (define df (make-data-frame))
+    (df-add-series! df (make-series "x-var" #:data (build-vector 6 add1)))
+    (df-add-series! df
+      (make-series "y-var"
+                   #:data (build-vector 6 (λ (x) (+ x (list-ref noise x))))))
+
+    (graph #:data df
+           #:mapping (aes #:x "x-var" #:y "y-var")
+           (points)
+           (fit #:show-equation? #t))
+  ]
+
+  The optional @tt{#:degree} argument specifies the degree of the fit line (2 for a second-degree
+  polynomial, et cetera).
+
+  The optional @tt{#:show-equation?} argument specifies whether to show the full fit equation in the
+  legend.
 }
 
 @defproc[(lines [#:mapping local-mapping
