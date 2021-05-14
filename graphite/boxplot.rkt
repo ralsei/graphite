@@ -16,7 +16,7 @@
     (values k (samples->bnw-data v #:iqr-scale iqr-scale))))
 
 (define-renderer (boxplot #:iqr-scale [iqr-scale 1.5] #:mapping [local-mapping (make-hash)])
-                 (#:ticks no-ticks)
+                 (#:y-ticks no-ticks)
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 
   (for/list ([(k v) (in-hash (make-stat-table aes iqr-scale))]

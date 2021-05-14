@@ -1,6 +1,6 @@
 #lang racket
 (require file/convertible data-frame pict fancy-app kw-utils/kw-hash-lambda
-         plot/utils
+         plot/utils racket/hash
          (except-in plot/pict density lines points)
 
          "contracts.rkt"
@@ -94,7 +94,7 @@
                     #:title (or group (plot-title))
                     (parameterize ([gr-group group])
                       (for/list ([render-fn (in-list render-fns)])
-                        ((hash-ref render-fn 'function)))))]))
+                        (render-fn))))]))
 
 (define (graph #:data data #:mapping mapping
                #:width [width (plot-width)]
@@ -111,14 +111,29 @@
                #:y-min [y-min (gr-y-min)]
                #:y-max [y-max (gr-y-max)]
                #:legend-anchor [legend-anchor (plot-legend-anchor)]
-               . render-fns)
+               . renderers)
+  ; TODO: better metadata conflict detection
+  (define metadata (apply (curry hash-union #:combine (λ (x y) x))
+                          (map (hash-remove _ 'function) renderers)))
+
   (parameterize ([plot-title title]
                  [plot-width width]
                  [plot-height height]
                  [plot-x-label (if x-label x-label (hash-ref mapping 'x #f))]
-                 [plot-y-label (if y-label y-label (hash-ref mapping 'y #f))]
-                 [plot-x-ticks (get-adjusted-ticks x-transform)]
-                 [plot-y-ticks (get-adjusted-ticks y-transform)]
+                 [plot-y-label
+                  (cond [(hash-ref metadata 'y-label #f) => identity]
+                        [y-label y-label]
+                        [else (hash-ref mapping 'y #f)])]
+                 [plot-x-ticks
+                  (let ([maybe-x-ticks (hash-ref metadata 'x-ticks #f)])
+                    (if maybe-x-ticks
+                        maybe-x-ticks
+                        (get-adjusted-ticks x-transform)))]
+                 [plot-y-ticks
+                  (let ([maybe-y-ticks (hash-ref metadata 'y-ticks #f)])
+                    (if maybe-y-ticks
+                        maybe-y-ticks
+                       (get-adjusted-ticks y-transform)))]
                  [plot-legend-anchor legend-anchor]
                  ; better defaults
                  [plot-x-far-ticks no-ticks]
@@ -134,7 +149,7 @@
                  [gr-x-max x-max]
                  [gr-y-min y-min]
                  [gr-y-max y-max])
-    (graph-internal #f render-fns)))
+    (graph-internal #f (map (hash-ref _ 'function) renderers))))
 
 (define (save-pict pict path)
   (define ext (path-get-extension path))

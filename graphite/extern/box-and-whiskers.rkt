@@ -119,7 +119,6 @@
   (define half-width (* 1/2 (- 1 gap)))
   (define quater-width (* 1/4 (- 1 gap)))
   (define maybe-invert (if invert? (lambda (x y) (vector y x)) vector))
-  (displayln x)
   (list
    (rectangles
     (list (maybe-invert (ivl (- x half-width) (+ x half-width)) (ivl q1 q3)))

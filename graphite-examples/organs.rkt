@@ -5,5 +5,4 @@
 
 (graph #:data organdata
        #:mapping (aes #:x "country" #:y "donors")
-       #:y-transform (only-ticks no-ticks)
        (boxplot #:mapping (aes #:invert? #t)))
