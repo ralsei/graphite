@@ -18,7 +18,7 @@
                                                           #:label (or/c string? pict? #f)))
                              graphite-renderer?)]))
 
-(define ((density #:mapping [local-mapping (make-hash)]))
+(define-renderer (density #:mapping [local-mapping (make-hash)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 
   (define tbl (make-hash))

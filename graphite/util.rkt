@@ -4,6 +4,27 @@
          (for-syntax syntax/parse))
 (provide (all-defined-out))
 
+(define (keyword->symbol s)
+  (string->symbol (keyword->string s)))
+(define (symbol->keyword s)
+  (string->keyword (symbol->string s)))
+
+(define-syntax (define-renderer stx)
+  (syntax-parse stx
+    [(_ (FN-NAME:id . ARGS)
+        (KEY:keyword VALUE ...)
+        FN-BODY:expr ...)
+     #'(define (FN-NAME (~@ . ARGS))
+         (hash 'function (λ ()
+                           FN-BODY ...)
+               (~@ (keyword->symbol (quote KEY)) VALUE ...)))]
+    [(_ (FN-NAME:id . ARGS)
+        ()
+        FN-BODY:expr ...)
+     #'(define (FN-NAME (~@ . ARGS))
+         (hash 'function (λ () FN-BODY ...)))]
+    [_ (raise-syntax-error 'define-renderer "bad syntax")]))
+
 (define-syntax (define-parameter stx)
   (syntax-parse stx
     [(_ NAME VALUE) #'(define NAME (make-parameter VALUE))]
@@ -48,11 +69,6 @@
 
   (cond [(empty? generators) (in-parallel '())]
         [else (apply in-parallel generators)]))
-
-(define (keyword->symbol s)
-  (string->symbol (keyword->string s)))
-(define (symbol->keyword s)
-  (string->keyword (symbol->string s)))
 
 (define (hash-remove* hsh keys)
   (for/fold ([ret hsh])

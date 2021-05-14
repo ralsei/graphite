@@ -86,12 +86,12 @@
    (for/vector ([(var cnt) (in-hash tbl)])
      (vector var cnt))))
 
-(define ((bar #:mode [mode 'count] #:mapping [local-mapping (make-hash)]))
+(define-renderer (bar #:mode [mode 'count] #:mapping [local-mapping (make-hash)]) ()
   (parameterize ([gr-global-mapping (mapping-override (gr-global-mapping) local-mapping)])
     (cond [(hash-ref (gr-global-mapping) 'group #f) (bar-dodged #:mode mode)]
           [else (bar-simple #:mode mode)])))
 
-(define ((stacked-bar #:mode [mode 'count] #:mapping [local-mapping (make-hash)]))
+(define-renderer (stacked-bar #:mode [mode 'count] #:mapping [local-mapping (make-hash)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 
   ; first generate every table based on every group...

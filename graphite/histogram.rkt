@@ -23,7 +23,7 @@
 (define (mean lst)
   (/ (foldr + 0 lst) (length lst)))
 
-(define ((histogram #:bins [bins 30] #:mapping [local-mapping (make-hash)]))
+(define-renderer (histogram #:bins [bins 30] #:mapping [local-mapping (make-hash)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 
   (define-values (xs ys)

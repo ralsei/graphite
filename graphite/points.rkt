@@ -24,7 +24,7 @@
                                                          #:label (or/c string? pict? #f)))
                             graphite-renderer?)]))
 
-(define ((points #:mapping [local-mapping (make-hash)]))
+(define-renderer (points #:mapping [local-mapping (make-hash)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
   (define discrete-color (hash-ref aes 'discrete-color #f))
   (define facet-on (hash-ref aes 'facet #f))

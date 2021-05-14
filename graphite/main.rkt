@@ -94,7 +94,7 @@
                     #:title (or group (plot-title))
                     (parameterize ([gr-group group])
                       (for/list ([render-fn (in-list render-fns)])
-                        (render-fn))))]))
+                        ((hash-ref render-fn 'function)))))]))
 
 (define (graph #:data data #:mapping mapping
                #:width [width (plot-width)]

@@ -20,8 +20,8 @@
                                                       #:label (or/c string? pict? #f)))
                          graphite-renderer?)]))
 
-(define ((fit #:degree [degree 1] #:show-equation? [show-equation? #f]
-              #:mapping [local-mapping (hash)]))
+(define-renderer (fit #:degree [degree 1] #:show-equation? [show-equation? #f]
+                      #:mapping [local-mapping (hash)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
   (define fit-line
     (for/fold ([pts '()]

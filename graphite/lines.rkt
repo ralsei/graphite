@@ -19,7 +19,7 @@
                                                         #:label (or/c string? pict? #f)))
                            graphite-renderer?)]))
 
-(define ((lines #:mapping [local-mapping (make-hash)]))
+(define-renderer (lines #:mapping [local-mapping (make-hash)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 
   (define tbl (make-hash))
