@@ -11,19 +11,13 @@
 
 (define-syntax (define-renderer stx)
   (syntax-parse stx
-    [(_ (FN-NAME:id . ARGS)
-        (KEY:keyword VALUE ...)
+    [(_ (FN-NAME:id ARGS:id ...)
+        ({~seq KEY:keyword VALUE:expr} ...)
         FN-BODY:expr ...)
-     #'(define (FN-NAME (~@ . ARGS))
+     #'(define (FN-NAME (ARGS ...))
          (hash 'function (λ ()
                            FN-BODY ...)
-               (~@ (keyword->symbol (quote KEY)) VALUE ...)))]
-    [(_ (FN-NAME:id . ARGS)
-        ()
-        FN-BODY:expr ...)
-     #'(define (FN-NAME (~@ . ARGS))
-         (hash 'function (λ () FN-BODY ...)))]
-    [_ (raise-syntax-error 'define-renderer "bad syntax")]))
+               {~@ (keyword->symbol 'KEY) VALUE} ...))]))
 
 (define-syntax (define-parameter stx)
   (syntax-parse stx
