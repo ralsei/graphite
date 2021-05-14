@@ -4,9 +4,13 @@
 (provide graphite-renderer?
          aes? aes-with/c aes-containing/c)
 
-;; (define graphite-renderer?
-;;   (-> (treeof (or/c renderer2d? nonrenderer?))))
-(define graphite-renderer? any/c) ; FIXME: specify that this is a hash table
+(define graphite-renderer?
+  (and/c hash?
+         (λ (v) (hash-has-key? v 'function))
+         (hash/dc [k symbol?]
+                  [v (k) (if (eq? k 'function)
+                             (-> (treeof (or/c renderer2d? nonrenderer?)))
+                             any/c)])))
 
 (define aes? (and/c hash? hash-equal? immutable?))
 
