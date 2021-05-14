@@ -114,7 +114,7 @@
                . renderers)
   ; TODO: better metadata conflict detection
   (define metadata (apply (curry hash-union #:combine (λ (x y) x))
-                          (map (hash-remove _ 'function) renderers)))
+                          (map renderer-metadata renderers)))
 
   (parameterize ([plot-title title]
                  [plot-width width]
@@ -149,7 +149,7 @@
                  [gr-x-max x-max]
                  [gr-y-min y-min]
                  [gr-y-max y-max])
-    (graph-internal #f (map (hash-ref _ 'function) renderers))))
+    (graph-internal #f (map renderer-function renderers))))
 
 (define (save-pict pict path)
   (define ext (path-get-extension path))

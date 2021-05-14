@@ -29,7 +29,7 @@
   (class record-dc%
     (init)
     (super-new)
-    (define/override (get-text-extent text (font #f) (combine? #f) (offset 0))
+    (define/override (get-text-extent text [font #f] [combine? #f] [offset 0])
       (values (* 10 (string-length text)) 10 0 0))
     (define/override (get-char-width) 10)
     (define/override (get-char-height) 10)))
@@ -84,7 +84,7 @@
       null))
 
 ; checks the draw steps required by the given pict to be the same as that in the file
-(define (check-draw-steps graph-pict saved-steps-file)
+(define-check (check-draw-steps graph-pict saved-steps-file)
   (define saved (read-draw-steps saved-steps-file))
   (define current (generate-pict-steps graph-pict))
   (unless (same-draw-steps? saved current)
@@ -96,4 +96,4 @@
     ;; Also generate an image of the current plot
     (define image-file (path-replace-extension data-file ".png"))
     (save-pict graph-pict image-file)
-    (fail (format "draw steps not the same, new set written to ~a" data-file))))
+    (fail-check (format "draw steps not the same, new set written to ~a" data-file))))

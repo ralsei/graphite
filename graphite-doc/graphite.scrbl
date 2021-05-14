@@ -110,6 +110,8 @@ A tutorial on @racketmodname[graphite] is also available;
 
 @defthing[graphite-renderer/c contract?]{
   The result contract of any of the renderers, designed to be fed to @racket[graph].
+
+  This is @italic{not} a boolean predicate, and cannot be used as such.
 }
 
 @defproc[(points [#:mapping local-mapping

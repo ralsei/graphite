@@ -19,6 +19,11 @@
                            FN-BODY ...)
                {~@ (keyword->symbol 'KEY) VALUE} ...))]))
 
+(define (renderer-function r)
+  (hash-ref r 'function))
+(define (renderer-metadata r)
+  (hash-remove r 'function))
+
 (define-syntax (define-parameter stx)
   (syntax-parse stx
     [(_ NAME VALUE) #'(define NAME (make-parameter VALUE))]
@@ -79,6 +84,6 @@
      (mapping-override (hash-remove* kw-hash '(#:renderer #:mapping))
                        (for/hash ([(k v) (in-hash mapping)]
                                   #:when (and (member (symbol->keyword k) kws)
-                                              (not (member (symbol->keyword k) '(#:x #:y)))))
+                                              (not (and (member k '(x y)) #t))))
                          (values (symbol->keyword k) v)))
      args)))
