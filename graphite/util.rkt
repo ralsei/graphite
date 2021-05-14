@@ -11,10 +11,10 @@
 
 (define-syntax (define-renderer stx)
   (syntax-parse stx
-    [(_ (FN-NAME:id ARGS:id ...)
+    [(_ (FN-NAME:id . ARGS:expr)
         ({~seq KEY:keyword VALUE:expr} ...)
         FN-BODY:expr ...)
-     #'(define (FN-NAME (ARGS ...))
+     #'(define (FN-NAME {~@ . ARGS})
          (hash 'function (λ ()
                            FN-BODY ...)
                {~@ (keyword->symbol 'KEY) VALUE} ...))]))
