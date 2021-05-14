@@ -25,7 +25,7 @@
                                          #:label (or/c string? pict? #f)
                                          #:add-ticks? boolean?
                                          #:far-ticks? boolean?))
-            graphite-renderer?)]
+            graphite-renderer/c)]
   [stacked-bar (->* ()
                     (#:mode (or/c 'count 'prop)
                      #:mapping (aes-containing/c #:x string?
@@ -47,7 +47,7 @@
                                                  #:labels (labels/c nat/c)
                                                  #:add-ticks? boolean?
                                                  #:far-ticks? boolean?))
-                    graphite-renderer?)]))
+                    graphite-renderer/c)]))
 
 (define (make-count-table mode group)
   (define count-tbl (make-hash))

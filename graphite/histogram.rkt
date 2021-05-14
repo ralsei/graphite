@@ -18,7 +18,7 @@
                                                             #:line-style plot-pen-style/c
                                                             #:alpha (real-in 0 1)
                                                             #:label (or/c string? pict? #f)))
-                               graphite-renderer?)]))
+                               graphite-renderer/c)]))
 
 (define (mean lst)
   (/ (foldr + 0 lst) (length lst)))

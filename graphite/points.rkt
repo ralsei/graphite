@@ -22,7 +22,7 @@
                                                          #:line-width (>=/c 0)
                                                          #:alpha (real-in 0 1)
                                                          #:label (or/c string? pict? #f)))
-                            graphite-renderer?)]))
+                            graphite-renderer/c)]))
 
 (define-renderer (points #:mapping [local-mapping (make-hash)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))

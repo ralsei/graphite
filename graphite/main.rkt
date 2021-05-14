@@ -30,7 +30,7 @@
                             #:y-min (or/c rational? #f)
                             #:y-max (or/c rational? #f)
                             #:legend-anchor legend-anchor/c)
-                           #:rest (non-empty-listof graphite-renderer?)
+                           #:rest (non-empty-listof graphite-renderer/c)
                            pict?)])
  aes save-pict
  (all-from-out "bar.rkt")

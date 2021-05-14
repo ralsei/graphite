@@ -16,7 +16,7 @@
                                                           #:style plot-pen-style/c
                                                           #:alpha (real-in 0 1)
                                                           #:label (or/c string? pict? #f)))
-                             graphite-renderer?)]))
+                             graphite-renderer/c)]))
 
 (define-renderer (density #:mapping [local-mapping (make-hash)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))

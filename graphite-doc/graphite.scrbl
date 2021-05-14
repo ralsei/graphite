@@ -46,10 +46,10 @@ A tutorial on @racketmodname[graphite] is also available;
                 [#:y-min y-min (or/c rational? #f) #f]
                 [#:y-max y-max (or/c rational? #f) #f]
                 [#:legend-anchor legend-anchor legend-anchor/c (plot-legend-anchor)]
-                [renderer graphite-renderer?] ...)
+                [renderer graphite-renderer/c] ...)
          pict?]{
   The primary graphing procedure, producing a @racket[pict?]. All positional arguments are
-  @racket[graphite-renderer?]s to be plotted, as returned by @racket[points], @racket[histogram], et cetera.
+  @racket[graphite-renderer/c]s to be plotted, as returned by @racket[points], @racket[histogram], et cetera.
 
   The required argument @tt{#:data} takes a @racket[data-frame?], as provided by the @racketmodname[data-frame]
   library. Note that the data being fed in must be @italic{tidy}, meaning that:
@@ -88,7 +88,7 @@ A tutorial on @racketmodname[graphite] is also available;
   Creates an aesthetic mapping.
 
   These objects are generally passed with the @tt{#:mapping} keyword to either the @racket[graph] procedure or
-  to each individual @racket[graphite-renderer?] in the render tree. They dictate various aesthetics, dictating
+  to each individual @racket[graphite-renderer/c] in the render tree. They dictate various aesthetics, dictating
   how to display the data (such as colors, variables, et cetera), with behavior being dictated by each renderer.
 }
 
@@ -108,8 +108,8 @@ A tutorial on @racketmodname[graphite] is also available;
 
 @section[#:tag "renderers"]{Renderers}
 
-@defproc[(graphite-renderer? [v any/c]) boolean?]{
-  Determines if the input is a renderer, designed to be fed to @racket[graph].
+@defthing[graphite-renderer/c contract?]{
+  The result contract of any of the renderers, designed to be fed to @racket[graph].
 }
 
 @defproc[(points [#:mapping local-mapping
@@ -131,7 +131,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                               #:alpha (real-in 0 1)
                                               #:label (or/c string? pict? #f))
                             (aes)])
-         graphite-renderer?]{
+         graphite-renderer/c]{
   Returns a renderer that draws a set of points, for example, to draw a (randomized) scatter plot:
   @examples[#:eval ev #:label #f
     (define (random-data)
@@ -164,7 +164,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                            #:alpha (real-in 0 1)
                                            #:label (or/c string? pict? #f))
                          (aes)])
-         graphite-renderer?]{
+         graphite-renderer/c]{
   Makes a line of best fit. Internally, this uses the @racket[simple-polynomial] library's best
   fit method. For example:
   @examples[#:eval ev #:label #f
@@ -203,7 +203,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                              #:alpha (real-in 0 1)
                                              #:label (or/c string? pict? #f))
                            (aes)])
-         graphite-renderer?]{
+         graphite-renderer/c]{
   You know.
 }
 
@@ -230,7 +230,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                            #:add-ticks? boolean?
                                            #:far-ticks? boolean?)
                          (aes)])
-         graphite-renderer?]{
+         graphite-renderer/c]{
   Yea
 }
 
@@ -256,7 +256,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                                    #:add-ticks? boolean?
                                                    #:far-ticks? boolean?)
                                  (aes)])
-         graphite-renderer?]{
+         graphite-renderer/c]{
   Nah
 }
 
@@ -277,7 +277,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                                  #:alpha (real-in 0 1)
                                                  #:label (or/c string? pict? #f))
                                (aes)])
-         graphite-renderer?]{
+         graphite-renderer/c]{
   Meh
 }
 
@@ -295,7 +295,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                                #:alpha (real-in 0 1)
                                                #:label (or/c string? pict? #f))
                              (aes)])
-         graphite-renderer?]{
+         graphite-renderer/c]{
   Maybe
 }
 

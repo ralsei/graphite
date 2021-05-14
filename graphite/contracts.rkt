@@ -1,10 +1,10 @@
 #lang racket
 (require kw-utils/kw-hash-lambda plot/utils
          "util.rkt")
-(provide graphite-renderer?
+(provide graphite-renderer/c
          aes? aes-with/c aes-containing/c)
 
-(define graphite-renderer?
+(define graphite-renderer/c
   (and/c hash?
          (λ (v) (hash-has-key? v 'function))
          (hash/dc [k symbol?]

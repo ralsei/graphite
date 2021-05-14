@@ -18,7 +18,7 @@
                                                       #:style plot-pen-style/c
                                                       #:alpha (real-in 0 1)
                                                       #:label (or/c string? pict? #f)))
-                         graphite-renderer?)]))
+                         graphite-renderer/c)]))
 
 (define-renderer (fit #:degree [degree 1] #:show-equation? [show-equation? #f]
                       #:mapping [local-mapping (hash)]) ()
