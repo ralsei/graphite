@@ -75,6 +75,19 @@
          #:title "Adversarial lines"
          (lines #:mapping (aes #:discrete-color "stratify-on"))))
 
+(define-runtime-path lines-2-data "./test-data/lines-2.dat")
+(define lines-2-df
+  (let ([int-data (make-data-frame)])
+    (df-add-series! int-data (make-series "x-var" #:data (build-vector 1000 identity)))
+    (df-add-series! int-data
+                    (make-series "y-var" #:data (build-vector 1000 (λ (x) (+ x (* (random) 20))))))
+    int-data))
+(define lines-2
+  (graph #:data lines-2-df
+         #:mapping (aes #:x "x-var" #:y "y-var")
+         #:title "Random walk"
+         (lines)))
+
 (define-runtime-path fit-1-data "./test-data/fit-1.dat")
 (define fit-1-df
   (let ([int-data (make-data-frame)])
@@ -135,17 +148,15 @@
          (fit #:degree 3)))
 
 (module+ test
-  (check-not-exn (thunk (contract-exercise points #:fuel 100)))
   (check-draw-steps points-1 points-1-data)
   (check-draw-steps points-2 points-2-data)
   (check-draw-steps points-3 points-3-data)
   (check-draw-steps points-4 points-4-data)
   (check-draw-steps points-5 points-5-data)
 
-  (check-not-exn (thunk (contract-exercise lines #:fuel 100)))
   (check-draw-steps lines-1 lines-1-data)
+  (check-draw-steps lines-2 lines-2-data)
 
-  (check-not-exn (thunk (contract-exercise fit #:fuel 100)))
   (check-draw-steps fit-1 fit-1-data)
   (check-draw-steps fit-2 fit-2-data)
   (check-draw-steps fit-3 fit-3-data)

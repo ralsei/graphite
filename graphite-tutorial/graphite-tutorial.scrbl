@@ -19,8 +19,10 @@ effort as possible, and allowing for easy manipulation of the plot around the da
 change the structure of the data itself. The interface is loosely modeled
 around the tidyverse's ggplot2, so if you're familiar with it, you should feel at home.
 
-To facilitate this, we depend on the @racket[data-frame] library as the primary data structure.
-Once your data is read into a data frame, Graphite is able to work with it.
+This tutorial is modeled around Kieran Healy's work @hyperlink["https://www.socviz.co"
+"Data Visualization: A practical introduction"], which uses ggplot2 and R rather than Graphite and Racket.
+
+@table-of-contents[]
 
 @section{Deciding what library to use}
 
@@ -51,6 +53,10 @@ Anecdotally, this is not particularly easy in Racket. All data in this tutorial 
 
 If your data is primarily continuous, needs to be interactive, or needs to be 3D, @racket[plot] is likely to
 be a better fit.
+
+@section{Key forms}
+
+@;; TODO: talk about renderers, aesthetic mappings, data-frames, ...
 
 @section{Gapminder}
 
@@ -162,3 +168,91 @@ to change the color on, in this case @tt{"continent"}:
 
 Now we're seeing some notable differences from where we've started! We made a scatter plot, transformed its
 axes, labeled it, and added aesthetics to make it more readable.
+
+@section{Bar charts}
+
+For this section, we'll be using a CSV dump of the 2016 GSS (General Social Survey) from its respective R
+library, a dataset that sociologists continually manage to squeeze more and more insights out of. More
+importantly, the Gapminder dataset from the previous section has a lot of continuous variables (such as
+GDP per capita and life expectancy, which we worked with), but no categorical variables. The GSS has a wide
+variety of categorical variables to work with, making it ideal for making bar charts and histograms.
+
+Similarly to last time, we load it up and take a gander:
+@examples[#:eval ev #:label #f
+  (define gss (df-read/csv "data/gss_sm.csv"))
+  (df-describe gss)
+]
+
+Clearly, we have a lot of data to work with here, but a lot of it is categorical, so @racket[df-describe]'s
+summary statistics aren't particularly useful.
+
+We start off by taking a look at the variable @tt{religion}, which contains a condensed version of the religions
+in the GSS. (The variable @tt{relig} is more descriptive, but has too many categories for simple examples.)
+We use the @racket[bar] renderer, with no arguments, to take a look at the count:
+@examples[#:eval ev #:label #f
+  (graph #:data gss
+         #:title "Religious preferences, GSS 2016"
+         #:mapping (aes #:x "religion")
+         (bar))
+]
+
+Unfortunately, the size of the text and the default size of our visualization don't play nice. We can extend
+the width and height of the result with their eponymous keywords:
+@examples[#:eval ev #:label #f
+  (graph #:data gss
+         #:title "Religious preferences, GSS 2016"
+         #:mapping (aes #:x "religion")
+         #:width 600 #:height 400
+         (bar))
+]
+
+Much easier to read. Let's say that we wanted to, instead, look at the @italic{proportion} of each religion
+among the whole, rather than its individual count. We can specify this with the @tt{#:mode} argument of
+@racket[bar], which can either be @tt{'count} or @tt{'prop}, with @tt{'count} being the default behavior
+we saw before.
+@examples[#:eval ev #:label #f
+  (graph #:data gss
+         #:title "Religious preferences, GSS 2016"
+         #:mapping (aes #:x "religion")
+         #:width 600 #:height 400
+         (bar #:mode 'prop))
+]
+
+With the y-axis representing proportions from 0 to 1, we now have a good idea of what's going on here. Similarly
+to the last example with Gapminder, let's say that we wanted to split on each region, cross-classifying between
+the categorical variables of @tt{religion} and @tt{bigregion} (Northeast/Midwest/South/West, in the US). To
+accomplish this, we can make the x-axis region, and then "dodge" on the variable @tt{religion} -- effectively,
+making each individual region its own bar chart. To do this, we use the aesthetic @tt{#:group}:
+@examples[#:eval ev #:label #f
+  (graph #:data gss
+         #:title "Religious preferences among regions, GSS 2016"
+         #:mapping (aes #:x "bigregion" #:group "religion")
+         #:width 600 #:height 400
+         (bar #:mode 'prop))
+]
+
+But this is pretty difficult to read as well! There's a lot of bars in each section, and you're forced to consult
+the legend for the bar colors for each one. To mitigate this, we can introduce another concept...
+
+@section{Faceting}
+
+@;; TODO: fix w/h, add wrapping would make this section so much nicer...
+
+In both the Gapminder and GSS examples, we ended with a whole bunch of information crammed into a single
+visualization. Let's say we instead wanted to make things more clear. In this case, we can add a @italic{facet}
+to our visualization, which creates multiple plots in different panels.
+
+Faceting is a global aesthetic (used by @racket[graph], and not individual renderers), dictated by the keyword
+@tt{#:facet}. To use it, we specify it to be a variable, and @racket[graph] will split the plot up for us.
+Take the previous GSS example: let's say we wanted to instead facet on @tt{bigregion}, and then have each subplot
+represent religious preferences in that region. In that case:
+@examples[#:eval ev #:label #f
+  (graph #:data gss
+         #:mapping (aes #:x "religion" #:facet "bigregion")
+         (bar #:mode 'prop))
+]
+
+Now we've managed to split up our visualization into seperate charts for each region. But, we're now facing
+the issue that they're all in a straight line, and our text isn't displaying the way we want it to on the x-axis.
+
+And this... is the limits of Graphite right now, and a feature I need to add before publishing this.
