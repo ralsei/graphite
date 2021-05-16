@@ -55,6 +55,8 @@
   (define facet (hash-ref (gr-global-mapping) 'facet))
   (define groups (vector-sort (possibilities (gr-data) facet)
                               (λ (x y) (string-ci<? (~a x) (~a y)))))
+  (define facet-wrap (hash-ref (gr-global-mapping) 'facet-wrap (vector-length groups)))
+  (define wrapped-groups (vector-reshape groups facet-wrap))
 
   (define init-plot
     (parameterize ([gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
@@ -65,17 +67,32 @@
   (match-define (vector x-left y-bottom) ((plot-pict-plot->dc init-plot) (vector x-min y-min)))
   (match-define (vector x-right y-top) ((plot-pict-plot->dc init-plot) (vector x-max y-max)))
 
+  ; FIXME: this doesn't work w/ discrete-histogram ticks
+  (define (plot-row group-vector [x-show-info? #f])
+    (parameterize ([plot-x-ticks (if x-show-info? (plot-x-ticks) no-ticks)]
+                   [plot-x-label (if x-show-info? (plot-x-label) #f)])
+      (for/fold ([plt (graph-internal (vector-ref group-vector 0) render-fns)])
+                ([grp (vector-drop group-vector 1)])
+        (parameterize ([plot-y-ticks no-ticks]
+                       [plot-y-label #f]
+                       [plot-width (inexact->exact (- x-right x-left))])
+          (hc-append plt
+                     (if grp
+                         (graph-internal grp render-fns)
+                         (filled-rectangle (- x-right x-left)
+                                           (pict-height init-plot)
+                                           #:color "white"
+                                           #:border-color "white")))))))
+
   (parameterize ([gr-x-min (if (not (gr-x-min)) x-min (gr-x-min))]
                  [gr-x-max (if (not (gr-x-max)) x-max (gr-x-max))]
                  [gr-y-min (if (not (gr-y-min)) y-min (gr-y-min))]
                  [gr-y-max (if (not (gr-y-max)) y-max (gr-y-max))])
-    (for/fold ([plt (graph-internal (vector-ref groups 0) render-fns)])
-              ([grp (vector-drop groups 1)])
-      ; all other arguments should be handled by the initial parameterize call
-      (parameterize ([plot-y-ticks no-ticks]
-                     [plot-y-label #f]
-                     [plot-width (inexact->exact (- x-right x-left))])
-        (hc-append plt (graph-internal grp render-fns))))))
+    (vc-append
+      (for/fold ([plt (blank)])
+                ([grp-vector (in-vector (vector-drop-right wrapped-groups 1))])
+        (vc-append plt (plot-row grp-vector)))
+      (plot-row (vector-ref wrapped-groups (sub1 (vector-length wrapped-groups))) #t))))
 
 (define (get-conversion-function conv transform)
   (cond [(and conv transform) (compose (transform-function transform) conv)]

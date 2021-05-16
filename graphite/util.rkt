@@ -54,6 +54,14 @@
       vector-remove-duplicates
       (vector-filter (λ (x) (and x #t)) _)))
 
+(define (vector-reshape vec cols)
+  (define len (vector-length vec))
+  (define rows (exact-ceiling (/ len cols)))
+  (for/vector ([y (in-range rows)])
+    (for/vector ([x (in-range cols)])
+      (define idx (+ x (* cols y)))
+      (and (< idx len) (vector-ref vec idx)))))
+
 (define (mapping-override mapping local-mapping)
   (hash-union mapping local-mapping #:combine (λ (x y) y)))
 
