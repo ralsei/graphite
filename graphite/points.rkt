@@ -27,21 +27,41 @@
 (define-renderer (points #:mapping [local-mapping (make-hash)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
   (define discrete-color (hash-ref aes 'discrete-color #f))
+  (define continuous-color (hash-ref aes 'continuous-color #f))
   (define facet-on (hash-ref aes 'facet #f))
-  
+
+  (when (and discrete-color continuous-color)
+    (error 'points "cannot have both discrete and continuous color aesthetics"))
+
   (define tbl (make-hash))
   (for ([(x y strat facet)
-         (in-data-frame* (gr-data) (hash-ref aes 'x) (hash-ref aes 'y) discrete-color facet-on)]
+         (in-data-frame* (gr-data) (hash-ref aes 'x) (hash-ref aes 'y)
+                         (or discrete-color continuous-color) facet-on)]
         #:when (and x y)
         #:when (equal? facet (gr-group)))
-    (hash-update! tbl strat (cons (vector ((gr-x-conv) x) ((gr-y-conv) y)) _) null))
-  
+    (hash-update! tbl
+                  strat
+                  (cons (vector ((gr-x-conv) x) ((gr-y-conv) y)) _) null))
+
+  (define continuous-min (and continuous-color
+                              (apply min (hash-keys tbl))))
+  (define continuous-max (and continuous-color
+                              (apply max (hash-keys tbl))))
+
   (let ([color-n -1])
     (hash-map tbl
               (λ (strat pts)
                 (set! color-n (add1 color-n))
                 (run-renderer #:renderer plot:points
                               #:mapping aes
-                              #:color (->pen-color color-n) #:label strat
+                              #:color (if continuous-color
+                                          (->pen-color
+                                           (inexact->exact
+                                            (round (convert continuous-min 0
+                                                            continuous-max
+                                                            (color-map-size (plot-pen-color-map))
+                                                            strat))))
+                                          (->pen-color color-n))
+                              #:label (~a strat)
                               pts))
               #t)))

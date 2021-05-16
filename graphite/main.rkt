@@ -156,7 +156,7 @@
                  [plot-x-far-ticks no-ticks]
                  [plot-y-far-ticks no-ticks]
                  [point-sym 'bullet]
-                 [plot-pen-color-map (hash-ref mapping 'colormap 'set1)]
+                 [plot-pen-color-map (or (plot-pen-color-map) 'set1)]
                  ; our settings
                  [gr-data data]
                  [gr-global-mapping mapping]

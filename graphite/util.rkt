@@ -82,6 +82,10 @@
             ([k (in-list keys)])
     (hash-remove ret k)))
 
+; if a1 becomes b1 and a2 becomes b2, then what should as become?
+(define (convert a1 b1 a2 b2 a)
+  (/ (+ (* b1 (- a2 a)) (* b2 (- a a1))) (- a2 a1)))
+
 (define run-renderer
   (kw-hash-lambda args #:kws kw-hash
     (define renderer (hash-ref kw-hash '#:renderer))
