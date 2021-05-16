@@ -81,8 +81,8 @@
                          (graph-internal grp render-fns)
                          (filled-rectangle (- x-right x-left)
                                            (pict-height init-plot)
-                                           #:color "white"
-                                           #:border-color "white")))))))
+                                           #:color (plot-background)
+                                           #:border-color (plot-background))))))))
 
   (parameterize ([gr-x-min (if (not (gr-x-min)) x-min (gr-x-min))]
                  [gr-x-max (if (not (gr-x-max)) x-max (gr-x-max))]
