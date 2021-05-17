@@ -54,10 +54,6 @@ Anecdotally, this is not particularly easy in Racket. All data in this tutorial 
 If your data is primarily continuous, needs to be interactive, or needs to be 3D, @racket[plot] is likely to
 be a better fit.
 
-@section{Key forms}
-
-@;; TODO: talk about renderers, aesthetic mappings, data-frames, ...
-
 @section{Gapminder}
 
 All data visualization starts with data to visualize, and we begin with excerpts of data from
@@ -255,4 +251,4 @@ represent religious preferences in that region. In that case:
 Now we've managed to split up our visualization into seperate charts for each region. But, we're now facing
 the issue that they're all in a straight line, and our text isn't displaying the way we want it to on the x-axis.
 
-And this... is the limits of Graphite right now, and a feature I need to add before publishing this.
+This is where the tutorial currently ends, as this hinges on currently unimplemented functionality. More to come!
