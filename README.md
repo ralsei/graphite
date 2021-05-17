@@ -1,3 +1,3 @@
-# viz
+# Graphite
 
-data visualization scraps in R and Racket
+A loosely ggplot2-inspired data visualization library in Racket.
