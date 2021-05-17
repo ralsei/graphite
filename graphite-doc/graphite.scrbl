@@ -119,6 +119,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                               #:y string?
                                               #:facet (or/c string? #f)
                                               #:discrete-color (or/c string? #f)
+                                              #:continuous-color (or/c string? #f)
                                               #:x-min (or/c rational? #f)
                                               #:x-max (or/c rational? #f)
                                               #:y-min (or/c rational? #f)
@@ -206,7 +207,6 @@ A tutorial on @racketmodname[graphite] is also available;
                                              #:label (or/c string? pict? #f))
                            (aes)])
          graphite-renderer/c]{
-  You know.
 }
 
 @defproc[(bar [#:mode mode (or/c 'count 'prop) 'count]
@@ -233,7 +233,6 @@ A tutorial on @racketmodname[graphite] is also available;
                                            #:far-ticks? boolean?)
                          (aes)])
          graphite-renderer/c]{
-  Yea
 }
 
 @defproc[(stacked-bar [#:mode mode (or/c 'count 'prop) 'count]
@@ -259,7 +258,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                                    #:far-ticks? boolean?)
                                  (aes)])
          graphite-renderer/c]{
-  Nah
+
 }
 
 @defproc[(histogram [#:bins bins positive-integer? 30]
@@ -280,7 +279,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                                  #:label (or/c string? pict? #f))
                                (aes)])
          graphite-renderer/c]{
-  Meh
+
 }
 
 @defproc[(density [#:mapping local-mapping
@@ -298,7 +297,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                                #:label (or/c string? pict? #f))
                              (aes)])
          graphite-renderer/c]{
-  Maybe
+
 }
 
 @section[#:tag "transforms"]{Axis Transforms}

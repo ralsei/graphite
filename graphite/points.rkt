@@ -9,6 +9,7 @@
                                                          #:y string?
                                                          #:facet (or/c string? #f)
                                                          #:discrete-color (or/c string? #f)
+                                                         #:continuous-color (or/c string? #f)
                                                          #:x-min (or/c rational? #f)
                                                          #:x-max (or/c rational? #f)
                                                          #:y-min (or/c rational? #f)

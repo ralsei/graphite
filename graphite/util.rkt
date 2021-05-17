@@ -14,7 +14,7 @@
     [(_ (FN-NAME:id . ARGS:expr)
         ({~seq KEY:keyword VALUE:expr} ...)
         FN-BODY:expr ...)
-     #'(define (FN-NAME {~@ . ARGS})
+     #'(define (FN-NAME . ARGS)
          (hash 'function (λ ()
                            FN-BODY ...)
                {~@ (keyword->symbol 'KEY) VALUE} ...))]))
@@ -82,7 +82,7 @@
             ([k (in-list keys)])
     (hash-remove ret k)))
 
-; if a1 becomes b1 and a2 becomes b2, then what should as become?
+; if a1 becomes b1 and a2 becomes b2, then what should a become?
 (define (convert a1 b1 a2 b2 a)
   (/ (+ (* b1 (- a2 a)) (* b2 (- a a1))) (- a2 a1)))
 

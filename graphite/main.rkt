@@ -5,7 +5,7 @@
 
          "contracts.rkt"
          "transforms.rkt"
-         "util.rkt"
+         (except-in "util.rkt" convert)
 
          "bar.rkt"
          "boxplot.rkt"
