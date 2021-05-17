@@ -11,3 +11,6 @@
                "plot-lib"
                "threading-lib"
                "graphite"))
+
+(define pkg-desc "Some examples for Graphite")
+(define version "1.0")

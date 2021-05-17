@@ -1,13 +1,12 @@
 #lang info
 
-(define collection "graphite")
-(define deps '("base"
-               "data-frame"
-               "fancy-app"
-               "kw-utils"
-               "math-lib"
-               "pict-lib"               
-               "plot-gui-lib"
-               "plot-lib"
-               "threading-lib"
-	       "simple-polynomial"))
+(define collection 'multi)
+(define deps '("graphite-lib"
+               "graphite-doc"
+               "graphite-tutorial"))
+(define implies '("graphite-lib"
+                  "graphite-doc"
+                  "graphite-tutorial"))
+
+(define pkg-desc "A ggplot2-inspired data visualization library")
+(define version "1.0")
