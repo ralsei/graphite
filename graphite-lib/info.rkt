@@ -1,7 +1,7 @@
 #lang info
 
 (define collection "graphite")
-(define deps '("base"
+(define deps '(("base" #:version "8.1")
                "data-frame"
                "fancy-app"
                "kw-utils"
