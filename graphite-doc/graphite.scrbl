@@ -288,18 +288,7 @@ A tutorial on @racketmodname[graphite] is also available;
                     [#:mapping local-mapping
                                (aes-containing/c #:x string?
                                                  #:y (or/c string? #f)
-                                                 #:facet (or/c string? #f)
-                                                 #:x-min (or/c rational? #f)
-                                                 #:x-max (or/c rational? #f)
-                                                 #:y-min (or/c rational? #f)
-                                                 #:y-max (or/c rational? #f)
-                                                 #:color plot-color/c
-                                                 #:style plot-brush-style/c
-                                                 #:line-color plot-color/c
-                                                 #:line-width (>=/c 0)
-                                                 #:line-style plot-pen-style/c
-                                                 #:alpha (real-in 0 1)
-                                                 #:label (or/c string? pict? #f))
+                                                 #:facet (or/c string? #f))
                                (aes)])
          graphite-renderer/c]{
   Renders a histogram.
@@ -314,7 +303,7 @@ A tutorial on @racketmodname[graphite] is also available;
                   [#:width width (>=/c 0) (line-width)]
                   [#:style style plot-pen-style/c (line-style)]
                   [#:alpha alpha (real-in 0 1) (line-alpha)]
-                  [#:label (or/c string? pict? #f)]
+                  [#:label label (or/c string? pict? #f) #f]
                   [#:mapping local-mapping
                              (aes-containing/c #:x string?
                                                #:facet (or/c string? #f)
