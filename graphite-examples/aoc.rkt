@@ -90,21 +90,21 @@
               (vector-append (vector-map (vector-ref _ 1) x-y) points))))
 
   (define result (make-data-frame))
-  (df-add-series result (make-series "name"
-                                     #:data names
-                                     #:cmpfn #f
-                                     #:na #f
-                                     #:contract string?))
-  (df-add-series result (make-series "time"
-                                     #:data times
-                                     #:cmpfn #f
-                                     #:na #f
-                                     #:contract number?))
-  (df-add-series result (make-series "points"
-                                     #:data points
-                                     #:cmpfn #f
-                                     #:na #f
-                                     #:contract number?))
+  (df-add-series! result (make-series "name"
+                                      #:data names
+                                      #:cmpfn #f
+                                      #:na #f
+                                      #:contract string?))
+  (df-add-series! result (make-series "time"
+                                      #:data times
+                                      #:cmpfn #f
+                                      #:na #f
+                                      #:contract number?))
+  (df-add-series! result (make-series "points"
+                                      #:data points
+                                      #:cmpfn #f
+                                      #:na #f
+                                      #:contract number?))
 
   result)
 
@@ -121,4 +121,4 @@
        #:mapping (aes #:x "time" #:y "points" #:discrete-color "name")
        #:x-max 1609005817
        #:x-transform (only-ticks (date-ticks))
-       (lines #:mapping (aes #:width 2)))
+       (lines #:width 2))

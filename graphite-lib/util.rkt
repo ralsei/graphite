@@ -1,6 +1,5 @@
 #lang racket
 (require data-frame threading racket/hash
-         kw-utils/keyword-apply-sort
          (for-syntax syntax/parse))
 (provide (all-defined-out))
 
@@ -107,7 +106,8 @@
 
 (define/kw (run-renderer kws kw-args #:renderer renderer
                          #:kws given-kws #:kw-args given-kwargs . rst)
-  (keyword-apply/sort renderer
-                      (append kws given-kws)
-                      (append kw-args given-kwargs)
+  (keyword-apply/dict renderer
+                      (hash-union (make-immutable-hash (map cons kws kw-args))
+                                  (make-immutable-hash (map cons given-kws given-kwargs))
+                                  #:combine (λ (_ y) y))
                       rst))

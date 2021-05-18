@@ -11,4 +11,4 @@
       #:y-label "% of total"
       #:mapping (aes #:x "bigregion")
       #:width 1200 #:height 600
-      (bar #:mode 'prop #:mapping (aes #:group "religion" #:group-gap 2)))
+      (bar #:mode 'prop #:group-gap 2 #:mapping (aes #:group "religion")))

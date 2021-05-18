@@ -5,4 +5,4 @@
 
 (graph #:data organdata
        #:mapping (aes #:x "country" #:y "donors")
-       (boxplot #:mapping (aes #:invert? #t)))
+       (boxplot #:invert? #t))

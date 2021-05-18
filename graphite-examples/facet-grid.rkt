@@ -10,5 +10,5 @@
        #:x-label "Age (yrs)"
        #:y-label "# of children"
        #:mapping (aes #:x "age" #:y "childs" #:facet "race")
-       (points #:mapping (aes #:alpha 0.2))
-       (fit #:mapping (aes #:width 3)))
+       (points #:alpha 0.2)
+       (fit #:width 3))

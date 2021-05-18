@@ -14,5 +14,5 @@
        #:y-max 5.1
        #:width 400 #:height 400
        #:legend-anchor 'no-legend
-       (lines #:mapping (aes #:color "gray"))
-       (fit #:mapping (aes #:width 2)))
+       (lines #:color "gray")
+       (fit #:width 2))
