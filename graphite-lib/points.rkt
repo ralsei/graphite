@@ -63,6 +63,6 @@
                                                             (color-map-size (plot-pen-color-map))
                                                             strat))))
                                           (->pen-color color-n))
-                              #:label (~a strat)
+                              #:label (and discrete-color strat)
                               pts))
               #t)))
