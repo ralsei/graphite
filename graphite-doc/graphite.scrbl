@@ -114,25 +114,25 @@ A tutorial on @racketmodname[graphite] is also available;
   This is @italic{not} a boolean predicate, and cannot be used as such.
 }
 
-@defproc[(points [#:mapping local-mapping
+@defproc[(points [#:x-min x-min (or/c rational? #f) #f]
+                 [#:x-max x-max (or/c rational? #f) #f]
+                 [#:y-min y-min (or/c rational? #f) #f]
+                 [#:y-max y-max (or/c rational? #f) #f]
+                 [#:sym sym point-sym/c (point-sym)]
+                 [#:color color plot-color/c (point-color)]
+                 [#:fill-color fill-color (or/c plot-color/c 'auto) 'auto]
+                 [#:x-jitter x-jitter (>=/c 0) (point-x-jitter)]
+                 [#:y-jitter y-jitter (>=/c 0) (point-y-jitter)]
+                 [#:size size (>=/c 0) (point-size)]
+                 [#:line-width line-width (>=/c 0) (point-line-width)]
+                 [#:alpha alpha (real-in 0 1) (point-alpha)]
+                 [#:label label (or/c string? pict? #f) #f]
+                 [#:mapping local-mapping
                             (aes-containing/c #:x string?
                                               #:y string?
                                               #:facet (or/c string? #f)
                                               #:discrete-color (or/c string? #f)
-                                              #:continuous-color (or/c string? #f)
-                                              #:x-min (or/c rational? #f)
-                                              #:x-max (or/c rational? #f)
-                                              #:y-min (or/c rational? #f)
-                                              #:y-max (or/c rational? #f)
-                                              #:sym point-sym/c
-                                              #:color plot-color/c
-                                              #:fill-color (or/c plot-color/c 'auto)
-                                              #:x-jitter (>=/c 0)
-                                              #:y-jitter (>=/c 0)
-                                              #:size (>=/c 0)
-                                              #:line-width (>=/c 0)
-                                              #:alpha (real-in 0 1)
-                                              #:label (or/c string? pict? #f))
+                                              #:continuous-color (or/c string? #f))
                             (aes)])
          graphite-renderer/c]{
   Returns a renderer that draws a set of points, for example, to draw a (randomized) scatter plot:
@@ -152,7 +152,17 @@ A tutorial on @racketmodname[graphite] is also available;
   The optional @tt{#:discrete-color} aesthetic dictates a variable to split on by color.
 }
 
-@defproc[(fit [#:degree degree positive-integer? 1]
+@defproc[(fit [#:x-min x-min (or/c rational? #f) #f]
+              [#:x-max x-max (or/c rational? #f) #f]
+              [#:y-min y-min (or/c rational? #f) #f]
+              [#:y-max y-max (or/c rational? #f) #f]
+              [#:samples samples (and/c exact-integer? (>=/c 2)) (line-samples)]
+              [#:color color plot-color/c (line-color)]
+              [#:width width (>=/c 0) (line-width)]
+              [#:style style plot-pen-style/c (line-style)]
+              [#:alpha alpha (real-in 0 1) (line-alpha)]
+              [#:label label (or/c string? pict? #f) #f]
+              [#:degree degree positive-integer? 1]
               [#:show-equation? show-equation? boolean? #f]
               [#:mapping local-mapping
                          (aes-containing/c #:x string?
@@ -191,80 +201,93 @@ A tutorial on @racketmodname[graphite] is also available;
   legend.
 }
 
-@defproc[(lines [#:mapping local-mapping
+@defproc[(lines [#:x-min x-min (or/c rational? #f) #f]
+                [#:x-max x-max (or/c rational? #f) #f]
+                [#:y-min y-min (or/c rational? #f) #f]
+                [#:y-max y-max (or/c rational? #f) #f]
+                [#:color color plot-color/c (line-color)]
+                [#:width width (>=/c 0) (line-width)]
+                [#:style style plot-pen-style/c (line-style)]
+                [#:alpha alpha (real-in 0 1) (line-alpha)]
+                [#:label label (or/c string? pict? #f) #f]
+                [#:mapping local-mapping
                            (aes-containing/c #:x string?
                                              #:y string?
                                              #:facet (or/c string? #f)
-                                             #:discrete-color (or/c string? #f)
-                                             #:x-min (or/c rational? #f)
-                                             #:x-max (or/c rational? #f)
-                                             #:y-min (or/c rational? #f)
-                                             #:y-max (or/c rational? #f)
-                                             #:color plot-color/c
-                                             #:width (>=/c 0)
-                                             #:style plot-pen-style/c
-                                             #:alpha (real-in 0 1)
-                                             #:label (or/c string? pict? #f))
+                                             #:discrete-color (or/c string? #f))
                            (aes)])
          graphite-renderer/c]{
+  Renders some lines.
 }
 
-@defproc[(bar [#:mode mode (or/c 'count 'prop) 'count]
+@defproc[(bar [#:x-min x-min (or/c rational? #f) 0]
+              [#:x-max x-max (or/c rational? #f) #f]
+              [#:y-min y-min (or/c rational? #f) 0]
+              [#:y-max y-max (or/c rational? #f) #f]
+              [#:gap gap (real-in 0 1) (discrete-histogram-gap)]
+              [#:skip skip (>=/c 0) (discrete-histogram-skip)]
+              [#:invert? invert? boolean? (discrete-histogram-invert?)]
+              [#:color color plot-color/c (rectangle-color)]
+              [#:style style plot-brush-style/c (rectangle-style)]
+              [#:line-color line-color plot-color/c (rectangle-line-color)]
+              [#:line-width line-width (>=/c 0) (rectangle-line-width)]
+              [#:line-style line-style plot-pen-style/c (rectangle-line-style)]
+              [#:alpha alpha (real-in 0 1) (rectangle-alpha)]
+              [#:label label (or/c string? pict? #f) #f]
+              [#:add-ticks? add-ticks? boolean? #t]
+              [#:far-ticks? far-ticks? boolean? #f]
+              [#:mode mode (or/c 'count 'prop) 'count]
+              [#:group-gap group-gap (>=/c 0) 1]
               [#:mapping local-mapping
                          (aes-containing/c #:x string?
                                            #:facet (or/c string? #f)
-                                           #:group any/c
-                                           #:group-gap (>=/c 0)
-                                           #:x-min (or/c rational? #f)
-                                           #:x-max (or/c rational? #f)
-                                           #:y-min (or/c rational? #f)
-                                           #:y-max (or/c rational? #f)
-                                           #:gap (real-in 0 1)
-                                           #:skip (>=/c 0)
-                                           #:invert? boolean?
-                                           #:color plot-color/c
-                                           #:style plot-brush-style/c
-                                           #:line-color plot-color/c
-                                           #:line-width (>=/c 0)
-                                           #:line-style plot-pen-style/c
-                                           #:alpha (real-in 0 1)
-                                           #:label (or/c string? pict? #f)
-                                           #:add-ticks? boolean?
-                                           #:far-ticks? boolean?)
+                                           #:group (or/c string? #f))
                          (aes)])
          graphite-renderer/c]{
+  Renders a bar chart.
 }
 
-@defproc[(stacked-bar [#:mode mode (or/c 'count 'prop) 'count]
+@defproc[(stacked-bar [#:x-min x-min (or/c rational? #f) #f]
+                      [#:x-max x-max (or/c rational? #f) #f]
+                      [#:y-min y-min (or/c rational? #f) 0]
+                      [#:y-max y-max (or/c rational? #f) #f]
+                      [#:gap gap (real-in 0 1) (discrete-histogram-gap)]
+                      [#:skip skip (>=/c 0) (discrete-histogram-skip)]
+                      [#:invert? invert? boolean? (discrete-histogram-invert?)]
+                      [#:colors colors (plot-colors/c nat/c) (stacked-histogram-colors)]
+                      [#:styles styles (plot-brush-styles/c nat/c) (stacked-histogram-styles)]
+                      [#:line-colors line-colors (plot-colors/c nat/c) (stacked-histogram-line-colors)]
+                      [#:line-widths line-widths (pen-widths/c nat/c) (stacked-histogram-line-widths)]
+                      [#:line-styles line-styles (plot-pen-styles/c nat/c) (stacked-histogram-line-styles)]
+                      [#:alphas alphas (alphas/c nat/c) (stacked-histogram-alphas)]
+                      [#:labels labels (labels/c nat/c) '(#f)]
+                      [#:add-ticks? add-ticks? boolean? #t]
+                      [#:far-ticks? far-ticks? boolean? #f]
+                      [#:mode mode (or/c 'count 'prop) 'count]
                       [#:mapping local-mapping
                                  (aes-containing/c #:x string?
                                                    #:facet (or/c string? #f)
-                                                   #:group string?
-                                                   #:x-min (or/c rational? #f)
-                                                   #:x-max (or/c rational? #f)
-                                                   #:y-min (or/c rational? #f)
-                                                   #:y-max (or/c rational? #f)
-                                                   #:gap (real-in 0 1)
-                                                   #:skip (>=/c 0)
-                                                   #:invert? boolean?
-                                                   #:colors (plot-colors/c nat/c)
-                                                   #:styles (plot-brush-styles/c nat/c)
-                                                   #:line-colors (plot-colors/c nat/c)
-                                                   #:line-widths (plot-colors/c nat/c)
-                                                   #:line-styles (plot-pen-styles/c nat/c)
-                                                   #:alphas (alphas/c nat/c)
-                                                   #:labels (labels/c nat/c)
-                                                   #:add-ticks? boolean?
-                                                   #:far-ticks? boolean?)
+                                                   #:group string?)
                                  (aes)])
          graphite-renderer/c]{
-
+  Renders a stacked bar chart, stratified by group.
 }
 
-@defproc[(histogram [#:bins bins positive-integer? 30]
+@defproc[(histogram [#:x-min x-min (or/c rational? #f) #f]
+                    [#:x-max x-max (or/c rational? #f) #f]
+                    [#:y-min y-min (or/c rational? #f) #f]
+                    [#:y-max y-max (or/c rational? #f) #f]
+                    [#:color color plot-color/c (rectangle-color)]
+                    [#:style style plot-brush-style/c (rectangle-style)]
+                    [#:line-color line-color plot-color/c (rectangle-line-color)]
+                    [#:line-width line-width (>=/c 0) (rectangle-line-width)]
+                    [#:line-style line-style plot-pen-style/c (rectangle-line-style)]
+                    [#:alpha alpha (real-in 0 1) (rectangle-alpha)]
+                    [#:label label (or/c string? pict? #f) #f]
+                    [#:bins bins positive-integer? 30]
                     [#:mapping local-mapping
                                (aes-containing/c #:x string?
-                                                 #:y string?
+                                                 #:y (or/c string? #f)
                                                  #:facet (or/c string? #f)
                                                  #:x-min (or/c rational? #f)
                                                  #:x-max (or/c rational? #f)
@@ -279,25 +302,26 @@ A tutorial on @racketmodname[graphite] is also available;
                                                  #:label (or/c string? pict? #f))
                                (aes)])
          graphite-renderer/c]{
-
+  Renders a histogram.
 }
 
-@defproc[(density [#:mapping local-mapping
+@defproc[(density [#:x-min x-min (or/c rational? #f) #f]
+                  [#:x-max x-max (or/c rational? #f) #f]
+                  [#:y-min y-min (or/c rational? #f) #f]
+                  [#:y-max y-max (or/c rational? #f) #f]
+                  [#:samples samples (and/c exact-integer? (>=/c 2)) (line-samples)]
+                  [#:color color plot-color/c (line-color)]
+                  [#:width width (>=/c 0) (line-width)]
+                  [#:style style plot-pen-style/c (line-style)]
+                  [#:alpha alpha (real-in 0 1) (line-alpha)]
+                  [#:label (or/c string? pict? #f)]
+                  [#:mapping local-mapping
                              (aes-containing/c #:x string?
                                                #:facet (or/c string? #f)
-                                               #:x-min (or/c rational? #f)
-                                               #:x-max (or/c rational? #f)
-                                               #:y-min (or/c rational? #f)
-                                               #:y-max (or/c rational? #f)
-                                               #:samples (and/c exact-integer? (>=/c 2))
-                                               #:color plot-color/c
-                                               #:width (>=/c 0)
-                                               #:style plot-pen-style/c
-                                               #:alpha (real-in 0 1)
-                                               #:label (or/c string? pict? #f))
+                                               #:discrete-color (or/c string? #f))
                              (aes)])
          graphite-renderer/c]{
-
+  Renders estimated density for the given points.
 }
 
 @section[#:tag "transforms"]{Axis Transforms}

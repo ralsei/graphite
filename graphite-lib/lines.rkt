@@ -4,19 +4,19 @@
          "contracts.rkt" "util.rkt")
 (provide
  (contract-out [lines (->* ()
-                           (#:mapping (aes-containing/c #:x string?
+                           (#:x-min (or/c rational? #f)
+                            #:x-max (or/c rational? #f)
+                            #:y-min (or/c rational? #f)
+                            #:y-max (or/c rational? #f)
+                            #:color plot-color/c
+                            #:width (>=/c 0)
+                            #:style plot-pen-style/c
+                            #:alpha (real-in 0 1)
+                            #:label (or/c string? pict? #f)
+                            #:mapping (aes-containing/c #:x string?
                                                         #:y string?
                                                         #:facet (or/c string? #f)
-                                                        #:discrete-color (or/c string? #f)
-                                                        #:x-min (or/c rational? #f)
-                                                        #:x-max (or/c rational? #f)
-                                                        #:y-min (or/c rational? #f)
-                                                        #:y-max (or/c rational? #f)
-                                                        #:color plot-color/c
-                                                        #:width (>=/c 0)
-                                                        #:style plot-pen-style/c
-                                                        #:alpha (real-in 0 1)
-                                                        #:label (or/c string? pict? #f)))
+                                                        #:discrete-color (or/c string? #f)))
                            graphite-renderer/c)]))
 
 (define-renderer (lines #:kws kws #:kw-args kw-args

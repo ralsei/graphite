@@ -4,49 +4,49 @@
 (provide
  (contract-out
   [bar (->* ()
-            (#:mode (or/c 'count 'prop)
+            (#:x-min (or/c rational? #f)
+             #:x-max (or/c rational? #f)
+             #:y-min (or/c rational? #f)
+             #:y-max (or/c rational? #f)
+             #:gap (real-in 0 1)
+             #:skip (>=/c 0)
+             #:invert? boolean?
+             #:color plot-color/c
+             #:style plot-brush-style/c
+             #:line-color plot-color/c
+             #:line-width (>=/c 0)
+             #:line-style plot-pen-style/c
+             #:alpha (real-in 0 1)
+             #:label (or/c string? pict? #f)
+             #:add-ticks? boolean?
+             #:far-ticks? boolean?
+             #:mode (or/c 'count 'prop)
+             #:group-gap (>=/c 0)
              #:mapping (aes-containing/c #:x string?
                                          #:facet (or/c string? #f)
-                                         #:group any/c
-                                         #:group-gap (>=/c 0)
-                                         #:x-min (or/c rational? #f)
-                                         #:x-max (or/c rational? #f)
-                                         #:y-min (or/c rational? #f)
-                                         #:y-max (or/c rational? #f)
-                                         #:gap (real-in 0 1)
-                                         #:skip (>=/c 0)
-                                         #:invert? boolean?
-                                         #:color plot-color/c
-                                         #:style plot-brush-style/c
-                                         #:line-color plot-color/c
-                                         #:line-width (>=/c 0)
-                                         #:line-style plot-pen-style/c
-                                         #:alpha (real-in 0 1)
-                                         #:label (or/c string? pict? #f)
-                                         #:add-ticks? boolean?
-                                         #:far-ticks? boolean?))
+                                         #:group (or/c string? #f)))
             graphite-renderer/c)]
   [stacked-bar (->* ()
-                    (#:mode (or/c 'count 'prop)
+                    (#:x-min (or/c rational? #f)
+                     #:x-max (or/c rational? #f)
+                     #:y-min (or/c rational? #f)
+                     #:y-max (or/c rational? #f)
+                     #:gap (real-in 0 1)
+                     #:skip (>=/c 0)
+                     #:invert? boolean?
+                     #:colors (plot-colors/c nat/c)
+                     #:styles (plot-brush-styles/c nat/c)
+                     #:line-colors (plot-colors/c nat/c)
+                     #:line-widths (pen-widths/c nat/c)
+                     #:line-styles (plot-pen-styles/c nat/c)
+                     #:alphas (alphas/c nat/c)
+                     #:labels (labels/c nat/c)
+                     #:add-ticks? boolean?
+                     #:far-ticks? boolean?
+                     #:mode (or/c 'count 'prop)
                      #:mapping (aes-containing/c #:x string?
                                                  #:facet (or/c string? #f)
-                                                 #:group string?
-                                                 #:x-min (or/c rational? #f)
-                                                 #:x-max (or/c rational? #f)
-                                                 #:y-min (or/c rational? #f)
-                                                 #:y-max (or/c rational? #f)
-                                                 #:gap (real-in 0 1)
-                                                 #:skip (>=/c 0)
-                                                 #:invert? boolean?
-                                                 #:colors (plot-colors/c nat/c)
-                                                 #:styles (plot-brush-styles/c nat/c)
-                                                 #:line-colors (plot-colors/c nat/c)
-                                                 #:line-widths (plot-colors/c nat/c)
-                                                 #:line-styles (plot-pen-styles/c nat/c)
-                                                 #:alphas (alphas/c nat/c)
-                                                 #:labels (labels/c nat/c)
-                                                 #:add-ticks? boolean?
-                                                 #:far-ticks? boolean?))
+                                                 #:group string?))
                     graphite-renderer/c)]))
 
 (define (make-count-table mode group)
@@ -65,12 +65,12 @@
            (for/hash ([(k c) (in-hash count-tbl)])
              (values k (/ c total)))]))
 
-(define (bar-dodged #:mode mode #:kws kws #:kw-args kw-args)
+(define (bar-dodged #:mode mode #:group-gap group-gap #:kws kws #:kw-args kw-args)
   (define strats (possibilities (gr-data) (hash-ref (gr-global-mapping) 'group)))
   (for/list ([var (in-vector strats)]
              [i (in-naturals)])
     (parameterize ([rectangle-color (->pen-color i)])
-      (bar-simple #:skip (+ (vector-length strats) (hash-ref (gr-global-mapping) 'group-gap 1))
+      (bar-simple #:skip (+ (vector-length strats) group-gap)
                   #:x-min i
                   #:group var
                   #:mode mode
@@ -89,10 +89,11 @@
      (vector var cnt))))
 
 (define-renderer (bar #:kws kws #:kw-args kw-args
+                      #:group-gap [group-gap 1]
                       #:mode [mode 'count] #:mapping [local-mapping (hash)])
                  (#:y-label (symbol->string mode))
   (parameterize ([gr-global-mapping (mapping-override (gr-global-mapping) local-mapping)])
-    (cond [(hash-ref (gr-global-mapping) 'group #f) (bar-dodged #:mode mode
+    (cond [(hash-ref (gr-global-mapping) 'group #f) (bar-dodged #:mode mode #:group-gap group-gap
                                                                 #:kws kws #:kw-args kw-args)]
           [else (bar-simple #:mode mode
                             #:kws kws #:kw-args kw-args)])))

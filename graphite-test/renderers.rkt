@@ -114,7 +114,7 @@
   (graph #:data points-1-df
          #:mapping (aes #:x "x-var" #:y "x-var")
          #:title "y=x"
-         (points #:mapping (aes #:size 0))
+         (points #:size 0)
          (fit #:show-equation? #t)))
 
 (define-runtime-path fit-4-data "./test-data/fit-4.dat")
@@ -122,7 +122,7 @@
   (graph #:data points-1-df
          #:mapping (aes #:x "x-var" #:y "x-var")
          #:title "y=x, but with no label"
-         (points #:mapping (aes #:size 0))
+         (points #:size 0)
          (fit)))
 
 (define-runtime-path fit-5-data "./test-data/fit-5.dat")

@@ -5,22 +5,25 @@
          "util.rkt")
 (provide
  (contract-out [fit (->* ()
-                         (#:degree positive-integer?
+                         (#:x-min (or/c rational? #f)
+                          #:x-max (or/c rational? #f)
+                          #:y-min (or/c rational? #f)
+                          #:y-max (or/c rational? #f)
+                          #:samples (and/c exact-integer? (>=/c 2))
+                          #:color plot-color/c
+                          #:width (>=/c 0)
+                          #:style plot-pen-style/c
+                          #:alpha (real-in 0 1)
+                          #:label (or/c string? pict? #f)
+                          #:degree positive-integer?
                           #:show-equation? boolean?
                           #:mapping (aes-containing/c #:x string?
                                                       #:y string?
-                                                      #:facet (or/c string? #f)
-                                                      #:y-min (or/c rational? #f)
-                                                      #:y-max (or/c rational? #f)
-                                                      #:samples (and/c exact-integer? (>=/c 2))
-                                                      #:color plot-color/c
-                                                      #:width (>=/c 0)
-                                                      #:style plot-pen-style/c
-                                                      #:alpha (real-in 0 1)
-                                                      #:label (or/c string? pict? #f)))
+                                                      #:facet (or/c string? #f)))
                          graphite-renderer/c)]))
 
 (define-renderer (fit #:kws kws #:kw-args kw-args
+                      #:x-min [x-min #f] #:x-max [x-max #f]
                       #:degree [degree 1] #:show-equation? [show-equation? #f]
                       #:mapping [local-mapping (hash)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
@@ -36,4 +39,4 @@
   (run-renderer #:renderer function
                 #:kws kws #:kw-args kw-args
                 #:label (if show-equation? (poly->string fit-line) #f)
-                fit-line))
+                fit-line x-min x-max))
