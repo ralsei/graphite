@@ -1,6 +1,6 @@
 #lang racket
-(require data-frame threading racket/dict racket/hash
-         kw-utils/kw-hash-lambda
+(require data-frame threading racket/hash
+         kw-utils/keyword-apply-sort
          (for-syntax syntax/parse))
 (provide (all-defined-out))
 
@@ -9,12 +9,31 @@
 (define (symbol->keyword s)
   (string->keyword (symbol->string s)))
 
+; thanks sorawee: https://groups.google.com/g/racket-users/c/3_Vc3t0fTGs/m/HpLZQCwADQAJ
+(define-syntax-rule (lambda/kw (kws kw-args . rst) body ...)
+  (let ([f (λ (kws kw-args . rst) body ...)])
+    (define-values (ignored used-kws) (procedure-keywords f))
+    (make-keyword-procedure
+     (λ (actual/kws actual/kw-args . actual/rest)
+       (define-values (used-kws+kw-args left-kws+kw-args)
+         (partition (λ (e) (member (car e) used-kws))
+                    (map cons actual/kws actual/kw-args)))
+       (keyword-apply f
+                      (map car used-kws+kw-args)
+                      (map cdr used-kws+kw-args)
+                      (list* (map car left-kws+kw-args)
+                             (map cdr left-kws+kw-args)
+                             actual/rest))))))
+
+(define-syntax-rule (define/kw (f . rst) body ...)
+  (define f (lambda/kw rst body ...)))
+
 (define-syntax (define-renderer stx)
   (syntax-parse stx
-    [(_ (FN-NAME:id . ARGS:expr)
+    [(_ (FN-NAME:id #:kws KWS:id #:kw-args KW-ARGS:id . ARGS:expr)
         ({~seq KEY:keyword VALUE:expr} ...)
         FN-BODY:expr ...)
-     #'(define (FN-NAME . ARGS)
+     #'(define/kw (FN-NAME KWS KW-ARGS . ARGS)
          (hash 'function (λ ()
                            FN-BODY ...)
                {~@ (keyword->symbol 'KEY) VALUE} ...))]))
@@ -86,16 +105,9 @@
 (define (convert a1 b1 a2 b2 a)
   (/ (+ (* b1 (- a2 a)) (* b2 (- a a1))) (- a2 a1)))
 
-(define run-renderer
-  (kw-hash-lambda args #:kws kw-hash
-    (define renderer (hash-ref kw-hash '#:renderer))
-    (define mapping (hash-ref kw-hash '#:mapping))
-    (define-values (_ kws) (procedure-keywords renderer))
-    (keyword-apply/dict
-     renderer
-     (mapping-override (hash-remove* kw-hash '(#:renderer #:mapping))
-                       (for/hash ([(k v) (in-hash mapping)]
-                                  #:when (and (member (symbol->keyword k) kws)
-                                              (not (and (member k '(x y)) #t))))
-                         (values (symbol->keyword k) v)))
-     args)))
+(define/kw (run-renderer kws kw-args #:renderer renderer
+                         #:kws given-kws #:kw-args given-kwargs . rst)
+  (keyword-apply/sort renderer
+                      (append kws given-kws)
+                      (append kw-args given-kwargs)
+                      rst))

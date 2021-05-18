@@ -20,7 +20,8 @@
                                                       #:label (or/c string? pict? #f)))
                          graphite-renderer/c)]))
 
-(define-renderer (fit #:degree [degree 1] #:show-equation? [show-equation? #f]
+(define-renderer (fit #:kws kws #:kw-args kw-args
+                      #:degree [degree 1] #:show-equation? [show-equation? #f]
                       #:mapping [local-mapping (hash)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
   (define fit-line
@@ -33,7 +34,6 @@
                #:when (equal? facet (gr-group)))
       (cons (list ((gr-x-conv) x) ((gr-y-conv) y)) pts)))
   (run-renderer #:renderer function
-                #:mapping (if show-equation?
-                              (hash-set aes 'label (poly->string fit-line))
-                              aes)
+                #:kws kws #:kw-args kw-args
+                #:label (if show-equation? (poly->string fit-line) #f)
                 fit-line))

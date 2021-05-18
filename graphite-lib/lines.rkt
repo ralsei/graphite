@@ -19,7 +19,8 @@
                                                         #:label (or/c string? pict? #f)))
                            graphite-renderer/c)]))
 
-(define-renderer (lines #:mapping [local-mapping (make-hash)]) ()
+(define-renderer (lines #:kws kws #:kw-args kw-args
+                        #:mapping [local-mapping (make-hash)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 
   (define tbl (make-hash))
@@ -34,7 +35,7 @@
     (hash-map tbl
               (λ (strat pts)
                 (set! color-n (add1 color-n))
-                (run-renderer #:renderer plot:lines #:mapping aes
+                (run-renderer #:renderer plot:lines #:kws kws #:kw-args kw-args
                               #:color (->pen-color color-n) #:label strat
                               pts))
               #t)))

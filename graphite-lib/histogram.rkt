@@ -23,7 +23,8 @@
 (define (mean lst)
   (/ (foldr + 0 lst) (length lst)))
 
-(define-renderer (histogram #:bins [bins 30] #:mapping [local-mapping (make-hash)]) ()
+(define-renderer (histogram #:kws kws #:kw-args kw-args
+                            #:bins [bins 30] #:mapping [local-mapping (make-hash)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 
   (define-values (xs ys)
@@ -51,6 +52,6 @@
                       [else (length ys)]))))
 
   (displayln (hash-count to-plot))
-  (run-renderer #:renderer rectangles #:mapping aes
+  (run-renderer #:renderer rectangles #:kws kws #:kw-args kw-args
                 (for/vector ([(k v) (in-hash to-plot)])
                   (vector (ivl k (+ bin-width k)) (ivl 0 v)))))

@@ -15,14 +15,15 @@
   (for/hash ([(k v) (in-hash list-tbl)])
     (values k (samples->bnw-data v #:iqr-scale iqr-scale))))
 
-(define-renderer (boxplot #:iqr-scale [iqr-scale 1.5] #:mapping [local-mapping (make-hash)])
+(define-renderer (boxplot #:kws kws #:kw-args kw-args
+                          #:iqr-scale [iqr-scale 1.5] #:mapping [local-mapping (make-hash)])
                  (#:y-ticks no-ticks)
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 
   (for/list ([(k v) (in-hash (make-stat-table aes iqr-scale))]
              [c (in-naturals)])
     (list (run-renderer #:renderer box-and-whiskers
-                        #:mapping aes
+                        #:kws kws #:kw-args kw-args
                         #:x c
                         v)
           (y-ticks (list (tick c #t k))))))

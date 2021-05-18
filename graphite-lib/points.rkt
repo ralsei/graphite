@@ -25,7 +25,8 @@
                                                          #:label (or/c string? pict? #f)))
                             graphite-renderer/c)]))
 
-(define-renderer (points #:mapping [local-mapping (make-hash)]) ()
+(define-renderer (points #:kws kws #:kw-args kw-args
+                         #:mapping [local-mapping (make-hash)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
   (define discrete-color (hash-ref aes 'discrete-color #f))
   (define continuous-color (hash-ref aes 'continuous-color #f))
@@ -54,7 +55,7 @@
               (λ (strat pts)
                 (set! color-n (add1 color-n))
                 (run-renderer #:renderer plot:points
-                              #:mapping aes
+                              #:kws kws #:kw-args kw-args
                               #:color (if continuous-color
                                           (->pen-color
                                            (inexact->exact

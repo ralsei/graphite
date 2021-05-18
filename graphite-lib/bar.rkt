@@ -65,7 +65,7 @@
            (for/hash ([(k c) (in-hash count-tbl)])
              (values k (/ c total)))]))
 
-(define (bar-dodged #:mode mode)
+(define (bar-dodged #:mode mode #:kws kws #:kw-args kw-args)
   (define strats (possibilities (gr-data) (hash-ref (gr-global-mapping) 'group)))
   (for/list ([var (in-vector strats)]
              [i (in-naturals)])
@@ -73,26 +73,32 @@
       (bar-simple #:skip (+ (vector-length strats) (hash-ref (gr-global-mapping) 'group-gap 1))
                   #:x-min i
                   #:group var
-                  #:mode mode))))
+                  #:mode mode
+                  #:kws kws #:kw-args kw-args))))
 
 (define (bar-simple #:mode mode #:skip [skip (discrete-histogram-skip)]
-                    #:x-min [x-min 0] #:group [group #f])
+                    #:x-min [x-min 0] #:group [group #f]
+                    #:kws kws #:kw-args kw-args)
   (define tbl (make-count-table mode group))
 
   (run-renderer
    #:renderer discrete-histogram
-   #:mapping (gr-global-mapping)
+   #:kws kws #:kw-args kw-args
    #:skip skip #:x-min x-min #:label group
    (for/vector ([(var cnt) (in-hash tbl)])
      (vector var cnt))))
 
-(define-renderer (bar #:mode [mode 'count] #:mapping [local-mapping (hash)])
+(define-renderer (bar #:kws kws #:kw-args kw-args
+                      #:mode [mode 'count] #:mapping [local-mapping (hash)])
                  (#:y-label (symbol->string mode))
   (parameterize ([gr-global-mapping (mapping-override (gr-global-mapping) local-mapping)])
-    (cond [(hash-ref (gr-global-mapping) 'group #f) (bar-dodged #:mode mode)]
-          [else (bar-simple #:mode mode)])))
+    (cond [(hash-ref (gr-global-mapping) 'group #f) (bar-dodged #:mode mode
+                                                                #:kws kws #:kw-args kw-args)]
+          [else (bar-simple #:mode mode
+                            #:kws kws #:kw-args kw-args)])))
 
-(define-renderer (stacked-bar #:mode [mode 'count] #:mapping [local-mapping (hash)])
+(define-renderer (stacked-bar #:kws kws #:kw-args kw-args
+                              #:mode [mode 'count] #:mapping [local-mapping (hash)])
                  (#:y-label (symbol->string mode))
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 
@@ -111,6 +117,6 @@
                   (hash-ref tbl x 0)))))
 
   (run-renderer #:renderer stacked-histogram
-                #:mapping (gr-global-mapping)
+                #:kws kws #:kw-args kw-args
                 #:labels (vector->list strats)
                 to-plot))
