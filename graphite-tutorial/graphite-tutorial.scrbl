@@ -114,12 +114,11 @@ can start by adding labels, and setting the alpha value of the renderer to see w
          #:y-label "Life expectancy (years)"
          #:mapping (aes #:x "gdpPercap" #:y "lifeExp")
          #:x-transform logarithmic-transform
-         (points #:mapping (aes #:alpha 0.4)))
+         (points #:alpha 0.4))
 ]
 
-All we've done here is added labels and titles via their eponymous keyword arguments, and added an @racket[aes]
-to the renderer @racket[points]'s mapping. Each renderer, including @racket[points], can take its own mapping,
-which overrides the global mapping set in the @racket[graph] form.
+All we've done here is added labels and titles via their eponymous keyword arguments, and added a keyword to
+the renderer @racket[points].
 
 We can then start thinking about relationships between all the data-points. Let's say we wanted to add a linear
 fit to our plot. Then, we can use the @racket[fit] renderer:
@@ -130,8 +129,8 @@ fit to our plot. Then, we can use the @racket[fit] renderer:
          #:y-label "Life expectancy (years)"
          #:mapping (aes #:x "gdpPercap" #:y "lifeExp")
          #:x-transform logarithmic-transform
-         (points #:mapping (aes #:alpha 0.4))
-         (fit #:mapping (aes #:width 3)))
+         (points #:alpha 0.4)
+         (fit #:width 3))
 ]
 
 @racket[fit] defaults to a linear fit (of degree 1), but you can instead do a fit using a higher-degree
@@ -143,14 +142,15 @@ polynomial with the optional @tt{#:degree} argument:
          #:y-label "Life expectancy (years)"
          #:mapping (aes #:x "gdpPercap" #:y "lifeExp")
          #:x-transform logarithmic-transform
-         (points #:mapping (aes #:alpha 0.4))
-         (fit #:degree 3 #:mapping (aes #:width 3)))
+         (points #:alpha 0.4)
+         (fit #:degree 3 #:width 3))
 ]
 but this is ill-advised for the relationship we see here.
 
 Finally, let's try and extrapolate different relationships for each continent. We can stratify the points alone
 by using the aesthetic @tt{#:discrete-color} to @racket[points], which lets us pick a categorical variable
-to change the color on, in this case @tt{"continent"}:
+to change the color on, in this case @tt{"continent"}. Each renderer also takes its own mapping, which can be
+used to map some aesthetic to a variable.
 @examples[#:eval ev #:label #f
   (graph #:data gapminder
          #:title "GDP per capita vs life expectancy"
@@ -158,8 +158,8 @@ to change the color on, in this case @tt{"continent"}:
          #:y-label "Life expectancy (years)"
          #:mapping (aes #:x "gdpPercap" #:y "lifeExp")
          #:x-transform logarithmic-transform
-         (points #:mapping (aes #:alpha 0.4 #:discrete-color "continent"))
-         (fit #:mapping (aes #:width 3)))
+         (points #:alpha 0.4 #:mapping (aes #:discrete-color "continent"))
+         (fit #:width 3))
 ]
 
 Now we're seeing some notable differences from where we've started! We made a scatter plot, transformed its
@@ -192,17 +192,7 @@ We use the @racket[bar] renderer, with no arguments, to take a look at the count
          (bar))
 ]
 
-Unfortunately, the size of the text and the default size of our visualization don't play nice. We can extend
-the width and height of the result with their eponymous keywords:
-@examples[#:eval ev #:label #f
-  (graph #:data gss
-         #:title "Religious preferences, GSS 2016"
-         #:mapping (aes #:x "religion")
-         #:width 600 #:height 400
-         (bar))
-]
-
-Much easier to read. Let's say that we wanted to, instead, look at the @italic{proportion} of each religion
+Let's say that we wanted to, instead, look at the @italic{proportion} of each religion
 among the whole, rather than its individual count. We can specify this with the @tt{#:mode} argument of
 @racket[bar], which can either be @tt{'count} or @tt{'prop}, with @tt{'count} being the default behavior
 we saw before.
@@ -210,7 +200,6 @@ we saw before.
   (graph #:data gss
          #:title "Religious preferences, GSS 2016"
          #:mapping (aes #:x "religion")
-         #:width 600 #:height 400
          (bar #:mode 'prop))
 ]
 
@@ -218,7 +207,8 @@ With the y-axis representing proportions from 0 to 1, we now have a good idea of
 to the last example with Gapminder, let's say that we wanted to split on each region, cross-classifying between
 the categorical variables of @tt{religion} and @tt{bigregion} (Northeast/Midwest/South/West, in the US). To
 accomplish this, we can make the x-axis region, and then "dodge" on the variable @tt{religion} -- effectively,
-making each individual region its own bar chart. To do this, we use the aesthetic @tt{#:group}:
+making each individual region its own bar chart. To do this, we use the aesthetic @tt{#:group}, and adjust
+the plot size:
 @examples[#:eval ev #:label #f
   (graph #:data gss
          #:title "Religious preferences among regions, GSS 2016"
@@ -248,7 +238,6 @@ represent religious preferences in that region. In that case:
          (bar #:mode 'prop))
 ]
 
-Now we've managed to split up our visualization into seperate charts for each region. But, we're now facing
-the issue that they're all in a straight line, and our text isn't displaying the way we want it to on the x-axis.
+Now we've managed to split up our visualization into seperate charts for each region.
 
-This is where the tutorial currently ends, as this hinges on currently unimplemented functionality. More to come!
+This is currently where the tutorial ends. More information to come!

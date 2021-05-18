@@ -55,7 +55,7 @@
   (define facet (hash-ref (gr-global-mapping) 'facet))
   (define groups (vector-sort (possibilities (gr-data) facet)
                               (λ (x y) (string-ci<? (~a x) (~a y)))))
-  (define facet-wrap (hash-ref (gr-global-mapping) 'facet-wrap (vector-length groups)))
+  (define facet-wrap (hash-ref (gr-global-mapping) 'facet-wrap (quotient (vector-length groups) 2)))
   (define wrapped-groups (vector-reshape groups facet-wrap))
 
   (define init-plot
