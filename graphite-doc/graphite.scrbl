@@ -167,15 +167,7 @@ A tutorial on @racketmodname[graphite] is also available;
               [#:mapping local-mapping
                          (aes-containing/c #:x string?
                                            #:y string?
-                                           #:facet (or/c string? #f)
-                                           #:y-min (or/c rational? #f)
-                                           #:y-max (or/c rational? #f)
-                                           #:samples (and/c exact-integer? (>=/c 2))
-                                           #:color plot-color/c
-                                           #:width (>=/c 0)
-                                           #:style plot-pen-style/c
-                                           #:alpha (real-in 0 1)
-                                           #:label (or/c string? pict? #f))
+                                           #:facet (or/c string? #f))
                          (aes)])
          graphite-renderer/c]{
   Makes a line of best fit. Internally, this uses the @racket[simple-polynomial] library's best

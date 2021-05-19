@@ -57,7 +57,7 @@ be a better fit.
 @section{Gapminder}
 
 All data visualization starts with data to visualize, and we begin with excerpts of data from
-@hyperlink["www.gapminder.org/data/" "Gapminder"]: more specifically, we begin with a CSV dump of the
+@hyperlink["https://www.gapminder.org/data/" "Gapminder"]: more specifically, we begin with a CSV dump of the
 data in the @hyperlink["https://cran.r-project.org/web/packages/gapminder/README.html" "Gapminder library
 for R"]. This data is already tidy and in the format we want, so we merely read it in as a CSV using
 @racket[df-read/csv] from the data-frame library:
