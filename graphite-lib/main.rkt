@@ -1,5 +1,5 @@
 #lang racket
-(require file/convertible data-frame pict fancy-app kw-utils/kw-hash-lambda
+(require file/convertible data-frame pict fancy-app
          plot/utils racket/hash
          (except-in plot/pict density lines points)
 
@@ -43,12 +43,12 @@
  (all-from-out "points.rkt")
  (all-from-out "transforms.rkt"))
 
-(define aes
-  (kw-hash-lambda args #:kws kw-hash
-    (when (not (empty? args))
-      (error 'aes "called with non-keyword argument"))
-    (for/hash ([(k v) (in-hash kw-hash)])
-      (values (keyword->symbol k) v))))
+(define/kw (aes kws kw-args . rst)
+  (when (not (empty? rst))
+    (error 'aes "called with non-keyword argument"))
+  (for/hash ([k (in-list kws)]
+             [v (in-list kw-args)])
+    (values (keyword->symbol k) v)))
 
 ; XXX: should we support multiple facets? n facets?
 (define (facet-plot render-fns)
