@@ -1,11 +1,13 @@
 #lang racket
-(require data-frame threading racket/hash
-         (for-syntax syntax/parse))
+(require data-frame threading racket/hash plot/utils
+         (for-syntax syntax/parse racket/syntax))
 (provide (all-defined-out))
 
 (define (keyword->symbol s)
   (string->symbol (keyword->string s)))
 (define (symbol->keyword s)
+  (string->keyword (symbol->string s)))
+(define-for-syntax (symbol->keyword s)
   (string->keyword (symbol->string s)))
 
 ; thanks sorawee: https://groups.google.com/g/racket-users/c/3_Vc3t0fTGs/m/HpLZQCwADQAJ
@@ -32,10 +34,13 @@
     [(_ (FN-NAME:id #:kws KWS:id #:kw-args KW-ARGS:id . ARGS:expr)
         ({~seq KEY:keyword VALUE:expr} ...)
         FN-BODY:expr ...)
+     #:with (KEY-PARAM ...) (map (λ (x)
+                                   (format-id x "plot-~a" (syntax->datum x)))
+                                 (attribute KEY))
      #'(define/kw (FN-NAME KWS KW-ARGS . ARGS)
          (hash 'function (λ ()
                            FN-BODY ...)
-               {~@ (keyword->symbol 'KEY) VALUE} ...))]))
+               {~@ KEY-PARAM VALUE} ...))]))
 
 (define (renderer-function r)
   (hash-ref r 'function))
@@ -48,6 +53,18 @@
     [(_ NAME) #'(define NAME (make-parameter #f))]
     [_ (raise-syntax-error 'define-parameter
                            (format "expected a name and a value, or just a name"))]))
+
+(define (call-while-parameterizing-with metadata thnk)
+  (define (iter alist)
+    (match alist
+      [`((,x . ,y) . ,rst)
+       (parameterize ([x y])
+         (iter rst))]
+      ['() (thnk)]))
+  (iter (hash->list metadata)))
+
+(define-syntax-rule (with-metadata metadata body ...)
+  (call-while-parameterizing-with metadata (λ () body ...)))
 
 (define-parameter gr-data)
 (define-parameter gr-global-mapping)
