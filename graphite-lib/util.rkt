@@ -7,8 +7,6 @@
   (string->symbol (keyword->string s)))
 (define (symbol->keyword s)
   (string->keyword (symbol->string s)))
-(define-for-syntax (symbol->keyword s)
-  (string->keyword (symbol->string s)))
 
 ; thanks sorawee: https://groups.google.com/g/racket-users/c/3_Vc3t0fTGs/m/HpLZQCwADQAJ
 (define-syntax-rule (lambda/kw (kws kw-args . rst) body ...)
@@ -35,7 +33,7 @@
         ({~seq KEY:keyword VALUE:expr} ...)
         FN-BODY:expr ...)
      #:with (KEY-PARAM ...) (map (λ (x)
-                                   (format-id x "plot-~a" (syntax->datum x)))
+                                   (format-id x "plot-~a" (keyword->string (syntax->datum x))))
                                  (attribute KEY))
      #'(define/kw (FN-NAME KWS KW-ARGS . ARGS)
          (hash 'function (λ ()
@@ -112,7 +110,7 @@
   (cond [(empty? generators) (in-parallel '())]
         [else (apply in-parallel generators)]))
 
-(define (hash-remove* hsh keys)
+(define (hash-remove* hsh . keys)
   (for/fold ([ret hsh])
             ([k (in-list keys)])
     (hash-remove ret k)))

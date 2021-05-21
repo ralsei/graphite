@@ -134,11 +134,17 @@
   (define metadata (apply (curry hash-union #:combine (λ (x y) x))
                           (map renderer-metadata renderers)))
 
+  (displayln (hash-ref metadata plot-y-ticks))
+
   (parameterize ([plot-title title]
                  [plot-width width]
                  [plot-height height]
-                 [plot-x-label (if x-label x-label (hash-ref mapping 'x #f))]
-                 [plot-y-label (if y-label y-label (hash-ref mapping 'y #f))]
+                 [plot-x-label (or x-label
+                                   (hash-ref metadata plot-x-label #f)
+                                   (hash-ref mapping 'x #f))]
+                 [plot-y-label (or y-label
+                                   (hash-ref metadata plot-y-label #f)
+                                   (hash-ref mapping 'y #f))]
                  [plot-x-ticks (get-adjusted-ticks x-transform)]
                  [plot-y-ticks (get-adjusted-ticks y-transform)]
                  [plot-legend-anchor legend-anchor]
@@ -156,7 +162,7 @@
                  [gr-x-max x-max]
                  [gr-y-min y-min]
                  [gr-y-max y-max])
-    (with-metadata metadata
+    (with-metadata (hash-remove* metadata plot-x-label plot-y-label)
       (graph-internal #f (map renderer-function renderers)))))
 
 (define (save-pict pict path)
