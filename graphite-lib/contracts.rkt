@@ -6,7 +6,7 @@
 (define graphite-renderer/c
   (and/c hash?
          (λ (v) (hash-has-key? v 'function))
-         (hash/dc [k (or/c symbol? parameter?)]
+         (hash/dc [k symbol?]
                   [v (k) (if (eq? k 'function)
                              (-> (treeof (or/c renderer2d? nonrenderer?)))
                              any/c)])))

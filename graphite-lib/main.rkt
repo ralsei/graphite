@@ -138,9 +138,20 @@
                  [plot-width width]
                  [plot-height height]
                  [plot-x-label (if x-label x-label (hash-ref mapping 'x #f))]
-                 [plot-y-label (if y-label y-label (hash-ref mapping 'y #f))]
-                 [plot-x-ticks (get-adjusted-ticks x-transform)]
-                 [plot-y-ticks (get-adjusted-ticks y-transform)]
+                 [plot-y-label
+                  (cond [(hash-ref metadata 'y-label #f) => identity]
+                        [y-label y-label]
+                        [else (hash-ref mapping 'y #f)])]
+                 [plot-x-ticks
+                  (let ([maybe-x-ticks (hash-ref metadata 'x-ticks #f)])
+                    (if maybe-x-ticks
+                        maybe-x-ticks
+                        (get-adjusted-ticks x-transform)))]
+                 [plot-y-ticks
+                  (let ([maybe-y-ticks (hash-ref metadata 'y-ticks #f)])
+                    (if maybe-y-ticks
+                        maybe-y-ticks
+                       (get-adjusted-ticks y-transform)))]
                  [plot-legend-anchor legend-anchor]
                  ; better defaults
                  [plot-x-far-ticks no-ticks]
@@ -156,8 +167,7 @@
                  [gr-x-max x-max]
                  [gr-y-min y-min]
                  [gr-y-max y-max])
-    (with-metadata metadata
-      (graph-internal #f (map renderer-function renderers)))))
+    (graph-internal #f (map renderer-function renderers))))
 
 (define (save-pict pict path)
   (define ext (path-get-extension path))
