@@ -1,7 +1,7 @@
 #lang racket
 (require fancy-app pict plot/utils
          (prefix-in plot: plot/pict)
-         "contracts.rkt" "util.rkt")
+         "aes.rkt" "renderer.rkt" "util.rkt")
 (provide
  (contract-out [density (->* ()
                              (#:x-min (or/c rational? #f)
@@ -17,10 +17,10 @@
                               #:mapping (aes-containing/c #:x string?
                                                           #:discrete-color (or/c string? #f)
                                                           #:facet (or/c string? #f)))
-                             graphite-renderer/c)]))
+                             graphite-renderer?)]))
 
 (define-renderer (density #:kws kws #:kw-args kw-args
-                          #:mapping [local-mapping (make-hash)]) ()
+                          #:mapping [local-mapping (aes)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 
   (define tbl (make-hash))

@@ -1,6 +1,8 @@
 #lang scribble/manual
-@(require scribble/example (for-label racket plot/utils pict data-frame graphite simple-polynomial
-                                      (except-in plot density lines points)))
+@(require scribble/example (for-label racket plot/utils
+                                      pict data-frame graphite simple-polynomial
+                                      (except-in plot points lines density
+                                                      renderer2d? nonrenderer?)))
 
 @(define ev
    (let ([eval (make-base-eval)])
@@ -35,21 +37,21 @@ A tutorial on @racketmodname[graphite] is also available;
                 [#:width width (or/c rational? #f) (plot-width)]
                 [#:height height (or/c rational? #f) (plot-height)]
                 [#:title title (or/c string? pict? #f) (plot-title)]
-                [#:x-label x-label (or/c string? pict? #f) (plot-x-label)]
-                [#:x-transform x-transform transform? no-transform]
+                [#:x-label x-label (or/c string? pict? #f) #f]
+                [#:x-transform x-transform (or/c transform? #f) #f]
                 [#:x-conv x-conv (or/c (-> any/c real?) #f) #f]
                 [#:x-min x-min (or/c rational? #f) #f]
                 [#:x-max x-max (or/c rational? #f) #f]
-                [#:y-label y-label (or/c string? pict? #f) (plot-y-label)]
-                [#:y-transform y-transform transform? no-transform]
+                [#:y-label y-label (or/c string? pict? #f) #f]
+                [#:y-transform y-transform (or/c transform? #f) #f]
                 [#:y-conv y-conv (or/c (-> any/c real?) #f) #f]
                 [#:y-min y-min (or/c rational? #f) #f]
                 [#:y-max y-max (or/c rational? #f) #f]
                 [#:legend-anchor legend-anchor legend-anchor/c (plot-legend-anchor)]
-                [renderer graphite-renderer/c] ...)
+                [renderer graphite-renderer?] ...)
          pict?]{
   The primary graphing procedure, producing a @racket[pict?]. All positional arguments are
-  @racket[graphite-renderer/c]s to be plotted, as returned by @racket[points], @racket[histogram], et cetera.
+  @racket[graphite-renderer?]s to be plotted, as returned by @racket[points], @racket[histogram], et cetera.
 
   The required argument @tt{#:data} takes a @racket[data-frame?], as provided by the @racketmodname[data-frame]
   library. Note that the data being fed in must be @italic{tidy}, meaning that:
@@ -88,7 +90,7 @@ A tutorial on @racketmodname[graphite] is also available;
   Creates an aesthetic mapping.
 
   These objects are generally passed with the @tt{#:mapping} keyword to either the @racket[graph] procedure or
-  to each individual @racket[graphite-renderer/c] in the render tree. They dictate various aesthetics, dictating
+  to each individual @racket[graphite-renderer?] in the render tree. They dictate various aesthetics, dictating
   how to display the data (such as colors, variables, et cetera), with behavior being dictated by each renderer.
 }
 
@@ -108,10 +110,13 @@ A tutorial on @racketmodname[graphite] is also available;
 
 @section[#:tag "renderers"]{Renderers}
 
-@defthing[graphite-renderer/c contract?]{
-  The result contract of any of the renderers, designed to be fed to @racket[graph].
+@defstruct*[graphite-renderer ([function (-> (treeof (or/c renderer2d? nonrenderer?)))]
+                               [metadata (listof (cons/c parameter? any/c))])]{
+  The result of each renderer.
 
-  This is @italic{not} a boolean predicate, and cannot be used as such.
+  Contains both a thunk returning a @racket[plot] render tree, and an association list of parameters
+  (generally @racket[plot] parameters) to values, used when a renderer requires certain parameters
+  to be set.
 }
 
 @defproc[(points [#:x-min x-min (or/c rational? #f) #f]
@@ -134,7 +139,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                               #:discrete-color (or/c string? #f)
                                               #:continuous-color (or/c string? #f))
                             (aes)])
-         graphite-renderer/c]{
+         graphite-renderer?]{
   Returns a renderer that draws a set of points, for example, to draw a (randomized) scatter plot:
   @examples[#:eval ev #:label #f
     (define (random-data)
@@ -169,7 +174,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                            #:y string?
                                            #:facet (or/c string? #f))
                          (aes)])
-         graphite-renderer/c]{
+         graphite-renderer?]{
   Makes a line of best fit. Internally, this uses the @racket[simple-polynomial] library's best
   fit method. For example:
   @examples[#:eval ev #:label #f
@@ -208,7 +213,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                              #:facet (or/c string? #f)
                                              #:discrete-color (or/c string? #f))
                            (aes)])
-         graphite-renderer/c]{
+         graphite-renderer?]{
   Renders some lines.
 }
 
@@ -235,7 +240,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                            #:facet (or/c string? #f)
                                            #:group (or/c string? #f))
                          (aes)])
-         graphite-renderer/c]{
+         graphite-renderer?]{
   Renders a bar chart.
 }
 
@@ -261,7 +266,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                                    #:facet (or/c string? #f)
                                                    #:group string?)
                                  (aes)])
-         graphite-renderer/c]{
+         graphite-renderer?]{
   Renders a stacked bar chart, stratified by group.
 }
 
@@ -282,7 +287,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                                  #:y (or/c string? #f)
                                                  #:facet (or/c string? #f))
                                (aes)])
-         graphite-renderer/c]{
+         graphite-renderer?]{
   Renders a histogram.
 }
 
@@ -301,7 +306,7 @@ A tutorial on @racketmodname[graphite] is also available;
                                                #:facet (or/c string? #f)
                                                #:discrete-color (or/c string? #f))
                              (aes)])
-         graphite-renderer/c]{
+         graphite-renderer?]{
   Renders estimated density for the given points.
 }
 

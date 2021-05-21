@@ -27,20 +27,16 @@
 (define-syntax-rule (define/kw (f . rst) body ...)
   (define f (lambda/kw rst body ...)))
 
-(define-syntax (define-renderer stx)
+(define-syntax (alist stx)
   (syntax-parse stx
-    [(_ (FN-NAME:id #:kws KWS:id #:kw-args KW-ARGS:id . ARGS:expr)
-        ({~seq KEY:keyword VALUE:expr} ...)
-        FN-BODY:expr ...)
-     #'(define/kw (FN-NAME KWS KW-ARGS . ARGS)
-         (hash 'function (λ ()
-                           FN-BODY ...)
-               {~@ (keyword->symbol 'KEY) VALUE} ...))]))
+    [(_ {~seq KEY:expr VALUE:expr} ...)
+     #'(list {~@ (cons KEY VALUE)} ...)]))
 
-(define (renderer-function r)
-  (hash-ref r 'function))
-(define (renderer-metadata r)
-  (hash-remove r 'function))
+(define (alist-remove-false alist)
+  (match alist
+    ['() '()]
+    [`((,k . #f) . ,rst) (alist-remove-false rst)]
+    [`(,p . ,rst) (cons p (alist-remove-false rst))]))
 
 (define-syntax (define-parameter stx)
   (syntax-parse stx
@@ -95,7 +91,7 @@
   (cond [(empty? generators) (in-parallel '())]
         [else (apply in-parallel generators)]))
 
-(define (hash-remove* hsh keys)
+(define (hash-remove* hsh . keys)
   (for/fold ([ret hsh])
             ([k (in-list keys)])
     (hash-remove ret k)))

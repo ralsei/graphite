@@ -1,15 +1,13 @@
 #lang racket
-(require plot/utils "util.rkt")
-(provide graphite-renderer/c
-         aes? aes-with/c aes-containing/c)
+(require "util.rkt")
+(provide aes aes? aes-with/c aes-containing/c)
 
-(define graphite-renderer/c
-  (and/c hash?
-         (λ (v) (hash-has-key? v 'function))
-         (hash/dc [k symbol?]
-                  [v (k) (if (eq? k 'function)
-                             (-> (treeof (or/c renderer2d? nonrenderer?)))
-                             any/c)])))
+(define/kw (aes kws kw-args . rst)
+  (when (not (empty? rst))
+    (error 'aes "called with non-keyword argument"))
+  (for/hash ([k (in-list kws)]
+             [v (in-list kw-args)])
+    (values (keyword->symbol k) v)))
 
 (define aes? (and/c hash? hash-equal? immutable?))
 

@@ -1,8 +1,7 @@
 #lang racket
 (require fancy-app pict plot/utils
          (prefix-in plot: plot/pict)
-         "contracts.rkt"
-         "util.rkt")
+         "aes.rkt" "renderer.rkt" "util.rkt")
 (provide
  (contract-out [points (->* ()
                             (#:x-min (or/c rational? #f)
@@ -23,10 +22,10 @@
                                                          #:facet (or/c string? #f)
                                                          #:discrete-color (or/c string? #f)
                                                          #:continuous-color (or/c string? #f)))
-                            graphite-renderer/c)]))
+                            graphite-renderer?)]))
 
 (define-renderer (points #:kws kws #:kw-args kw-args
-                         #:mapping [local-mapping (make-hash)]) ()
+                         #:mapping [local-mapping (aes)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
   (define discrete-color (hash-ref aes 'discrete-color #f))
   (define continuous-color (hash-ref aes 'continuous-color #f))
