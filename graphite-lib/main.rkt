@@ -139,8 +139,8 @@
                  [plot-height height]
                  [plot-x-label (if x-label x-label (hash-ref mapping 'x #f))]
                  [plot-y-label
-                  (cond [(hash-ref metadata 'y-label #f) => identity]
-                        [y-label y-label]
+                  (cond [y-label y-label]
+                        [(hash-ref metadata 'y-label #f) => identity]
                         [else (hash-ref mapping 'y #f)])]
                  [plot-x-ticks
                   (let ([maybe-x-ticks (hash-ref metadata 'x-ticks #f)])
