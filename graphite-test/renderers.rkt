@@ -92,7 +92,7 @@
 (define fit-1-df
   (let ([int-data (make-data-frame)])
     (df-add-series! int-data (make-series "x-var" #:data (build-vector 1000 identity)))
-    (df-add-series! int-data (make-series "y-var" #:data (build-vector 1000 cos)))
+    (df-add-series! int-data (make-series "y-var" #:data (build-vector 1000 (λ (x) (expt x 3)))))
     int-data))
 (define fit-1
   (graph #:data fit-1-df
@@ -147,6 +147,26 @@
          (points)
          (fit #:degree 3)))
 
+(define (random-in-list lst)
+  (list-ref lst (random (length lst))))
+
+(define-runtime-path bar-1-data "./test-data/bar-1.dat")
+(define bar-1-df
+  (begin
+    (random-seed 4926)
+    (let ([int-data (make-data-frame)])
+      (df-add-series! int-data (make-series "whatever" #:data (build-vector 1000 (λ (_) (random)))))
+      (df-add-series! int-data
+                      (make-series "strat"
+                                   #:data
+                                   (build-vector 1000 (λ (_) (random-in-list '("a" "b" "c" "d" "q"))))))
+      int-data)))
+(define bar-1
+  (graph #:data bar-1-df
+         #:mapping (aes #:x "strat")
+         #:title "Some random garbage"
+         (bar)))
+
 (module+ test
   (check-draw-steps points-1 points-1-data)
   (check-draw-steps points-2 points-2-data)
@@ -162,4 +182,6 @@
   (check-draw-steps fit-3 fit-3-data)
   (check-draw-steps fit-4 fit-4-data)
   (check-draw-steps fit-5 fit-5-data)
-  (check-draw-steps fit-6 fit-6-data))
+  (check-draw-steps fit-6 fit-6-data)
+
+  (check-draw-steps bar-1 bar-1-data))
