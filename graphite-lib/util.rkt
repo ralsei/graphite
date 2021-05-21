@@ -27,23 +27,16 @@
 (define-syntax-rule (define/kw (f . rst) body ...)
   (define f (lambda/kw rst body ...)))
 
-(define-syntax (define-renderer stx)
+(define-syntax (alist stx)
   (syntax-parse stx
-    [(_ (FN-NAME:id #:kws KWS:id #:kw-args KW-ARGS:id . ARGS:expr)
-        ({~seq KEY:keyword VALUE:expr} ...)
-        FN-BODY:expr ...)
-     #:with (KEY-PARAM ...) (map (λ (x)
-                                   (format-id x "plot-~a" (keyword->string (syntax->datum x))))
-                                 (attribute KEY))
-     #'(define/kw (FN-NAME KWS KW-ARGS . ARGS)
-         (hash 'function (λ ()
-                           FN-BODY ...)
-               {~@ KEY-PARAM VALUE} ...))]))
+    [(_ {~seq KEY:expr VALUE:expr} ...)
+     #'(list {~@ (cons KEY VALUE)} ...)]))
 
-(define (renderer-function r)
-  (hash-ref r 'function))
-(define (renderer-metadata r)
-  (hash-remove r 'function))
+(define (alist-remove-false alist)
+  (match alist
+    ['() '()]
+    [`((,k . #f) . ,rst) (alist-remove-false rst)]
+    [`(,p . ,rst) (cons p (alist-remove-false rst))]))
 
 (define-syntax (define-parameter stx)
   (syntax-parse stx
@@ -51,18 +44,6 @@
     [(_ NAME) #'(define NAME (make-parameter #f))]
     [_ (raise-syntax-error 'define-parameter
                            (format "expected a name and a value, or just a name"))]))
-
-(define (call-while-parameterizing-with metadata thnk)
-  (define (iter alist)
-    (match alist
-      [`((,x . ,y) . ,rst)
-       (parameterize ([x y])
-         (iter rst))]
-      ['() (thnk)]))
-  (iter (hash->list metadata)))
-
-(define-syntax-rule (with-metadata metadata body ...)
-  (call-while-parameterizing-with metadata (λ () body ...)))
 
 (define-parameter gr-data)
 (define-parameter gr-global-mapping)

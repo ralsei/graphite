@@ -1,6 +1,7 @@
 #lang racket
 (require fancy-app plot/pict plot/utils
-         "extern/box-and-whiskers.rkt" "util.rkt")
+         "extern/box-and-whiskers.rkt"
+         "aes.rkt" "renderer.rkt" "util.rkt")
 (provide boxplot)
 
 (define (make-stat-table mapping iqr-scale)
@@ -16,7 +17,7 @@
     (values k (samples->bnw-data v #:iqr-scale iqr-scale))))
 
 (define-renderer (boxplot #:kws kws #:kw-args kw-args
-                          #:iqr-scale [iqr-scale 1.5] #:mapping [local-mapping (make-hash)])
+                          #:iqr-scale [iqr-scale 1.5] #:mapping [local-mapping (aes)])
                  (#:y-ticks no-ticks)
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 

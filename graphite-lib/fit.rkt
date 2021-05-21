@@ -1,8 +1,7 @@
 #lang racket
 (require pict plot/pict plot/utils
          simple-polynomial/base simple-polynomial/fit
-         "contracts.rkt"
-         "util.rkt")
+         "aes.rkt" "renderer.rkt" "util.rkt")
 (provide
  (contract-out [fit (->* ()
                          (#:x-min (or/c rational? #f)
@@ -20,12 +19,12 @@
                           #:mapping (aes-containing/c #:x string?
                                                       #:y string?
                                                       #:facet (or/c string? #f)))
-                         graphite-renderer/c)]))
+                         graphite-renderer?)]))
 
 (define-renderer (fit #:kws kws #:kw-args kw-args
                       #:x-min [x-min #f] #:x-max [x-max #f]
                       #:degree [degree 1] #:show-equation? [show-equation? #f]
-                      #:mapping [local-mapping (hash)]) ()
+                      #:mapping [local-mapping (aes)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
   (define fit-line
     (for/fold ([pts '()]

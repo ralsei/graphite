@@ -1,6 +1,6 @@
 #lang racket
 (require fancy-app plot/pict plot/utils pict
-         "util.rkt" "contracts.rkt")
+         "aes.rkt" "renderer.rkt" "util.rkt")
 (provide
  (contract-out [histogram (->* ()
                                (#:x-min (or/c rational? #f)
@@ -18,13 +18,13 @@
                                 #:mapping (aes-containing/c #:x string?
                                                             #:y string?
                                                             #:facet (or/c string? #f)))
-                               graphite-renderer/c)]))
+                               graphite-renderer?)]))
 
 (define (mean lst)
   (/ (foldr + 0 lst) (length lst)))
 
 (define-renderer (histogram #:kws kws #:kw-args kw-args
-                            #:bins [bins 30] #:mapping [local-mapping (make-hash)]) ()
+                            #:bins [bins 30] #:mapping [local-mapping (aes)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 
   (define-values (xs ys)

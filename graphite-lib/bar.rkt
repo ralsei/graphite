@@ -1,6 +1,6 @@
 #lang racket
 (require fancy-app pict plot/pict plot/utils
-         "contracts.rkt" "util.rkt")
+         "aes.rkt" "renderer.rkt" "util.rkt")
 (provide
  (contract-out
   [bar (->* ()
@@ -25,7 +25,7 @@
              #:mapping (aes-containing/c #:x string?
                                          #:facet (or/c string? #f)
                                          #:group (or/c string? #f)))
-            graphite-renderer/c)]
+            graphite-renderer?)]
   [stacked-bar (->* ()
                     (#:x-min (or/c rational? #f)
                      #:x-max (or/c rational? #f)
@@ -47,7 +47,7 @@
                      #:mapping (aes-containing/c #:x string?
                                                  #:facet (or/c string? #f)
                                                  #:group string?))
-                    graphite-renderer/c)]))
+                    graphite-renderer?)]))
 
 (define (make-count-table mode group)
   (define count-tbl (make-hash))
@@ -90,7 +90,7 @@
 
 (define-renderer (bar #:kws kws #:kw-args kw-args
                       #:group-gap [group-gap 1]
-                      #:mode [mode 'count] #:mapping [local-mapping (hash)])
+                      #:mode [mode 'count] #:mapping [local-mapping (aes)])
                  (#:y-label (symbol->string mode))
   (parameterize ([gr-global-mapping (mapping-override (gr-global-mapping) local-mapping)])
     (cond [(hash-ref (gr-global-mapping) 'group #f) (bar-dodged #:mode mode #:group-gap group-gap
@@ -99,7 +99,7 @@
                             #:kws kws #:kw-args kw-args)])))
 
 (define-renderer (stacked-bar #:kws kws #:kw-args kw-args
-                              #:mode [mode 'count] #:mapping [local-mapping (hash)])
+                              #:mode [mode 'count] #:mapping [local-mapping (aes)])
                  (#:y-label (symbol->string mode))
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 

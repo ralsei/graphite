@@ -3,7 +3,8 @@
          plot/utils racket/hash
          (except-in plot/pict density lines points)
 
-         "contracts.rkt"
+         "aes.rkt"
+         "renderer.rkt"
          "transforms.rkt"
          (except-in "util.rkt" convert)
 
@@ -30,25 +31,20 @@
                             #:y-min (or/c rational? #f)
                             #:y-max (or/c rational? #f)
                             #:legend-anchor legend-anchor/c)
-                           #:rest (non-empty-listof graphite-renderer/c)
+                           #:rest (non-empty-listof graphite-renderer?)
                            pict?)])
- aes save-pict
+ save-pict
+ (struct-out graphite-renderer)
+
+ (all-from-out "aes.rkt")
  (all-from-out "bar.rkt")
  (all-from-out "boxplot.rkt")
- (all-from-out "contracts.rkt")
  (all-from-out "density.rkt")
  (all-from-out "histogram.rkt")
  (all-from-out "fit.rkt")
  (all-from-out "lines.rkt")
  (all-from-out "points.rkt")
  (all-from-out "transforms.rkt"))
-
-(define/kw (aes kws kw-args . rst)
-  (when (not (empty? rst))
-    (error 'aes "called with non-keyword argument"))
-  (for/hash ([k (in-list kws)]
-             [v (in-list kw-args)])
-    (values (keyword->symbol k) v)))
 
 ; XXX: should we support multiple facets? n facets?
 (define (facet-plot render-fns)
@@ -119,42 +115,40 @@
                #:height [height (plot-height)]
                #:title [title (plot-title)]
                #:x-label [x-label #f]
-               #:x-transform [x-transform no-transform]
+               #:x-transform [x-transform #f]
                #:x-conv [x-conv (gr-x-conv)]
                #:x-min [x-min (gr-x-min)]
                #:x-max [x-max (gr-x-max)]
                #:y-label [y-label #f]
-               #:y-transform [y-transform no-transform]
+               #:y-transform [y-transform #f]
                #:y-conv [y-conv (gr-y-conv)]
                #:y-min [y-min (gr-y-min)]
                #:y-max [y-max (gr-y-max)]
                #:legend-anchor [legend-anchor (plot-legend-anchor)]
                . renderers)
-  ; TODO: better metadata conflict detection
-  (define metadata (apply (curry hash-union #:combine (λ (x y) x))
-                          (map renderer-metadata renderers)))
+  (define defaults
+    (alist plot-x-label (hash-ref mapping 'x #f)
+           plot-y-label (hash-ref mapping 'y #f)
+           point-sym 'bullet
+           plot-pen-color-map (or (plot-pen-color-map) 'set1)
+           plot-x-far-ticks no-ticks
+           plot-y-far-ticks no-ticks))
+  (define user-data
+    (alist plot-title title
+           plot-width width
+           plot-height height
+           plot-x-label x-label
+           plot-y-label y-label
+           plot-x-ticks (and x-transform (get-adjusted-ticks x-transform))
+           plot-y-ticks (and y-transform (get-adjusted-ticks y-transform))
+           plot-legend-anchor legend-anchor))
 
-  (displayln (hash-ref metadata plot-y-ticks))
+  (define metadata (alist-remove-false
+                    (append defaults
+                            (append* (map graphite-renderer-metadata renderers))
+                            user-data)))
 
-  (parameterize ([plot-title title]
-                 [plot-width width]
-                 [plot-height height]
-                 [plot-x-label (or x-label
-                                   (hash-ref metadata plot-x-label #f)
-                                   (hash-ref mapping 'x #f))]
-                 [plot-y-label (or y-label
-                                   (hash-ref metadata plot-y-label #f)
-                                   (hash-ref mapping 'y #f))]
-                 [plot-x-ticks (get-adjusted-ticks x-transform)]
-                 [plot-y-ticks (get-adjusted-ticks y-transform)]
-                 [plot-legend-anchor legend-anchor]
-                 ; better defaults
-                 [plot-x-far-ticks no-ticks]
-                 [plot-y-far-ticks no-ticks]
-                 [point-sym 'bullet]
-                 [plot-pen-color-map (or (plot-pen-color-map) 'set1)]
-                 ; our settings
-                 [gr-data data]
+  (parameterize ([gr-data data]
                  [gr-global-mapping mapping]
                  [gr-x-conv (get-conversion-function x-conv x-transform)]
                  [gr-y-conv (get-conversion-function y-conv y-transform)]
@@ -162,8 +156,8 @@
                  [gr-x-max x-max]
                  [gr-y-min y-min]
                  [gr-y-max y-max])
-    (with-metadata (hash-remove* metadata plot-x-label plot-y-label)
-      (graph-internal #f (map renderer-function renderers)))))
+    (with-metadata metadata
+      (graph-internal #f (map graphite-renderer-function renderers)))))
 
 (define (save-pict pict path)
   (define ext (path-get-extension path))
