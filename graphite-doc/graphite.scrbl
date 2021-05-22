@@ -10,10 +10,13 @@
               (require data-frame
                        graphite
                        plot/utils
-                       threading)))
+                       threading
+                       racket/list)))
+     (eval '(random-seed 1337))
      eval))
 
 @title{Graphite: A data visualization library}
+@author{@(author+email "Hazel Levine" "hazel@knightsofthelambdacalcul.us")}
 
 @defmodule[graphite]
 
@@ -154,7 +157,10 @@ A tutorial on @racketmodname[graphite] is also available;
            (points))
   ]
 
-  The optional @tt{#:discrete-color} aesthetic dictates a variable to split on by color.
+  The optional @tt{#:discrete-color} aesthetic dictates a variable to split on by color, in discrete groups.
+
+  Similarly, the @tt{#:continuous-color} aesthetic dictates a continuous (numeric) variable to split on by
+  color. You likely want to use a color-map from the @racketmodname[colormaps] package for this.
 }
 
 @defproc[(fit [#:x-min x-min (or/c rational? #f) #f]
@@ -214,7 +220,23 @@ A tutorial on @racketmodname[graphite] is also available;
                                              #:discrete-color (or/c string? #f))
                            (aes)])
          graphite-renderer?]{
-  Renders some lines.
+  Renders some lines connecting the points of the input sequence. This is useful for plotting a time
+  series.
+
+  As an example, consider a random walk, adapted from the @racketmodname[plot] documentation:
+  @examples[#:eval ev #:label #f
+    (define df (make-data-frame))
+    (define-values (xs ys)
+      (for/fold ([xs (list 0)] [ys (list 0)])
+                ([i (in-range 1 200)])
+        (values (cons i xs) (cons (+ (first ys) (* 1/100 (- (random) 1/2))) ys))))
+    (df-add-series! df (make-series "x-var" #:data (list->vector xs)))
+    (df-add-series! df (make-series "y-var" #:data (list->vector ys)))
+
+    (graph #:data df
+           #:mapping (aes #:x "x-var" #:y "y-var")
+           (lines #:label "Random walk"))
+  ]
 }
 
 @defproc[(bar [#:x-min x-min (or/c rational? #f) 0]
@@ -242,7 +264,13 @@ A tutorial on @racketmodname[graphite] is also available;
                          (aes)])
          graphite-renderer?]{
   Renders a bar chart.
-}
+
+  The @tt{#:mode} argument dictates whether the y-axis should be the count of observations by the x-axis
+  (@tt{'count}), or the relative frequency of those observations (@tt{'prop}).
+
+  The optional @tt{#:group} aesthetic dictates whether the bar should be "dodged", with each bar
+  being broken up into bars based on the group. If this is enabled, the @tt{#:group-gap} argument dictates
+  the space between each sub-chart.
 
 @defproc[(stacked-bar [#:x-min x-min (or/c rational? #f) #f]
                       [#:x-max x-max (or/c rational? #f) #f]
@@ -268,6 +296,12 @@ A tutorial on @racketmodname[graphite] is also available;
                                  (aes)])
          graphite-renderer?]{
   Renders a stacked bar chart, stratified by group.
+
+  The @italic{mandatory} @tt{#:group} aesthetic dictates what variable each bar should be broken up by.
+
+  The @tt{#:mode} argument dictates whether the y-axis should be the count of observations by the x-axis
+  (@tt{'count}), or the relative frequency of those observations (@tt{'prop}). @tt{'prop} does not make much
+  sense for stacked bar charts (everything is 100% of itself), but it can be useful in some scenarios.
 }
 
 @defproc[(histogram [#:x-min x-min (or/c rational? #f) #f]
@@ -288,7 +322,13 @@ A tutorial on @racketmodname[graphite] is also available;
                                                  #:facet (or/c string? #f))
                                (aes)])
          graphite-renderer?]{
-  Renders a histogram.
+  Renders a histogram. This is not the same as a bar chart, as the x-axis must be a continuous variable.
+
+  The argument @tt{#:bins} dictates the number of bins on the x-axis.
+
+  The optional @tt{#:y} aesthetic will be the average of every observation in the given x-axis bin. If not
+  specified, this will default to the count of the number of elements in the bin. Anecdotally, if you use
+  this, you may be better off with @racket[points] or @racket[lines].
 }
 
 @defproc[(density [#:x-min x-min (or/c rational? #f) #f]
@@ -307,7 +347,8 @@ A tutorial on @racketmodname[graphite] is also available;
                                                #:discrete-color (or/c string? #f))
                              (aes)])
          graphite-renderer?]{
-  Renders estimated density for the given points.
+  Renders estimated density for the given points. The only suppported kernel is the Gaussian, as this
+  is the only supported kernel in @racketmodname[plot].
 }
 
 @section[#:tag "transforms"]{Axis Transforms}

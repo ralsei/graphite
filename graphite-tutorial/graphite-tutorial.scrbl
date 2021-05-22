@@ -13,6 +13,7 @@
      eval))
 
 @title{Graphite: a guided tour}
+@author{@(author+email "Hazel Levine" "hazel@knightsofthelambdacalcul.us")}
 
 Graphite is a library for data visualization, designed to create common types of plots with as little
 effort as possible, and allowing for easy manipulation of the plot around the data without having to
