@@ -1,6 +1,6 @@
 #lang scribble/manual
 @(require scribble/example (for-label racket plot/utils
-                                      pict data-frame graphite simple-polynomial
+                                      pict data-frame graphite simple-polynomial colormaps
                                       (except-in plot points lines density
                                                       renderer2d? nonrenderer?)))
 
@@ -271,6 +271,7 @@ A tutorial on @racketmodname[graphite] is also available;
   The optional @tt{#:group} aesthetic dictates whether the bar should be "dodged", with each bar
   being broken up into bars based on the group. If this is enabled, the @tt{#:group-gap} argument dictates
   the space between each sub-chart.
+}
 
 @defproc[(stacked-bar [#:x-min x-min (or/c rational? #f) #f]
                       [#:x-max x-max (or/c rational? #f) #f]
