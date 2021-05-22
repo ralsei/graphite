@@ -88,6 +88,24 @@
          #:title "Random walk"
          (lines)))
 
+(define-runtime-path lines-3-data "./test-data/lines-3.dat")
+(define lines-3-df
+  (begin
+    (random-seed 5010)
+    (let ([int-data (make-data-frame)])
+      (define-values (xs ys)
+        (for/fold ([xs (list 0)] [ys (list 0)])
+                  ([i (in-range 1 200)])
+          (values (cons i xs) (cons (+ (first ys) (* 1/100 (- (random) 1/2))) ys))))
+      (df-add-series! int-data (make-series "x-var" #:data (list->vector xs)))
+      (df-add-series! int-data (make-series "y-var" #:data (list->vector ys)))
+      int-data)))
+(define lines-3
+  (graph #:data lines-3-df
+         #:mapping (aes #:x "x-var" #:y "y-var")
+         #:title "Random walk, 2"
+         (lines)))
+
 (define-runtime-path fit-1-data "./test-data/fit-1.dat")
 (define fit-1-df
   (let ([int-data (make-data-frame)])
@@ -167,6 +185,92 @@
          #:title "Some random garbage"
          (bar)))
 
+(define-runtime-path bar-2-data "./test-data/bar-2.dat")
+(define bar-2-df
+  (let ([int-data (make-data-frame)])
+    (df-add-series! int-data (make-series "x" #:data (vector-append (make-vector 1000 "a")
+                                                                    (vector "b"))))
+    int-data))
+(define bar-2
+  (graph #:data bar-2-df
+         #:mapping (aes #:x "x")
+         #:title "Overpowered"
+         (bar)))
+
+(define-runtime-path bar-3-data "./test-data/bar-3.dat")
+(define bar-3-df
+  (let ([int-data (make-data-frame)])
+    (define-values (xs ys)
+      (for/fold ([xs (vector)] [ys (vector)])
+                ([i (in-range 10)])
+        (values (vector-append xs (make-vector (sqr i) (string-ref "abcdefhijklm" i)))
+                (vector-append ys (make-vector (sqr i) i)))))
+    (df-add-series! int-data (make-series "x-var" #:data xs))
+    (df-add-series! int-data (make-series "y-var" #:data ys)) 
+    int-data))
+(define bar-3
+  (graph #:data bar-3-df
+         #:mapping (aes #:x "x-var" #:y "y-var")
+         (bar #:label "big steppy")))
+
+(define-runtime-path bar-4-data "./test-data/bar-4.dat")
+(define bar-4
+  (graph #:data bar-1-df
+         #:mapping (aes #:x "strat")
+         #:title "Some random garbage, proportionally(tm)"
+         (bar #:mode 'prop)))
+
+(define-runtime-path bar-5-data "./test-data/bar-5.dat")
+(define bar-5
+  (graph #:data bar-1-df
+         #:mapping (aes #:x "strat")
+         (bar #:mode 'prop #:mapping (aes #:group "strat"))))
+
+(define-runtime-path bar-6-data "./test-data/bar-6.dat")
+(define bar-6-df
+  (begin
+    (random-seed 1747)
+    (let ([int-data (make-data-frame)])
+      (define (blah-vector)
+        (build-vector 1000 (λ (_) (random-in-list '("a" "b" "c" "d" "q")))))
+      (df-add-series! int-data (make-series "x-var" #:data (blah-vector)))
+      (df-add-series! int-data (make-series "group-var" #:data (blah-vector)))
+      int-data)))
+(define bar-6
+  (graph #:data bar-6-df
+         #:mapping (aes #:x "x-var")
+         (bar #:mode 'prop #:mapping (aes #:group "group-var"))))
+
+(define-runtime-path stacked-bar-1-data "./test-data/stacked-bar-1.dat")
+(define stacked-bar-1
+  (graph #:data bar-6-df
+         #:mapping (aes #:x "x-var")
+         (stacked-bar #:mapping (aes #:group "group-var"))))
+
+(define-runtime-path histogram-1-data "./test-data/histogram-1.dat")
+(define histogram-1
+  (graph #:data points-5-df
+         #:mapping (aes #:x "x-var")
+         (histogram)))
+
+(define-runtime-path histogram-2-data "./test-data/histogram-2.dat")
+(define histogram-2
+  (graph #:data points-5-df
+         #:mapping (aes #:x "x-var" #:y "y-var")
+         (histogram)))
+
+(define-runtime-path density-1-data "./test-data/density-1.dat")
+(define density-1
+  (graph #:data points-5-df
+         #:mapping (aes #:x "x-var")
+         (density)))
+
+(define-runtime-path density-2-data "./test-data/density-2.dat")
+(define density-2
+  (graph #:data points-5-df
+         #:mapping (aes #:x "x-var")
+         (density #:mapping (aes #:discrete-color "stratify-on"))))
+
 (module+ test
   (check-draw-steps points-1 points-1-data)
   (check-draw-steps points-2 points-2-data)
@@ -176,6 +280,7 @@
 
   (check-draw-steps lines-1 lines-1-data)
   (check-draw-steps lines-2 lines-2-data)
+  (check-draw-steps lines-3 lines-3-data)
 
   (check-draw-steps fit-1 fit-1-data)
   (check-draw-steps fit-2 fit-2-data)
@@ -184,4 +289,17 @@
   (check-draw-steps fit-5 fit-5-data)
   (check-draw-steps fit-6 fit-6-data)
 
-  (check-draw-steps bar-1 bar-1-data))
+  (check-draw-steps bar-1 bar-1-data)
+  (check-draw-steps bar-2 bar-2-data)
+  (check-draw-steps bar-3 bar-3-data)
+  (check-draw-steps bar-4 bar-4-data)
+  (check-draw-steps bar-5 bar-5-data)
+  (check-draw-steps bar-6 bar-6-data)
+
+  (check-draw-steps stacked-bar-1 stacked-bar-1-data)
+
+  (check-draw-steps histogram-1 histogram-1-data)
+  (check-draw-steps histogram-2 histogram-2-data)
+
+  (check-draw-steps density-1 density-1-data)
+  (check-draw-steps density-2 density-2-data))

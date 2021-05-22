@@ -76,9 +76,6 @@
       (define idx (+ x (* cols y)))
       (and (< idx len) (vector-ref vec idx)))))
 
-(define (mapping-override mapping local-mapping)
-  (hash-union mapping local-mapping #:combine (λ (x y) y)))
-
 (define (in-infinite val)
   (in-cycle (in-value val)))
 

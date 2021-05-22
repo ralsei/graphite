@@ -51,7 +51,6 @@
       (values i (cond [(hash-ref aes 'y #f) (mean ys)]
                       [else (length ys)]))))
 
-  (displayln (hash-count to-plot))
   (run-renderer #:renderer rectangles #:kws kws #:kw-args kw-args
                 (for/vector ([(k v) (in-hash to-plot)])
                   (vector (ivl k (+ bin-width k)) (ivl 0 v)))))

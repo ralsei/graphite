@@ -1,6 +1,6 @@
 #lang racket
-(require "util.rkt")
-(provide aes aes? aes-with/c aes-containing/c)
+(require racket/hash "util.rkt")
+(provide aes aes? aes-with/c aes-containing/c mapping-override)
 
 (define/kw (aes kws kw-args . rst)
   (when (not (empty? rst))
@@ -35,3 +35,6 @@
            (if (hash-has-key? kw-hash sym)
                ((hash-ref kw-hash sym) v)
                #t)))))
+
+(define (mapping-override mapping local-mapping)
+  (hash-union mapping local-mapping #:combine (λ (_ y) y)))
