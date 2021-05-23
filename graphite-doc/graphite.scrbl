@@ -68,17 +68,25 @@ A tutorial on @racketmodname[graphite] is also available;
   The required argument @tt{#:mapping} takes a @racket[aes?] that dictates aesthetics to be applied to
   every renderer in the specified tree. Generally, you will want at least an x-axis (@tt{#:x}).
 
-  The @tt{x-conv} and @tt{y-conv} arguments, if given, perform pre-processing of the x-axis and y-axis variable
+  The @tt{#:x-conv} and @tt{#:y-conv} arguments, if given, perform pre-processing of the x-axis and y-axis variable
   (when said variables are not automatically determined). For example, if you wanted to place dates on the
   x-axis, this could be a function converting your preferred date format to seconds since the UNIX epoch.
 
-  The @tt{x-transform} and @tt{y-transform} arguments, if given, take a @racket[transform?] to adjust the x and
+  The @tt{#:x-transform} and @tt{#:y-transform} arguments, if given, take a @racket[transform?] to adjust the x and
   y axes, as well as the ticks. For example, if you wanted to place a logarithmic transform on the x-axis, you
-  could specify @racket[logarithmic-transform]. Transforms are applied @italic{after} the respective @tt{x-conv}
-  or @racket{y-conv} function, if present.
+  could specify @racket[logarithmic-transform]. Transforms are applied @italic{after} the respective @tt{#:x-conv}
+  or @racket{#:y-conv} function, if present.
 
-  When given, the @tt{x-min} (etc.) arguments determine the bounds of the plot, but not the bounds of the
+  When given, the @tt{#:x-min} (etc.) arguments determine the bounds of the plot, but not the bounds of the
   individual renderers. For this, the data should be trimmed before being passed in.
+
+  The aesthetic @tt{#:facet}, specified in the @tt{#:mapping} argument, dictates whether to facet on a
+  single categorical variable. If this is selected, Graphite will split the plot into subplots based on that
+  variable, into a grid. This aesthetic does nothing if not applied globally.
+
+  The optional @tt{#:facet-wrap} argument dictates how many columns should be drawn before wrapping to a new
+  line. By default, this is the square root of the number of observations in the @tt{#:facet} variable, creating
+  a grid.
 }
 
 @defproc[(save-pict [pict pict?]
@@ -90,8 +98,12 @@ A tutorial on @racketmodname[graphite] is also available;
 
 @section[#:tag "aesthetics"]{Aesthetic Mappings}
 
+Aesthetic mappings are used to map a given "aesthetic" (such as the x-axis, y-axis, or color) to a variable. When
+doing this, the given aesthetic will be "split" on that variable. Every renderer, as well as @racket[graph],
+takes an aesthetic mapping using the @tt{#:mapping} keyword.
+
 @defproc[(aes [#:<key> value any/c] ...) aes?]{
-  Creates an aesthetic mapping.
+  Creates an aesthetic mapping, with each @tt{#:<key>} being mapped to each value.
 
   These objects are generally passed with the @tt{#:mapping} keyword to either the @racket[graph] procedure or
   to each individual @racket[graphite-renderer?] in the render tree. They dictate various aesthetics, dictating

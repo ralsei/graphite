@@ -122,7 +122,7 @@
                     #:x-max (gr-x-max)
                     #:y-min (gr-y-min)
                     #:y-max (gr-y-max)
-                    #:title (or group (plot-title))
+                    #:title (or (and group (~a group)) (plot-title))
                     (parameterize ([gr-group group])
                       (for/list ([render-fn (in-list render-fns)])
                         (render-fn))))]))

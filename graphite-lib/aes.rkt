@@ -21,7 +21,7 @@
          (for/and ([(k v) (in-hash kw-hash)])
            (define sym (keyword->symbol k))
            (and (hash-has-key? aes sym)
-                ((hash-ref kw-hash sym) v))))))
+                (v (hash-ref aes sym)))))))
 
 ; aes optionally has these values, with these contracts
 (define/kw (aes-containing/c kws kw-args . rst)
