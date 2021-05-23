@@ -236,6 +236,8 @@ represent religious preferences in that region. In that case:
 @examples[#:eval ev #:label #f
   (graph #:data gss
          #:mapping (aes #:x "religion" #:facet "bigregion")
+         #:width 700 #:height 700
+         #:x-conv (λ (x) (substring x 0 2))
          (bar #:mode 'prop))
 ]
 

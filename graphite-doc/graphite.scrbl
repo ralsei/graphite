@@ -1,6 +1,6 @@
 #lang scribble/manual
 @(require scribble/example (for-label racket plot/utils
-                                      pict data-frame graphite simple-polynomial colormaps
+                                      pict data-frame graphite simple-polynomial
                                       (except-in plot points lines density
                                                       renderer2d? nonrenderer?)))
 
@@ -50,6 +50,7 @@ A tutorial on @racketmodname[graphite] is also available;
                 [#:y-conv y-conv (or/c (-> any/c real?) #f) #f]
                 [#:y-min y-min (or/c rational? #f) #f]
                 [#:y-max y-max (or/c rational? #f) #f]
+                [#:facet-wrap facet-wrap (or/c positive-integer? #f) #f]
                 [#:legend-anchor legend-anchor legend-anchor/c (plot-legend-anchor)]
                 [renderer graphite-renderer?] ...)
          pict?]{
@@ -160,7 +161,7 @@ A tutorial on @racketmodname[graphite] is also available;
   The optional @tt{#:discrete-color} aesthetic dictates a variable to split on by color, in discrete groups.
 
   Similarly, the @tt{#:continuous-color} aesthetic dictates a continuous (numeric) variable to split on by
-  color. You likely want to use a color-map from the @racketmodname[colormaps] package for this.
+  color. You likely want to use a continuous colormap for this.
 }
 
 @defproc[(fit [#:x-min x-min (or/c rational? #f) #f]

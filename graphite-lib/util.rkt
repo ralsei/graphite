@@ -1,5 +1,5 @@
 #lang racket
-(require data-frame threading racket/hash
+(require data-frame threading racket/hash plot/pict pict
          (for-syntax syntax/parse))
 (provide (all-defined-out))
 
@@ -104,3 +104,18 @@
                                   (make-immutable-hash (map cons given-kws given-kwargs))
                                   #:combine (λ (_ y) y))
                       rst))
+
+(define (plot-extras-size plotpict)
+  (match-define (vector (vector x-min x-max)
+                        (vector y-min y-max))
+    (plot-pict-bounds plotpict))
+  (match-define (vector x-left y-bottom)
+    ((plot-pict-plot->dc plotpict) (vector x-min y-min)))
+  (match-define (vector x-right y-top)
+    ((plot-pict-plot->dc plotpict) (vector x-max y-max)))
+
+  (define inner-width (- x-right x-left))
+  (define inner-height (- y-bottom y-top))
+
+  (values (- (pict-width plotpict) inner-width)
+          (- (pict-height plotpict) inner-height)))

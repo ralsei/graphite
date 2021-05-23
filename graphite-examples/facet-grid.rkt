@@ -5,10 +5,13 @@
 
 (define all-data (df-read/csv "./data/gss_sm.csv"))
 
-(graph #:data all-data
-       #:title "Age vs. number of children among different genders and races"
-       #:x-label "Age (yrs)"
-       #:y-label "# of children"
-       #:mapping (aes #:x "age" #:y "childs" #:facet "race")
-       (points #:alpha 0.2)
-       (fit #:width 3))
+(define p (graph #:data all-data
+                #:title "Age vs. number of children among different genders and races"
+                #:x-label "Age (yrs)"
+                #:y-label "# of children"
+                #:mapping (aes #:x "age" #:y "childs" #:facet "race")
+                #:facet-wrap 2
+                #:height 400
+                #:width 400
+                (points #:alpha 0.2)
+                (fit #:width 3)))
