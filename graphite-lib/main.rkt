@@ -1,7 +1,7 @@
 #lang racket
 (require file/convertible data-frame pict fancy-app
          plot/utils racket/hash
-         (except-in plot/pict density lines points)
+         (except-in plot/no-gui density lines points)
 
          "aes.rkt"
          "renderer.rkt"

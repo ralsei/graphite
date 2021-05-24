@@ -1,5 +1,5 @@
 #lang racket
-(require fancy-app plot/pict plot/utils pict
+(require fancy-app plot/no-gui plot/utils pict
          "aes.rkt" "renderer.rkt" "util.rkt")
 (provide
  (contract-out [histogram (->* ()

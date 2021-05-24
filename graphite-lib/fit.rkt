@@ -1,5 +1,5 @@
 #lang racket
-(require pict plot/pict plot/utils
+(require pict plot/no-gui plot/utils
          simple-polynomial/base simple-polynomial/fit
          "aes.rkt" "renderer.rkt" "util.rkt")
 (provide

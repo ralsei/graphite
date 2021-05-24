@@ -1,5 +1,5 @@
 #lang racket
-(require data-frame threading racket/hash plot/pict pict
+(require data-frame threading racket/hash plot/no-gui pict
          (for-syntax syntax/parse))
 (provide (all-defined-out))
 

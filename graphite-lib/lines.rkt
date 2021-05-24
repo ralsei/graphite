@@ -1,6 +1,6 @@
 #lang racket
 (require fancy-app pict plot/utils
-         (prefix-in plot: plot/pict)
+         (prefix-in plot: plot/no-gui)
          "aes.rkt" "renderer.rkt" "util.rkt")
 (provide
  (contract-out [lines (->* ()

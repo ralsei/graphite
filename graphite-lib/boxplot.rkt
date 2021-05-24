@@ -1,5 +1,5 @@
 #lang racket
-(require fancy-app plot/pict plot/utils
+(require fancy-app plot/no-gui plot/utils
          "extern/box-and-whiskers.rkt"
          "aes.rkt" "renderer.rkt" "util.rkt")
 (provide boxplot)

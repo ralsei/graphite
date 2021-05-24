@@ -1,5 +1,5 @@
 #lang racket
-(require fancy-app pict plot/pict plot/utils
+(require fancy-app pict plot/no-gui plot/utils
          "aes.rkt" "renderer.rkt" "util.rkt")
 (provide
  (contract-out

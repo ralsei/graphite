@@ -19,7 +19,7 @@
 
 (require math/statistics
          plot/utils
-         plot/pict
+         plot/no-gui
          racket/match
          racket/contract
          racket/sequence)
