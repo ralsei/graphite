@@ -1,5 +1,5 @@
 #lang racket
-(require data-frame threading racket/hash plot/no-gui pict
+(require data-frame threading racket/hash plot/utils pict
          (for-syntax syntax/parse))
 (provide (all-defined-out))
 
@@ -105,17 +105,6 @@
                                   #:combine (λ (_ y) y))
                       rst))
 
-(define (plot-extras-size plotpict)
-  (match-define (vector (vector x-min x-max)
-                        (vector y-min y-max))
-    (plot-pict-bounds plotpict))
-  (match-define (vector x-left y-bottom)
-    ((plot-pict-plot->dc plotpict) (vector x-min y-min)))
-  (match-define (vector x-right y-top)
-    ((plot-pict-plot->dc plotpict) (vector x-max y-max)))
-
-  (define inner-width (- x-right x-left))
-  (define inner-height (- y-bottom y-top))
-
-  (values (- (pict-width plotpict) inner-width)
-          (- (pict-height plotpict) inner-height)))
+(define (background-rectangle width height)
+  (colorize (filled-rectangle width height)
+            (->color (plot-background))))

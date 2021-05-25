@@ -37,16 +37,17 @@
          (density)))
 
 ; stress test. this one takes a while to render
-(define-runtime-path facet-4-data "./test-data/facet-4.dat")
-(define facet-4
-  (graph #:data facet-1-df
-         #:mapping (aes #:x "stratify-on" #:facet "x-var")
-         #:width 10000
-         #:height 10000
-         (bar)))
+; OOMs the test server, so commented out unless running locally...
+;; (define-runtime-path facet-4-data "./test-data/facet-4.dat")
+;; (define facet-4
+;;   (graph #:data facet-1-df
+;;          #:mapping (aes #:x "stratify-on" #:facet "x-var")
+;;          #:width 10000
+;;          #:height 10000
+;;          (bar)))
 
 (module+ test
   (check-draw-steps facet-1 facet-1-data)
   (check-draw-steps facet-2 facet-2-data)
-  (check-draw-steps facet-3 facet-3-data)
-  (check-draw-steps facet-4 facet-4-data))
+  (check-draw-steps facet-3 facet-3-data))
+  ; (check-draw-steps facet-4 facet-4-data))

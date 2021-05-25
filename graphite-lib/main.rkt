@@ -1,11 +1,11 @@
 #lang racket
-(require file/convertible data-frame pict fancy-app
-         plot/utils racket/hash
+(require file/convertible data-frame pict fancy-app plot/utils
          (except-in plot/no-gui density lines points)
 
          "aes.rkt"
          "renderer.rkt"
          "transforms.rkt"
+         "with-area.rkt"
          (except-in "util.rkt" convert)
 
          "bar.rkt"
@@ -56,57 +56,49 @@
   (define wrapped-groups (vector-reshape groups facet-wrap))
 
   (define metrics-plot
-    (parameterize ([gr-global-mapping (hash-remove (gr-global-mapping) 'facet)]
-                   [plot-title #f])
-      (graph-internal #f render-fns wrap)))
+    (parameterize ([gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
+      (graph-internal #f render-fns)))
   (match-define (vector (vector x-min x-max)
                         (vector y-min y-max))
     (plot-pict-bounds metrics-plot))
-  (define-values (x-extras y-extras) (plot-extras-size metrics-plot))
+  (define-values (left right bot top) (plot-extras-size metrics-plot))
 
-  (define init-plot
-    (parameterize ([gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
-      (graph-internal #f render-fns wrap)))
+  ; p rows x q columns
+  (define grid-p (vector-length wrapped-groups))
+  (define grid-q (vector-length (vector-ref wrapped-groups 0)))
 
-  (define exact-x-extras (inexact->exact (round x-extras)))
-  (define exact-y-extras (inexact->exact (round y-extras)))
-
-  (define height-no-extras (round (/ (- (pict-height init-plot) exact-x-extras)
-                                     (vector-length wrapped-groups))))
-  (define width-no-extras (round (/ (- (pict-width init-plot) exact-y-extras)
-                                    (vector-length (vector-ref wrapped-groups 0)))))
+  (define width (inexact->exact (round (/ (- (plot-width) left (* grid-q right)) grid-q))))
+  ; FIXME: figure out why height is sporadic
+  (define height (inexact->exact (round (/ (- (plot-height) (* 2 bot) (* grid-p top)) grid-p))))
 
   (define (run-plot group [with-x-extras? #f] [with-y-extras? #f])
     (parameterize ([plot-x-ticks (if with-x-extras? (plot-x-ticks) no-ticks)]
-                   [plot-x-label (if with-x-extras? (plot-x-label) #f)]
+                   [plot-x-label (and with-x-extras? (plot-x-label))]
                    [plot-y-ticks (if with-y-extras? (plot-y-ticks) no-ticks)]
-                   [plot-y-label (if with-y-extras? (plot-y-label) #f)]
-                   [plot-height (if with-x-extras?
-                                    (+ height-no-extras exact-x-extras)
-                                    height-no-extras)]
-                   [plot-width (if with-y-extras?
-                                   (+ width-no-extras exact-y-extras)
-                                   width-no-extras)])
+                   [plot-y-label (and with-y-extras? (plot-y-label))])
       (if group
-          (graph-internal group render-fns wrap)
-          (filled-rectangle (plot-width) (plot-height)
-                            #:color (plot-background)
-                            #:border-color (plot-background)))))
+          (plot-with-area (thunk (graph-internal group render-fns)) width height)
+          (background-rectangle width (+ height bot top))))) ; only appears at the bottom
 
   (define (plot-row group-vector [with-x-extras? #f])
     (for/fold ([plt (run-plot (vector-ref group-vector 0) with-x-extras? #t)])
               ([grp (vector-drop group-vector 1)])
-      (hc-append plt (run-plot grp with-x-extras? #f))))
+      (ht-append plt (run-plot grp with-x-extras? #f))))
 
-  (parameterize ([gr-x-min (if (not (gr-x-min)) x-min (gr-x-min))]
-                 [gr-x-max (if (not (gr-x-max)) x-max (gr-x-max))]
-                 [gr-y-min (if (not (gr-y-min)) y-min (gr-y-min))]
-                 [gr-y-max (if (not (gr-y-max)) y-max (gr-y-max))])
-    (vc-append
-      (for/fold ([plt (blank)])
-                ([grp-vector (in-vector (vector-drop-right wrapped-groups 1))])
-        (vc-append plt (plot-row grp-vector)))
-      (plot-row (vector-ref wrapped-groups (sub1 (vector-length wrapped-groups))) #t))))
+  (define almost
+    (parameterize ([gr-x-min (if (not (gr-x-min)) x-min (gr-x-min))]
+                   [gr-x-max (if (not (gr-x-max)) x-max (gr-x-max))]
+                   [gr-y-min (if (not (gr-y-min)) y-min (gr-y-min))]
+                   [gr-y-max (if (not (gr-y-max)) y-max (gr-y-max))])
+      (vc-append
+        (for/fold ([plt (blank)])
+                  ([grp-vector (in-vector (vector-drop-right wrapped-groups 1))])
+          (vc-append plt (plot-row grp-vector)))
+        (plot-row (vector-ref wrapped-groups (sub1 (vector-length wrapped-groups))) #t))))
+
+  (cc-superimpose (background-rectangle (pict-width almost)
+                                        (pict-height almost))
+                  almost))
 
 (define (get-conversion-function conv transform)
   (cond [(and conv transform) (compose (transform-function transform) conv)]
@@ -114,18 +106,15 @@
         [transform (transform-function transform)]
         [else identity]))
 
-(define (graph-internal group render-fns wrap)
-  (define facet (and (hash-ref (gr-global-mapping) 'facet #f) #t))
-  (cond [(and (not group) facet) (facet-plot render-fns wrap)]
-        [else
-         (plot-pict #:x-min (gr-x-min)
-                    #:x-max (gr-x-max)
-                    #:y-min (gr-y-min)
-                    #:y-max (gr-y-max)
-                    #:title (or (and group (~a group)) (plot-title))
-                    (parameterize ([gr-group group])
-                      (for/list ([render-fn (in-list render-fns)])
-                        (render-fn))))]))
+(define (graph-internal group render-fns)
+  (plot-pict #:x-min (gr-x-min)
+             #:x-max (gr-x-max)
+             #:y-min (gr-y-min)
+             #:y-max (gr-y-max)
+             #:title (or (and group (~a group)) (plot-title))
+             (parameterize ([gr-group group])
+               (for/list ([render-fn (in-list render-fns)])
+                 (render-fn)))))
 
 (define (graph #:data data #:mapping mapping
                #:width [width (plot-width)]
@@ -175,7 +164,9 @@
                  [gr-y-min y-min]
                  [gr-y-max y-max])
     (with-metadata metadata
-      (graph-internal #f (map graphite-renderer-function renderers) facet-wrap))))
+      (define render-fns (map graphite-renderer-function renderers))
+      (cond [(hash-ref mapping 'facet #f) (facet-plot render-fns facet-wrap)]
+            [else (graph-internal #f render-fns)]))))
 
 (define (save-pict pict path)
   (define ext (path-get-extension path))

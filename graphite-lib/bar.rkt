@@ -85,6 +85,7 @@
    #:renderer discrete-histogram
    #:kws kws #:kw-args kw-args
    #:skip skip #:x-min x-min #:label group
+   #:add-ticks? (not (equal? (plot-x-ticks) no-ticks))
    (for/vector ([(var cnt) (in-hash tbl)])
      (vector var cnt))))
 
@@ -120,4 +121,5 @@
   (run-renderer #:renderer stacked-histogram
                 #:kws kws #:kw-args kw-args
                 #:labels (vector->list strats)
+                #:add-ticks? (not (equal? (plot-x-ticks) no-ticks))
                 to-plot))

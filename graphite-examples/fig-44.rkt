@@ -7,11 +7,10 @@
 
 (graph #:data all-data
        #:mapping (aes #:x "year" #:y "gdpPercap"
-                      #:discrete-color "country" #:facet "continent")
+                        #:discrete-color "country" #:facet "continent")
        #:x-label "Year" #:y-label "GDP per capita (USD)"
        #:y-transform logarithmic-transform
-       #:y-max 5.1
-       #:width 400 #:height 400
+       #:width 1200 #:height 500
        #:legend-anchor 'no-legend
        (lines #:color "gray")
        (fit #:width 2))
