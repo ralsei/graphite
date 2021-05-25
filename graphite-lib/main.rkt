@@ -61,7 +61,7 @@
   (match-define (vector (vector x-min x-max)
                         (vector y-min y-max))
     (plot-pict-bounds metrics-plot))
-  (define-values (left right bot top) (plot-extras-size metrics-plot))
+  (define-values (left right top bot) (plot-extras-size metrics-plot))
 
   ; p rows x q columns
   (define grid-p (vector-length wrapped-groups))
@@ -69,7 +69,7 @@
 
   (define width (inexact->exact (round (/ (- (plot-width) left (* grid-q right)) grid-q))))
   ; FIXME: figure out why height is sporadic
-  (define height (inexact->exact (round (/ (- (plot-height) (* 2 bot) (* grid-p top)) grid-p))))
+  (define height (inexact->exact (round (/ (- (plot-height) bot (* grid-p top)) grid-p))))
 
   (define (run-plot group [with-x-extras? #f] [with-y-extras? #f])
     (parameterize ([plot-x-ticks (if with-x-extras? (plot-x-ticks) no-ticks)]
