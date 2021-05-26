@@ -13,6 +13,7 @@
                        threading
                        racket/list)))
      (eval '(random-seed 1337))
+     (eval '(define organdata (df-read/csv "data/organdata.csv" #:na "NA")))
      eval))
 
 @title{Graphite: A data visualization library}
@@ -363,6 +364,57 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
          graphite-renderer?]{
   Renders estimated density for the given points. The only suppported kernel is the Gaussian, as this
   is the only supported kernel in @racketmodname[plot].
+}
+
+@defproc[(boxplot [#:invert? invert? boolean? #f]
+                  [#:iqr-scale iqr-scale real? 1.5]
+                  [#:gap gap (real-in 0 1) (discrete-histogram-gap)]
+                  [#:box-color box-color plot-color/c (rectangle-color)]
+                  [#:box-style box-style plot-brush-style/c (rectangle-style)]
+                  [#:box-line-color box-line-color plot-color/c (rectangle-line-color)]
+                  [#:box-line-width box-line-width (>=/c 0) (rectangle-line-width)]
+                  [#:box-line-style box-line-style plot-pen-style/c (rectangle-line-style)]
+                  [#:box-alpha box-alpha (real-in 0 1) (rectangle-alpha)]
+                  [#:show-outliers? show-outliers? boolean? #t]
+                  [#:outlier-color outlier-color plot-color/c (point-color)]
+                  [#:outlier-sym outlier-sym point-sym/c (point-sym)]
+                  [#:outlier-fill-color outlier-fill-color (or/c plot-color/c 'auto) 'auto]
+                  [#:outlier-size outlier-size (>=/c 0) (point-size)]
+                  [#:outlier-line-width outlier-line-width (>=/c 0) (point-line-width)]
+                  [#:outlier-alpha outlier-alpha (real-in 0 1) (point-alpha)]
+                  [#:show-whiskers? show-whiskers? boolean? #t]
+                  [#:whiskers-color whiskers-color plot-color/c (line-color)]
+                  [#:whiskers-width whiskers-width (>=/c 0) (line-width)]
+                  [#:whiskers-style whiskers-style plot-pen-style/c (line-style)]
+                  [#:whiskers-alpha whiskers-alpha (real-in 0 1) (line-alpha)]
+                  [#:show-median? show-median? boolean? #t]
+                  [#:median-color median-color plot-color/c (line-color)]
+                  [#:median-width median-width (>=/c 0) (line-width)]
+                  [#:median-style median-style plot-pen-style/c (line-style)]
+                  [#:median-alpha median-alpha (real-in 0 1) (line-alpha)]
+                  [#:mapping local-mapping
+                             (aes-containing/c #:x string?
+                                               #:y string?
+                                               #:facet (or/c string? #f))
+                             (aes)])
+        graphite-renderer?]{
+  Renders a box-and-whisker plot.
+
+  The optional @tt{#:invert?} argument, if true, will draw the box-and-whisker plots lengthwise (left-to-right)
+  rather than top-to-bottom. This means that the axes will have to be inverted. For example:
+  @examples[#:eval ev #:label #f
+    (graph #:data organdata
+           #:mapping (aes #:x "country" #:y "donors")
+           (boxplot))
+    (graph #:data organdata
+           #:mapping (aes #:x "donors" #:y "country")
+           (boxplot #:invert? #t))
+  ]
+  where the second graph is wildly preferable.
+
+  The optional @tt{#:iqr-scale} argument is the multiplier used to determine the lower and upper limits (IQR)
+  and which points are considered arguments. These limits are calculated as @racket[(* iqr-scale (- Q3 Q1))],
+  where Q1 and Q3 are (respectively) the first and third quantile of the data.
 }
 
 @section[#:tag "transforms"]{Axis Transforms}

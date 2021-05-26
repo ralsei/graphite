@@ -271,6 +271,30 @@
          #:mapping (aes #:x "x-var")
          (density #:mapping (aes #:discrete-color "stratify-on"))))
 
+(define-runtime-path boxplot-1-data "./test-data/boxplot-1.dat")
+(define boxplot-1
+  (graph #:data bar-1-df
+         #:mapping (aes #:x "strat" #:y "whatever")
+         (boxplot)))
+
+(define-runtime-path boxplot-2-data "./test-data/boxplot-2.dat")
+(define boxplot-2
+  (graph #:data bar-1-df
+         #:mapping (aes #:x "whatever" #:y "strat")
+         (boxplot #:invert? #t)))
+
+(define-runtime-path boxplot-3-data "./test-data/boxplot-3.dat")
+(define boxplot-3
+  (graph #:data bar-1-df
+         #:mapping (aes #:x "strat" #:y "whatever")
+         (boxplot #:iqr-scale 0.5)))
+
+(define-runtime-path boxplot-4-data "./test-data/boxplot-4.dat")
+(define boxplot-4
+  (graph #:data bar-1-df
+         #:mapping (aes #:x "strat" #:y "whatever")
+         (boxplot #:iqr-scale 0.5 #:show-outliers? #f #:show-whiskers? #f)))
+
 (module+ test
   (check-draw-steps points-1 points-1-data)
   (check-draw-steps points-2 points-2-data)
@@ -302,4 +326,9 @@
   (check-draw-steps histogram-2 histogram-2-data)
 
   (check-draw-steps density-1 density-1-data)
-  (check-draw-steps density-2 density-2-data))
+  (check-draw-steps density-2 density-2-data)
+
+  (check-draw-steps boxplot-1 boxplot-1-data)
+  (check-draw-steps boxplot-2 boxplot-2-data)
+  (check-draw-steps boxplot-3 boxplot-3-data)
+  (check-draw-steps boxplot-4 boxplot-4-data))
