@@ -1,5 +1,9 @@
-#lang racket
-(require fancy-app plot/utils)
+#lang racket/base
+(require fancy-app
+         plot/utils
+         racket/contract/base
+         racket/function)
+
 (provide (contract-out [struct transform ((function (-> any/c any/c))
                                           (inverse (-> any/c any/c))
                                           (axis-ticks ticks?))]

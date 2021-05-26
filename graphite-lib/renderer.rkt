@@ -1,7 +1,12 @@
-#lang racket
-(require plot/utils
-         "util.rkt"
-         (for-syntax syntax/parse racket/syntax))
+#lang racket/base
+(require (for-syntax racket/base
+                     racket/syntax
+                     syntax/parse)
+         plot/utils
+         racket/contract/base
+         racket/match
+         "util.rkt")
+
 (provide
  (contract-out
   [struct graphite-renderer ((function (-> (treeof (or/c renderer2d? nonrenderer?))))

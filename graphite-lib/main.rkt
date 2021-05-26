@@ -1,20 +1,35 @@
-#lang racket
-(require file/convertible data-frame pict fancy-app plot/utils
-         (except-in plot/no-gui density lines points)
-
+#lang racket/base
+(require data-frame
+         fancy-app
+         file/convertible
+         pict
+         (except-in plot/no-gui
+                    density
+                    lines
+                    points)
+         plot/utils
+         racket/contract/base
+         racket/format
+         racket/function
+         racket/list
+         racket/match
+         racket/math
+         racket/path
+         racket/vector
          "aes.rkt"
-         "renderer.rkt"
-         "transforms.rkt"
-         "with-area.rkt"
-         (except-in "util.rkt" convert)
-
          "bar.rkt"
          "boxplot.rkt"
          "density.rkt"
-         "histogram.rkt"
          "fit.rkt"
+         "histogram.rkt"
          "lines.rkt"
-         "points.rkt")
+         "points.rkt"
+         "renderer.rkt"
+         "transforms.rkt"
+         (except-in "util.rkt"
+                    convert)
+         "with-area.rkt")
+
 (provide
  (contract-out [graph (->* (#:data data-frame? #:mapping aes?)
                            (#:width (or/c rational? #f)
@@ -56,12 +71,14 @@
   (define wrapped-groups (vector-reshape groups facet-wrap))
 
   (define metrics-plot
-    (parameterize ([gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
+    (parameterize ([gr-global-mapping (hash-remove (gr-global-mapping) 'facet)]
+                   [plot-title "a"]) ; facets always have titles, and we need this to calculate the
+                                     ; top metric
       (graph-internal #f render-fns)))
   (match-define (vector (vector x-min x-max)
                         (vector y-min y-max))
     (plot-pict-bounds metrics-plot))
-  (define-values (left right top bot) (plot-extras-size metrics-plot))
+  (define-values (left right bot top) (plot-extras-size metrics-plot))
 
   ; p rows x q columns
   (define grid-p (vector-length wrapped-groups))

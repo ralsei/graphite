@@ -1,7 +1,13 @@
-#lang racket
-(require fancy-app pict plot/utils
+#lang racket/base
+(require fancy-app
+         pict
          (prefix-in plot: plot/no-gui)
-         "aes.rkt" "renderer.rkt" "util.rkt")
+         plot/utils
+         racket/contract/base
+         "aes.rkt"
+         "renderer.rkt"
+         "util.rkt")
+
 (provide
  (contract-out [points (->* ()
                             (#:x-min (or/c rational? #f)

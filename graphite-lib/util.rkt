@@ -1,6 +1,17 @@
-#lang racket
-(require data-frame threading racket/hash plot/utils pict
-         (for-syntax syntax/parse))
+#lang racket/base
+(require (for-syntax racket/base syntax/parse)
+         data-frame
+         pict
+         plot/utils
+         racket/dict
+         racket/hash
+         racket/list
+         racket/match
+         racket/math
+         racket/set
+         racket/vector
+         threading)
+
 (provide (all-defined-out))
 
 (define (keyword->symbol s)

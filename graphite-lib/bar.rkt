@@ -1,6 +1,14 @@
-#lang racket
-(require fancy-app pict plot/no-gui plot/utils
-         "aes.rkt" "renderer.rkt" "util.rkt")
+#lang racket/base
+(require fancy-app
+         pict
+         plot/no-gui
+         plot/utils
+         racket/contract/base
+         racket/match
+         "aes.rkt"
+         "renderer.rkt"
+         "util.rkt")
+
 (provide
  (contract-out
   [bar (->* ()

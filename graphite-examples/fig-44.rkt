@@ -5,12 +5,12 @@
 
 (define all-data (df-read/csv "./data/all_gapminder.csv"))
 
-(define p (graph #:data all-data
-                #:mapping (aes #:x "year" #:y "gdpPercap"
-                                 #:discrete-color "country" #:facet "continent")
-                #:x-label "Year" #:y-label "GDP per capita (USD)"
-                #:y-transform logarithmic-transform
-                #:width 1200 #:height 500
-                #:legend-anchor 'no-legend
-                (lines #:color "gray")
-                (fit #:width 2)))
+(graph #:data all-data
+       #:mapping (aes #:x "year" #:y "gdpPercap"
+                       #:discrete-color "country" #:facet "continent")
+       #:x-label "Year" #:y-label "GDP per capita (USD)"
+       #:y-transform logarithmic-transform
+       #:width 1200 #:height 500
+       #:legend-anchor 'no-legend
+       (lines #:color "gray")
+       (fit #:width 2))

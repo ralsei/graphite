@@ -1,7 +1,12 @@
-#lang racket
-(require fancy-app plot/no-gui plot/utils
+#lang racket/base
+(require fancy-app
+         plot/no-gui
+         plot/utils
+         "aes.rkt"
          "extern/box-and-whiskers.rkt"
-         "aes.rkt" "renderer.rkt" "util.rkt")
+         "renderer.rkt"
+         "util.rkt")
+
 (provide boxplot)
 
 (define (make-stat-table mapping iqr-scale)

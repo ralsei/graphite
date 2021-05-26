@@ -1,6 +1,14 @@
-#lang racket
-(require fancy-app plot/no-gui plot/utils pict
-         "aes.rkt" "renderer.rkt" "util.rkt")
+#lang racket/base
+(require fancy-app
+         pict
+         plot/no-gui
+         plot/utils
+         racket/contract/base
+         racket/math
+         "aes.rkt"
+         "renderer.rkt"
+         "util.rkt")
+
 (provide
  (contract-out [histogram (->* ()
                                (#:x-min (or/c rational? #f)

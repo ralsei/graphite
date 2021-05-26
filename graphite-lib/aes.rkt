@@ -1,5 +1,9 @@
-#lang racket
-(require racket/hash "util.rkt")
+#lang racket/base
+(require racket/contract/base
+         racket/hash
+         racket/list
+         "util.rkt")
+
 (provide aes aes? aes-with/c aes-containing/c mapping-override)
 
 (define/kw (aes kws kw-args . rst)

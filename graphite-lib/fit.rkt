@@ -1,7 +1,15 @@
-#lang racket
-(require pict plot/no-gui plot/utils
-         simple-polynomial/base simple-polynomial/fit
-         "aes.rkt" "renderer.rkt" "util.rkt")
+#lang racket/base
+(require pict
+         plot/no-gui
+         plot/utils
+         racket/contract/base
+         racket/math
+         simple-polynomial/base
+         simple-polynomial/fit
+         "aes.rkt"
+         "renderer.rkt"
+         "util.rkt")
+
 (provide
  (contract-out [fit (->* ()
                          (#:x-min (or/c rational? #f)
