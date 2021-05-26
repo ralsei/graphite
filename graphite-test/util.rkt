@@ -2,7 +2,7 @@
 (require (except-in plot/no-gui points density lines)
          pict racket/draw rackunit graphite
          file/gzip file/gunzip)
-(provide check-draw-steps mock-record-dc%)
+(provide check-same-draw-steps? check-draw-steps mock-record-dc%)
 
 ; NOTE: this is adapted almost wholesale from the test suite for plot, except it uses picts
 ; https://raw.githubusercontent.com/racket/plot/master/plot-test/plot/tests/helpers.rkt
@@ -97,3 +97,9 @@
     (define image-file (path-replace-extension data-file ".png"))
     (save-pict graph-pict image-file)
     (fail-check (format "draw steps not the same, new set written to ~a" data-file))))
+
+(define-check (check-same-draw-steps? steps1 steps2)
+  (define saved1 (read-draw-steps steps1))
+  (define saved2 (read-draw-steps steps2))
+  (unless (same-draw-steps? saved1 saved2)
+    (fail-check "draw steps not the same")))
