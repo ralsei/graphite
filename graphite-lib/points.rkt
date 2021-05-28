@@ -64,7 +64,8 @@
                                (inexact->exact
                                 (round (convert continuous-min 0
                                                 continuous-max
-                                                (color-map-size (plot-pen-color-map))))))
+                                                (color-map-size (plot-pen-color-map))
+                                                strat))))
                               (->pen-color color-n))
                   #:label (and discrete-color strat)
                   pts)))
