@@ -104,6 +104,54 @@
             ([k (in-list keys)])
     (hash-remove ret k)))
 
+(define (in-hash/sort hsh)
+  (define sorted (try-sort-keys (hash->list hsh)))
+  (in-parallel (map car sorted) (map cdr sorted)))
+
+; straight out of hash.ss
+; https://github.com/racket/racket/blob/master/racket/src/cs/rumble/hash.ss#L500
+(define (try-sort-keys keys)
+  (cond [(andmap (λ (p) (orderable? (car p))) keys)
+         (sort keys orderable<? #:key car)]
+        [else keys]))
+
+(define (orderable-major v)
+  (cond [(boolean? v)    0]
+        [(char? v)       1]
+        [(real? v)       2]
+        [(symbol? v)     3]
+        [(keyword? v)    4]
+        [(string? v)     5]
+        [(null? v)       6]
+        [(void? v)       7]
+        [(eof-object? v) 8]
+        [else #f]))
+
+(define (orderable? v) (and (orderable-major v) #t))
+
+(define (orderable<? a b)
+  (let ([am (orderable-major a)]
+        [bm (orderable-major b)])
+    (cond [(or (not am) (not bm)) #f]
+          [(= am bm)
+           (cond [(boolean? a) (not a)]
+                 [(char? a) (char<? a b)]
+                 [(real? a) (< a b)]
+                 [(symbol? a)
+                  (cond [(symbol-interned? a)
+                         (and (symbol-interned? b)
+                              (symbol<? a b))]
+                        [(symbol-interned? b) #t]
+                        [(symbol-unreadable? a)
+                         (and (symbol-unreadable? b)
+                              (symbol<? a b))]
+                        [(symbol-unreadable? b) #t]
+                        [else (symbol<? a b)])]
+                 [(keyword? a) (keyword<? a b)]
+                 [(string? a) (string<? a b)]
+                 [else #f])]
+          [else (< am bm)])))
+
 ; if a1 becomes b1 and a2 becomes b2, then what should a become?
 (define (convert a1 b1 a2 b2 a)
   (/ (+ (* b1 (- a2 a)) (* b2 (- a a1))) (- a2 a1)))

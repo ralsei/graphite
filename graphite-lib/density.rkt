@@ -38,11 +38,8 @@
         #:when (equal? facet (gr-group)))
     (hash-update! tbl strat (cons ((gr-x-conv) x) _) null))
 
-  (let ([color-n -1])
-    (hash-map tbl
-              (λ (strat pts)
-                (set! color-n (add1 color-n))
-                (run-renderer #:renderer plot:density #:kws kws #:kw-args kw-args
-                              #:color (->pen-color color-n) #:label strat
-                              pts))
-              #t)))
+  (for/list ([(strat pts) (in-hash/sort tbl)]
+             [color-n (in-naturals)])
+    (run-renderer #:renderer plot:density #:kws kws #:kw-args kw-args
+                  #:color (->pen-color color-n) #:label strat
+                  pts)))

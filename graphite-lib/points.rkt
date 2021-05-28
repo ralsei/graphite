@@ -55,20 +55,16 @@
   (define continuous-max (and continuous-color
                               (apply max (hash-keys tbl))))
 
-  (let ([color-n -1])
-    (hash-map tbl
-              (λ (strat pts)
-                (set! color-n (add1 color-n))
-                (run-renderer #:renderer plot:points
-                              #:kws kws #:kw-args kw-args
-                              #:color (if continuous-color
-                                          (->pen-color
-                                           (inexact->exact
-                                            (round (convert continuous-min 0
-                                                            continuous-max
-                                                            (color-map-size (plot-pen-color-map))
-                                                            strat))))
-                                          (->pen-color color-n))
-                              #:label (and discrete-color strat)
-                              pts))
-              #t)))
+  (for/list ([(strat pts) (in-hash/sort tbl)]
+             [color-n (in-naturals)])
+    (run-renderer #:renderer plot:points
+                  #:kws kws #:kw-args kw-args
+                  #:color (if continuous-color
+                              (->pen-color
+                               (inexact->exact
+                                (round (convert continuous-min 0
+                                                continuous-max
+                                                (color-map-size (plot-pen-color-map))))))
+                              (->pen-color color-n))
+                  #:label (and discrete-color strat)
+                  pts)))
