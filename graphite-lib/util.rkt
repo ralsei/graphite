@@ -4,6 +4,7 @@
          pict
          plot/utils
          racket/dict
+         racket/function
          racket/hash
          racket/list
          racket/match
@@ -58,8 +59,8 @@
 
 (define-parameter gr-data)
 (define-parameter gr-global-mapping)
-(define-parameter gr-x-conv)
-(define-parameter gr-y-conv)
+(define-parameter gr-x-conv identity)
+(define-parameter gr-y-conv identity)
 (define-parameter gr-group)
 
 (define-parameter gr-x-min)

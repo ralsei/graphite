@@ -119,12 +119,6 @@
                                         (pict-height almost))
                   almost))
 
-(define (get-conversion-function conv transform)
-  (cond [(and conv transform) (compose (transform-function transform) conv)]
-        [conv conv]
-        [transform (transform-function transform)]
-        [else identity]))
-
 (define (graph-internal group render-fns)
   (plot-pict #:x-min (gr-x-min)
              #:x-max (gr-x-max)
@@ -153,41 +147,49 @@
                #:legend-anchor [legend-anchor (plot-legend-anchor)]
                #:theme [theme theme-default]
                . renderers)
-  (define defaults
-    (alist plot-x-label (hash-ref mapping 'x #f)
-           plot-y-label (hash-ref mapping 'y #f)
-           point-sym 'bullet
-           plot-pen-color-map (or (plot-pen-color-map) 'set1)
-           plot-x-far-ticks no-ticks
-           plot-y-far-ticks no-ticks))
-  (define user-data
-    (alist plot-title title
-           plot-width width
-           plot-height height
-           plot-x-label x-label
-           plot-y-label y-label
-           plot-x-ticks (and x-transform (get-adjusted-ticks x-transform))
-           plot-y-ticks (and y-transform (get-adjusted-ticks y-transform))
-           plot-legend-anchor legend-anchor))
-
-  (define metadata (alist-remove-false
-                    (append defaults
-                            (append* (map graphite-renderer-metadata renderers))
-                            (theme->alist theme)
-                            user-data)))
-
   (parameterize ([gr-data data]
                  [gr-global-mapping mapping]
-                 [gr-x-conv (get-conversion-function x-conv x-transform)]
-                 [gr-y-conv (get-conversion-function y-conv y-transform)]
+                 [gr-x-conv x-conv] ; temporary, in case axes are not reals
+                 [gr-y-conv y-conv]
                  [gr-x-min x-min]
                  [gr-x-max x-max]
                  [gr-y-min y-min]
                  [gr-y-max y-max])
-    (with-metadata metadata
-      (define render-fns (map graphite-renderer-function renderers))
-      (cond [(hash-ref mapping 'facet #f) (facet-plot render-fns facet-wrap)]
-            [else (graph-internal #f render-fns)]))))
+    (define render-fns (map graphite-renderer-function renderers))
+    (match-define (vector (vector actual/x-min actual/x-max)
+                          (vector actual/y-min actual/y-max))
+      (parameterize ([plot-pen-color-map 'set1]
+                     [plot-brush-color-map 'set1]
+                     [gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
+        (plot-pict-bounds (graph-internal #f render-fns))))
+
+    (define defaults
+      (alist plot-x-label (hash-ref mapping 'x #f)
+             plot-y-label (hash-ref mapping 'y #f)
+             point-sym 'bullet
+             plot-x-far-ticks no-ticks
+             plot-y-far-ticks no-ticks))
+    (define user-data
+      (alist plot-title title
+             plot-width width
+             plot-height height
+             plot-x-label x-label
+             plot-y-label y-label
+             plot-x-ticks (and x-transform (get-adjusted-ticks actual/x-min actual/x-max x-transform))
+             plot-y-ticks (and y-transform (get-adjusted-ticks actual/y-min actual/y-max y-transform))
+             plot-legend-anchor legend-anchor))
+
+    (define metadata (alist-remove-false
+                      (append defaults
+                              (append* (map graphite-renderer-metadata renderers))
+                              (theme->alist theme)
+                              user-data)))
+
+    (parameterize ([gr-x-conv (get-conversion-function actual/x-min actual/x-max x-conv x-transform)]
+                   [gr-y-conv (get-conversion-function actual/y-min actual/y-max y-conv y-transform)])
+      (with-metadata metadata
+        (cond [(hash-ref mapping 'facet #f) (facet-plot render-fns facet-wrap)]
+              [else (graph-internal #f render-fns)])))))
 
 (define (save-pict pict path)
   (define ext (path-get-extension path))

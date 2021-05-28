@@ -21,18 +21,18 @@
 
 (define-runtime-path transform-1-data "./test-data/transform-1.dat")
 (define transform-1
-  (parameterize ([plot-x-ticks (get-adjusted-ticks logarithmic-transform)]
-                 [plot-y-ticks (get-adjusted-ticks no-transform)])
+  (parameterize ([plot-x-ticks (get-adjusted-ticks 1 10000 logarithmic-transform)]
+                 [plot-y-ticks (get-adjusted-ticks 1 10000 no-transform)])
     (plot-pict (plot:points (df-select* random-df "exp-x" "y-var")))))
 (define-runtime-path transform-1.v2-data "./test-data/transform-1.v2.dat")
 (define transform-1.v2
-  (parameterize ([plot-x-ticks (get-adjusted-ticks logarithmic-transform)])
+  (parameterize ([plot-x-ticks (get-adjusted-ticks 1 10000 logarithmic-transform)])
     (plot-pict (plot:points (df-select* random-df "exp-x" "y-var")))))
 
 (define-runtime-path transform-2-data "./test-data/transform-2.dat")
 (define transform-2
-  (parameterize ([plot-x-ticks (get-adjusted-ticks (only-ticks no-ticks))]
-                 [plot-y-ticks (get-adjusted-ticks (only-ticks no-ticks))])
+  (parameterize ([plot-x-ticks (get-adjusted-ticks 1 10000 (only-ticks no-ticks))]
+                 [plot-y-ticks (get-adjusted-ticks 1 10000 (only-ticks no-ticks))])
     (plot-pict (plot:points (df-select* random-df "x-var" "y-var")))))
 (define-runtime-path transform-2.v2-data "./test-data/transform-2.v2.dat")
 (define transform-2.v2

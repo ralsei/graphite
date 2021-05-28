@@ -1,5 +1,5 @@
 #lang racket
-(require data-frame fancy-app graphite)
+(require data-frame fancy-app graphite plot/utils)
 
 (define all-data (df-read/csv "./data/all_gapminder.csv"))
 

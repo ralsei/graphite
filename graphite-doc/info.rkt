@@ -2,7 +2,8 @@
 (define collection "graphite-doc")
 (define deps '("base"))
 (define scribblings '(("graphite.scrbl" ())))
-(define build-deps '("plot-gui-lib"
+(define build-deps '("draw-doc"
+                     "plot-gui-lib"
                      "simple-polynomial"
                      "data-frame"
                      "graphite-lib"
@@ -13,7 +14,8 @@
                      "plot-lib"
                      "sandbox-lib"
                      "scribble-lib"
-                     "racket-doc"))
+                     "racket-doc"
+                     "gregor"))
 
 (define pkg-desc "Documentation for graphite")
 (define version "1.0")

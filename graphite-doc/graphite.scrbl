@@ -2,13 +2,15 @@
 @(require scribble/example (for-label racket plot/utils
                                       pict data-frame graphite simple-polynomial
                                       (except-in plot points lines density
-                                                      renderer2d? nonrenderer?)))
+                                                      renderer2d? nonrenderer?)
+                                      (except-in gregor date? date)))
 
 @(define ev
    (let ([eval (make-base-eval)])
      (eval '(begin
               (require data-frame
                        graphite
+                       gregor
                        plot/utils
                        threading
                        racket/list)))
@@ -16,6 +18,7 @@
      (eval '(define organdata (df-read/csv "data/organdata.csv" #:na "NA")))
      (eval '(define midwest (df-read/csv "data/midwest.csv")))
      (eval '(define gapminder (df-read/csv "data/all_gapminder.csv")))
+     (eval '(define chicago (df-read/csv "data/chicago-nmmaps.csv")))
      eval))
 
 @title{Graphite: A data visualization library}
@@ -422,17 +425,25 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
 
 @section[#:tag "transforms"]{Axis Transforms}
 
-@defstruct*[transform ([function (-> any/c any/c)]
-                       [inverse (-> any/c any/c)]
+@defstruct*[transform ([plot-transform axis-transform/c]
                        [axis-ticks ticks?])]{
-  Represents an axis transform, to be used in the @tt{#:x-transform} or @tt{#:y-transform}
+  Represents an axis transform, to be used in the @racket[#:x-transform] or @racket[#:y-transform]
   argument of @racket[graph].
 
-  Takes a function, its inverse, and a @racket[ticks?] to transform the axis.
-  For example, for a logarithmic transform, you could use:
-  @racketblock[
-    (transform (λ (x) (log x 10)) (λ (x) (expt 10 x))
-               (log-ticks))
+  Takes a @racketmodname[plot] transform and a @racket[ticks?] for the respective axis to be applied. For
+  example, to add a stretch transform on an axis where the x-axis is a date:
+  @examples[#:eval ev #:label #f
+    (define iso8601->posix (compose ->posix iso8601->date))
+    (graph #:data chicago
+           #:mapping (aes #:x "date" #:y "temp")
+           #:x-transform (transform (stretch-transform
+                                     (iso8601->posix "1998-01-01")
+                                     (iso8601->posix "1999-01-01")
+                                     10)
+                                    (date-ticks))
+           #:x-conv iso8601->posix
+           #:width 600
+           (points))
   ]
 }
 
