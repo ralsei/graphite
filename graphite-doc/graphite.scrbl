@@ -14,6 +14,8 @@
                        racket/list)))
      (eval '(random-seed 1337))
      (eval '(define organdata (df-read/csv "data/organdata.csv" #:na "NA")))
+     (eval '(define midwest (df-read/csv "data/midwest.csv")))
+     (eval '(define gapminder (df-read/csv "data/all_gapminder.csv")))
      eval))
 
 @title{Graphite: A data visualization library}
@@ -53,6 +55,7 @@ A tutorial on @racketmodname[graphite] is also available;
                 [#:y-max y-max (or/c rational? #f) #f]
                 [#:facet-wrap facet-wrap (or/c positive-integer? #f) #f]
                 [#:legend-anchor legend-anchor legend-anchor/c (plot-legend-anchor)]
+                [#:theme theme graphite-theme? theme-default]
                 [renderer graphite-renderer?] ...)
          pict?]{
   The primary graphing procedure, producing a @racket[pict?]. All positional arguments are
@@ -451,4 +454,95 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
 
 @defthing[logarithmic-transform transform?]{
   A logarithmic (base 10) axis transform.
+}
+
+@section[#:tag "themes"]{Theming}
+
+@defstruct*[graphite-theme ([foreground plot-color/c]
+                            [foreground-alpha (real-in 0 1)]
+                            [background plot-color/c]
+                            [background-alpha (real-in 0 1)]
+                            [font-size (>=/c 0)]
+                            [font-face (or/c string? #f)]
+                            [font-family font-family/c]
+                            [pen-color-map (or/c symbol? #f)]
+                            [brush-color-map (or/c symbol? #f)])]{
+  Represents a theme, to be passed by the @racket[#:theme] argument to @racket[graph].
+
+  These fields correspond to, respectively, the @racketmodname[plot] parameters @racket[plot-foreground],
+  @racket[plot-foreground-alpha], @racket[plot-background], @racket[plot-background-alpha],
+  @racket[plot-font-size], @racket[plot-font-face], @racket[plot-font-family],
+  @racket[plot-pen-color-map], and @racket[plot-brush-color-map]. They correspond to the same
+  behaviors in @racket[plot].
+
+  The @racket[pen-color-map] field corresponds to the color-map used to draw points and lines,
+  such as that in @racket[points] or @racket[lines]. The @racket[brush-color-map] field corresponds
+  to the color-map used to draw rectangles and other large fields, such as @racket[histogram] and
+  @racket[bar].
+}
+
+@defproc[(make-graphite-theme [#:fg fg plot-color/c (plot-foreground)]
+                              [#:fg-alpha fg-alpha (real-in 0 1) (plot-foreground-alpha)]
+                              [#:bg bg plot-color/c (plot-background)]
+                              [#:bg-alpha bg-alpha (real-in 0 1) (plot-background-alpha)]
+                              [#:font-size font-size (>=/c 0) (plot-font-size)]
+                              [#:font-face font-face (or/c symbol? #f) (plot-font-face)]
+                              [#:font-family font-family font-family/c (plot-font-family)]
+                              [#:color-map color-map (or/c symbol? #f) (plot-pen-color-map)]
+                              [#:brush-color-map brush-color-map (or/c symbol? #f) (plot-brush-color-map)])
+         graphite-theme?]{
+  Constructs a @racket[graphite-theme?], but with keyword-arguments for readability, and with fields
+  defaulting to their respective plot parameters.
+}
+
+@defproc[(theme-override [theme graphite-theme?]
+                         [#:fg fg plot-color/c (graphite-theme-foreground theme)]
+                         [#:fg-alpha fg-alpha (real-in 0 1) (graphite-theme-foreground-alpha theme)]
+                         [#:bg bg plot-color/c (graphite-theme-background theme)]
+                         [#:bg-alpha bg-alpha (real-in 0 1) (graphite-theme-background-alpha theme)]
+                         [#:font-size font-size (>=/c 0) (graphite-theme-font-size theme)]
+                         [#:font-face font-face (>=/c 0) (graphite-theme-font-face theme)]
+                         [#:font-family font-family font-family/c (graphite-theme-font-family theme)]
+                         [#:color-map color-map (or/c symbol? #f) (graphite-theme-pen-color-map theme)]
+                         [#:brush-color-map brush-color-map (or/c symbol? #f)
+                                            (graphite-theme-brush-color-map theme)])
+         graphite-theme?]{
+  Constructs a @racket[graphite-theme?], but overriding fields from an existing theme. For example, if you
+  wanted to use Comic Sans with the default theme, you could use the theme:
+  @racketblock[
+    (theme-override theme-default #:font-face "Comic Sans MS")
+  ]
+}
+
+@defthing[theme-default graphite-theme?]{
+  The default theme. Defined as:
+  @racketblock[
+    (make-graphite-theme #:fg "black" #:fg-alpha 1
+                         #:bg "white" #:bg-alpha 1
+                         #:font-size 11 #:font-family 'swiss
+                         #:color-map 'set1 #:brush-color-map 'pastel1)
+  ]
+
+  Uses a sans-serif font, white background, black text, and the @racket['set1] color-map and @racket['pastel1]
+  brush color map. See the documentation for @racket[plot-pen-color-map] for the colors of this theme.
+}
+
+@defthing[theme-continuous graphite-theme?]{
+  A theme for plotting continuous data. Defined as the default theme, except with the color-map set to
+  @racket['tol-is] from the @tt{colormaps} package.
+
+  @examples[#:eval ev
+    (df-add-derived! gapminder "log-pop" '("pop") (λ (x) (log (first x) 10)))
+    (graph #:data gapminder
+           #:mapping (aes #:x "gdpPercap" #:y "lifeExp")
+           #:x-transform logarithmic-transform
+           #:legend-anchor 'no-legend
+           #:theme theme-continuous
+           (points #:mapping (aes #:continuous-color "log-pop")))
+  ]
+}
+
+@defproc[(theme->alist [theme graphite-theme?]) (listof (cons/c parameter? any/c))]{
+  Converts a @racket[graphite-theme?] to an association list of @racketmodname[plot] parameters to
+  the values specified by the theme.
 }

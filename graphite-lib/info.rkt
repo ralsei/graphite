@@ -2,6 +2,7 @@
 
 (define collection "graphite")
 (define deps '(("base" #:version "8.1")
+               "colormaps"
                "data-frame"
                "fancy-app"
                "math-lib"

@@ -26,7 +26,8 @@
                              graphite-renderer?)]))
 
 (define-renderer (density #:kws kws #:kw-args kw-args
-                          #:mapping [local-mapping (aes)]) ()
+                          #:mapping [local-mapping (aes)])
+                 (#:y-label "density")
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 
   (define tbl (make-hash))

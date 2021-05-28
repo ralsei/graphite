@@ -25,9 +25,9 @@
          "lines.rkt"
          "points.rkt"
          "renderer.rkt"
+         "themes.rkt"
          "transforms.rkt"
-         (except-in "util.rkt"
-                    convert)
+         (except-in "util.rkt" convert)
          "with-area.rkt")
 
 (provide
@@ -46,7 +46,8 @@
                             #:y-min (or/c rational? #f)
                             #:y-max (or/c rational? #f)
                             #:facet-wrap (or/c positive-integer? #f)
-                            #:legend-anchor legend-anchor/c)
+                            #:legend-anchor legend-anchor/c
+                            #:theme graphite-theme?)
                            #:rest (non-empty-listof graphite-renderer?)
                            pict?)])
  save-pict
@@ -60,6 +61,7 @@
  (all-from-out "fit.rkt")
  (all-from-out "lines.rkt")
  (all-from-out "points.rkt")
+ (all-from-out "themes.rkt")
  (all-from-out "transforms.rkt"))
 
 ; XXX: should we support multiple facets? n facets?
@@ -149,6 +151,7 @@
                #:y-max [y-max (gr-y-max)]
                #:facet-wrap [facet-wrap #f]
                #:legend-anchor [legend-anchor (plot-legend-anchor)]
+               #:theme [theme theme-default]
                . renderers)
   (define defaults
     (alist plot-x-label (hash-ref mapping 'x #f)
@@ -170,6 +173,7 @@
   (define metadata (alist-remove-false
                     (append defaults
                             (append* (map graphite-renderer-metadata renderers))
+                            (theme->alist theme)
                             user-data)))
 
   (parameterize ([gr-data data]

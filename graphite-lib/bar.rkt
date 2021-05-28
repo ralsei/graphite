@@ -77,7 +77,7 @@
   (define strats (possibilities (gr-data) (hash-ref (gr-global-mapping) 'group)))
   (for/list ([var (in-vector strats)]
              [i (in-naturals)])
-    (parameterize ([rectangle-color (->pen-color i)])
+    (parameterize ([rectangle-color (->brush-color i)])
       (bar-simple #:skip (+ (vector-length strats) group-gap)
                   #:x-min i
                   #:group var
