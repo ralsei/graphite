@@ -71,6 +71,8 @@
                               (λ (x y) (string-ci<? (~a x) (~a y)))))
   (define facet-wrap (or wrap (inexact->exact (ceiling (sqrt (vector-length groups))))))
   (define wrapped-groups (vector-reshape groups facet-wrap))
+  (define num-blanks (vector-count not (vector-ref wrapped-groups
+                                                   (sub1 (vector-length wrapped-groups)))))
 
   (define metrics-plot
     (parameterize ([gr-global-mapping (hash-remove (gr-global-mapping) 'facet)]
@@ -99,21 +101,28 @@
           (plot-with-area (thunk (graph-internal group render-fns)) width height)
           (background-rectangle width (+ height bot top))))) ; only appears at the bottom
 
-  (define (plot-row group-vector [with-x-extras? #f])
-    (for/fold ([plt (run-plot (vector-ref group-vector 0) with-x-extras? #t)])
-              ([grp (vector-drop group-vector 1)])
-      (ht-append plt (run-plot grp with-x-extras? #f))))
+  (define (plot-row group-vector [with-x-extras? #f] [end-add-x? #f])
+    (for/fold ([plt (blank)])
+              ([(grp idx) (in-indexed (in-vector group-vector))])
+      (define add-x-extras? (or with-x-extras?
+                                (and end-add-x? (< (abs (- grid-q (add1 idx))) num-blanks))))
+      (ht-append plt (run-plot grp add-x-extras? (zero? idx)))))
 
   (define almost
     (parameterize ([gr-x-min (if (not (gr-x-min)) x-min (gr-x-min))]
                    [gr-x-max (if (not (gr-x-max)) x-max (gr-x-max))]
                    [gr-y-min (if (not (gr-y-min)) y-min (gr-y-min))]
                    [gr-y-max (if (not (gr-y-max)) y-max (gr-y-max))])
-      (vc-append
-        (for/fold ([plt (blank)])
-                  ([grp-vector (in-vector (vector-drop-right wrapped-groups 1))])
-          (vc-append plt (plot-row grp-vector)))
-        (plot-row (vector-ref wrapped-groups (sub1 (vector-length wrapped-groups))) #t))))
+      (for/fold ([plt (blank)])
+                ([(grp-vector idx) (in-indexed (in-vector wrapped-groups))])
+        (define offset (- (sub1 grid-p) idx))
+        (cond [(zero? offset)
+               (vl-append-backwards (if (not (zero? num-blanks)) (- bot) 0)
+                                    plt
+                                    (plot-row grp-vector #t))]
+              [(= offset 1)
+               (vl-append plt (plot-row grp-vector #f #t))]
+              [else (vl-append plt (plot-row grp-vector))]))))
 
   (cc-superimpose (background-rectangle (pict-width almost)
                                         (pict-height almost))
@@ -156,19 +165,24 @@
                  [gr-y-min y-min]
                  [gr-y-max y-max])
     (define render-fns (map graphite-renderer-function renderers))
+
+    ; calculate bounds, for axis transforms
     (match-define (vector (vector actual/x-min actual/x-max)
                           (vector actual/y-min actual/y-max))
+      ; bare minimum params, don't facet
       (parameterize ([plot-pen-color-map 'set1]
                      [plot-brush-color-map 'set1]
                      [gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
         (plot-pict-bounds (graph-internal #f render-fns))))
 
+    ; overridden by anything
     (define defaults
       (alist plot-x-label (hash-ref mapping 'x #f)
              plot-y-label (hash-ref mapping 'y #f)
              point-sym 'bullet
              plot-x-far-ticks no-ticks
              plot-y-far-ticks no-ticks))
+    ; overrides anything
     (define user-data
       (alist plot-title title
              plot-width width

@@ -168,3 +168,6 @@
 (define (background-rectangle width height)
   (colorize (filled-rectangle width height)
             (->color (plot-background))))
+
+(define (vl-append-backwards offset pict-a pict-b)
+  (lb-superimpose pict-b (inset pict-a 0 0 0 (- (pict-height pict-b) (- offset)))))
