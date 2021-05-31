@@ -1,7 +1,7 @@
 #lang scribble/manual
 @(require scribble/example (for-label racket plot/utils
                                       pict data-frame graphite simple-polynomial
-                                      (except-in plot points lines density
+                                      (except-in plot points lines density error-bars
                                                       renderer2d? nonrenderer?)
                                       (except-in gregor date? date)))
 
@@ -256,6 +256,46 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
     (graph #:data df
            #:mapping (aes #:x "x-var" #:y "y-var")
            (lines #:label "Random walk"))
+  ]
+}
+
+@defproc[(error-bars [#:mapping local-mapping
+                                (and/c (aes-with/c #:perc-error? string?)
+                                       (aes-containing/c #:x string?
+                                                         #:y string?
+                                                         #:facet (or/c string? #f)))]
+                     [#:x-min x-min (or/c rational? #f) #f]
+                     [#:x-max x-max (or/c rational? #f) #f]
+                     [#:y-min y-min (or/c rational? #f) #f]
+                     [#:y-max y-max (or/c rational? #f) #f]
+                     [#:color color plot-color/c (error-bar-color)]
+                     [#:line-width line-width (>=/c 0) (error-bar-line-width)]
+                     [#:line-style line-style plot-pen-style/c (error-bar-line-style)]
+                     [#:width width (>=/c 0) (error-bar-width)]
+                     [#:alpha alpha (real-in 0 1) (error-bar-alpha)]
+                     [#:invert? invert? boolean? #f])
+         graphite-renderer?]{
+  Displays a set of error bars.
+
+  The @italic{mandatory} aesthetic @racket[#:perc-error?] dictates the variable in the data-frame
+  that corresponds to percent error. The procedure @racket[df-add-derived!] may be useful for adding
+  this to a data-frame.
+
+  For exmaple, with a constant 20% error:
+  @examples[#:eval ev #:label #f
+    (define (3x^2 x) (* 3.0 (expt x 2.0)))
+    (define (add-error y) (+ y (* y (/ (- (random 4) 2) 10.0))))
+    (define df (make-data-frame))
+    (df-add-series! df (make-series "x" #:data (build-vector 10 add1)))
+    (df-add-series! df
+      (make-series "3x^2"
+                    #:data (build-vector 10 (compose add-error 3x^2 add1))))
+    (df-add-series! df (make-series "err" #:data (make-vector 10 0.2)))
+    (graph #:data df
+           #:mapping (aes #:x "x" #:y "3x^2")
+           (points)
+           (fit #:degree 2)
+           (error-bars #:mapping (aes #:perc-error "err")))
   ]
 }
 

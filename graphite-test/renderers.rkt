@@ -165,6 +165,24 @@
          (points)
          (fit #:degree 3)))
 
+(define-runtime-path error-bars-1-data "./test-data/error-bars-1.dat")
+(define error-bars-1-df
+  (let ()
+    (define int-data (make-data-frame))
+    (define (3x^2 x) (* 3.0 (expt x 2.0)))
+    (define (add-error y) (+ y (* y (/ (- (random 4) 2) 10.0))))
+    (df-add-series! int-data (make-series "x" #:data (build-vector 10 add1)))
+    (df-add-series! int-data (make-series "3x^2" #:data (build-vector 10 (compose add-error 3x^2 add1))))
+    (df-add-series! int-data (make-series "err" #:data (make-vector 10 0.2)))
+    int-data))
+(define error-bars-1
+  (graph #:data error-bars-1-df
+         #:mapping (aes #:x "x" #:y "3x^2")
+         #:title "Error bars"
+         (points)
+         (fit #:degree 2)
+         (error-bars #:mapping (aes #:perc-error "err"))))
+
 (define (random-in-list lst)
   (list-ref lst (random (length lst))))
 
@@ -312,6 +330,8 @@
   (check-draw-steps fit-4 fit-4-data)
   (check-draw-steps fit-5 fit-5-data)
   (check-draw-steps fit-6 fit-6-data)
+
+  (check-draw-steps error-bars-1 error-bars-1-data)
 
   (check-draw-steps bar-1 bar-1-data)
   (check-draw-steps bar-2 bar-2-data)

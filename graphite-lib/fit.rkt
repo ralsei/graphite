@@ -3,6 +3,7 @@
          plot/no-gui
          plot/utils
          racket/contract/base
+         racket/match
          racket/math
          simple-polynomial/base
          simple-polynomial/fit

@@ -1,5 +1,5 @@
 #lang racket
-(require (except-in plot/no-gui points density lines)
+(require (except-in plot/no-gui points density lines error-bars)
          pict racket/draw rackunit graphite
          file/gzip file/gunzip)
 (provide check-same-draw-steps? check-draw-steps mock-record-dc%)

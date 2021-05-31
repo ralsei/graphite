@@ -1,6 +1,6 @@
 #lang racket
 (require data-frame graphite rackunit racket/runtime-path
-         (except-in plot/no-gui density lines points)
+         (except-in plot/no-gui density lines points error-bars)
          (prefix-in plot: (only-in plot/no-gui density lines points))
          "util.rkt")
 (provide (all-defined-out))
@@ -72,6 +72,39 @@
          #:y-transform logarithmic-transform
          (points)))
 
+(define sqr-df
+  (let ([int-data (make-data-frame)])
+    (df-add-series! int-data (make-series "x" #:data (build-vector 1000 identity)))
+    (df-add-series! int-data (make-series "sqr(x)" #:data (build-vector 1000 sqr)))
+    int-data))
+
+(define-runtime-path transform-6-data "./test-data/transform-6.dat")
+(define transform-6
+  (graph #:data sqr-df
+         #:mapping (aes #:x "x" #:y "sqr(x)")
+         #:x-transform (transform (hand-drawn-transform 500) (linear-ticks))
+         (points)))
+
+(define-runtime-path transform-7-data "./test-data/transform-7.dat")
+(define transform-7
+  (graph #:data sqr-df
+         #:mapping (aes #:x "x" #:y "sqr(x)")
+         #:x-transform (transform (axis-transform-append
+                                   (stretch-transform 50 200 10)
+                                   (stretch-transform 700 900 10)
+                                   500)
+                                  (linear-ticks))
+         (points)))
+
+(define-runtime-path transform-8-data "./test-data/transform-8.dat")
+(define transform-8
+  (graph #:data sqr-df
+         #:mapping (aes #:x "x" #:y "sqr(x)")
+         #:x-transform (transform (collapse-transform 200 400)
+                                  (linear-ticks))
+         (points)
+         (fit #:degree 2)))
+
 (module+ test
   (check-draw-steps transform-1 transform-1-data)
   (check-draw-steps transform-1.v2 transform-1.v2-data)
@@ -84,4 +117,8 @@
   (check-draw-steps transform-3 transform-3-data)
 
   (check-draw-steps transform-4 transform-4-data)
-  (check-draw-steps transform-5 transform-5-data))
+  (check-draw-steps transform-5 transform-5-data)
+
+  (check-draw-steps transform-6 transform-6-data)
+  (check-draw-steps transform-7 transform-7-data)
+  (check-draw-steps transform-8 transform-8-data))

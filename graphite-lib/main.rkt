@@ -5,6 +5,7 @@
          pict
          (except-in plot/no-gui
                     density
+                    error-bars
                     lines
                     points)
          plot/utils
@@ -20,6 +21,7 @@
          "bar.rkt"
          "boxplot.rkt"
          "density.rkt"
+         "error-bars.rkt"
          "fit.rkt"
          "histogram.rkt"
          "lines.rkt"
@@ -57,6 +59,7 @@
  (all-from-out "bar.rkt")
  (all-from-out "boxplot.rkt")
  (all-from-out "density.rkt")
+ (all-from-out "error-bars.rkt")
  (all-from-out "histogram.rkt")
  (all-from-out "fit.rkt")
  (all-from-out "lines.rkt")
