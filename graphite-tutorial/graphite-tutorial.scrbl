@@ -55,6 +55,50 @@ Anecdotally, this is not particularly easy in Racket. All data in this tutorial 
 If your data is primarily continuous, needs to be interactive, or needs to be 3D, @racket[plot] is likely to
 be a better fit.
 
+@section{Key forms}
+
+Graphite has a number of important forms that are effectively required for anything to come out of it.
+
+First off, in order to plot data, we need to read data in. To do this, Graphite uses the
+@racketmodname[data-frame] library. Usually, to read in data from a CSV, you use @racket[df-read/csv].
+Various other formats are supported by @racketmodname[data-frame], which you can find by consulting its
+documentation.
+
+The main form of Graphite-generated plots is the function @racket[graph]. It takes two mandatory keywords,
+@racket[#:data] and @racket[#:mapping], which correspond to (respectively) the @racket[data-frame?] to read
+your data from and the @racket[aes?] to retrieve global aesthetics from (more on that later). Finally, it takes
+any amount of renderers, such as @racket[points] and @racket[lines], as positional arguments. As an example,
+a usual call to @racket[graph] would look like:
+@racketblock[
+  (graph #:data some-data
+         #:mapping (aes #:some-key some-value)
+         #:title "a title"
+         (renderer-1)
+         (renderer-2))
+]
+
+Aesthetic mappings, created with the @racket[aes] form, creates a set of key-value mappings, with keys specified
+by keywords. Each key represents an "aesthetic" to map a variable to, and each value represents a variable in the
+data to map it to. If a value is not present and not mandatory, it is read as @racket[#f]. These can correspond
+to positional aesthetics (the x-axis with @racket[#:x], and the y-axis with @racket[#:y]), colorings
+(such as @racket[#:discrete-color] to @racket[points]), or another required variable
+(such as @racket[#:perc-error] to @racket[error-bars]). The most important thing is that aesthetic mappings only
+correspond to mapping an aesthetic to a @italic{variable}: if you want to set it as a constant, you likely want
+a regular keyword argument.
+
+@racket[graph] takes a global aesthetic mapping, and each renderer takes its own aesthetic mapping as well,
+all with the @racket[#:mapping] keyword. When a renderer is called, it inherits aesthetics from both the global
+mapping passed to @racket[graph] and the local mapping passed to it. In addition, the local mapping overrides
+the global mapping's settings. So, for example, in this code:
+@racketblock[
+  (graph #:data some-data
+         #:mapping (aes #:foo "bar" #:baz "quux")
+         (renderer-1 #:mapping (aes #:baz "waldo" #:fruit "apple")))
+]
+the aesthetic mapping that is actually used in @racket[renderer-1] would be
+@racket[(aes #:foo "bar" #:baz "waldo" #:fruit "apple")], inheriting @racket[#:foo] from the global mapping
+and overriding @racket[#:baz].
+
 @section{Gapminder}
 
 All data visualization starts with data to visualize, and we begin with excerpts of data from
@@ -101,8 +145,8 @@ already has a log transform predefined:
          (points))
 ]
 
-The @tt{#:x-transform} keyword argument specifies an @racket[invertible-function] that dictates an axis
-transform. In this case, we use the @racket[logarithmic-transform] function, which is already defined.
+The @tt{#:x-transform} keyword argument specifies a @racket[transform?], which combines a @racketmodname[plot]
+transform and ticks. In this case, we use the @racket[logarithmic-transform] function, which is already defined.
 
 This plot is starting to look nicer, but it's pretty unenlightening. We don't know anything about each country
 or how they're stratified, we can't figure out how many countries are present at any given point, we can't
@@ -223,8 +267,6 @@ the legend for the bar colors for each one. To mitigate this, we can introduce a
 
 @section{Faceting}
 
-@;; TODO: fix w/h, add wrapping would make this section so much nicer...
-
 In both the Gapminder and GSS examples, we ended with a whole bunch of information crammed into a single
 visualization. Let's say we instead wanted to make things more clear. In this case, we can add a @italic{facet}
 to our visualization, which creates multiple plots in different panels.
@@ -243,4 +285,14 @@ represent religious preferences in that region. In that case:
 
 Now we've managed to split up our visualization into seperate charts for each region.
 
-This is currently where the tutorial ends. More information to come!
+We can do this in a similar fashion for the Gapminder plot from before, instead of using @racket[#:discrete-color]:
+@examples[#:eval ev #:label #f
+  (graph #:data gapminder
+         #:title "GDP per capita vs life expectancy"
+         #:x-label "GDP per capita (USD)"
+         #:y-label "Life expectancy (years)"
+         #:mapping (aes #:x "gdpPercap" #:y "lifeExp" #:facet "continent")
+         #:x-transform logarithmic-transform
+         (points #:alpha 0.4)
+         (fit #:width 3))
+]
