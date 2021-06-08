@@ -193,6 +193,8 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
               [#:style style plot-pen-style/c (line-style)]
               [#:alpha alpha (real-in 0 1) (line-alpha)]
               [#:label label (or/c string? pict? #f) #f]
+              [#:method method (or/c 'poly 'loess) 'poly]
+              [#:span span (real-in 0 1) span]
               [#:degree degree positive-integer? 1]
               [#:show-equation? show-equation? boolean? #f]
               [#:mapping local-mapping
@@ -202,8 +204,9 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
                          (aes)])
          graphite-renderer?]{
   Makes a line of best fit. Internally, this uses the @racket[simple-polynomial] library's best
-  fit method. For example:
-  @examples[#:eval ev #:label #f
+  fit method for the default @racket['poly] method, or @racketmodname[loess] for the @racket['loess] method.
+
+  @examples[#:eval ev
     (define noise '(1/9 -1/7 0 1/3 -1 1/9))
     (define df (make-data-frame))
     (df-add-series! df (make-series "x-var" #:data (build-vector 6 add1)))
@@ -214,14 +217,19 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
     (graph #:data df
            #:mapping (aes #:x "x-var" #:y "y-var")
            (points)
-           (fit #:show-equation? #t))
+           (fit #:width 3 #:label "Linear")
+           (fit #:method 'loess #:color 'red #:style 'dot
+                #:width 3 #:label "LOESS"))
   ]
 
-  The optional @tt{#:degree} argument specifies the degree of the fit line (2 for a second-degree
-  polynomial, et cetera).
+  The optional @racket[#:degree] argument specifies the degree of the fit line (2 for a second-degree
+  polynomial, et cetera) in the case of the @racket['poly] method, or the degree of each local fit in the case
+  of @racket['loess].
 
-  The optional @tt{#:show-equation?} argument specifies whether to show the full fit equation in the
-  legend.
+  See the documentation for @racket[loess-fit] for details on the @racket[#:span] parameter.
+
+  The optional @racket[#:show-equation?] argument specifies whether to show the full fit equation in the
+  legend. As LOESS is a non-parametric fit, this requires the @racket['poly] method.
 }
 
 @defproc[(lines [#:x-min x-min (or/c rational? #f) #f]

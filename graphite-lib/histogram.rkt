@@ -41,6 +41,7 @@
                                              (hash-ref aes 'y #f)
                                              (hash-ref aes 'facet #f))]
                 #:when x
+                #:when (if (hash-ref aes 'y #f) y #t)
                 #:when (equal? facet (gr-group)))
       (values ((gr-x-conv) x) ((gr-y-conv) y))))
 

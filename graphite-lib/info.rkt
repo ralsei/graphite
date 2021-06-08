@@ -5,6 +5,7 @@
                "colormaps"
                "data-frame"
                "fancy-app"
+               "loess"
                "math-lib"
                "pict-lib"               
                "plot-gui-lib"
