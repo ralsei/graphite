@@ -20,6 +20,7 @@
          "aes.rkt"
          "bar.rkt"
          "boxplot.rkt"
+         "col.rkt"
          "density.rkt"
          "error-bars.rkt"
          "fit.rkt"
@@ -58,6 +59,7 @@
  (all-from-out "aes.rkt")
  (all-from-out "bar.rkt")
  (all-from-out "boxplot.rkt")
+ (all-from-out "col.rkt")
  (all-from-out "density.rkt")
  (all-from-out "error-bars.rkt")
  (all-from-out "histogram.rkt")

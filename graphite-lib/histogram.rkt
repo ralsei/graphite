@@ -24,7 +24,7 @@
                                 #:label (or/c string? pict? #f)
                                 #:bins positive-integer?
                                 #:mapping (aes-containing/c #:x string?
-                                                            #:y string?
+                                                            #:y (or/c string? #f)
                                                             #:facet (or/c string? #f)))
                                graphite-renderer?)]))
 
@@ -51,7 +51,7 @@
   (define bin-width (/ (- max-data min-data) bins))
   (define binned (make-hash))
   (for* ([i (in-range min-data max-data bin-width)]
-         [(x y) (in-parallel xs ys)]
+         [(x y) (in-parallel (in-list xs) (in-list ys))]
          #:when (<= i x (+ i bin-width)))
     (hash-update! binned i (cons y _) null))
 

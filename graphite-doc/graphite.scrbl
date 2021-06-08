@@ -19,6 +19,7 @@
      (eval '(define midwest (df-read/csv "data/midwest.csv")))
      (eval '(define gapminder (df-read/csv "data/all_gapminder.csv")))
      (eval '(define chicago (df-read/csv "data/chicago-nmmaps.csv")))
+     (eval '(define oecd (df-read/csv "data/oecd.csv" #:na "NA")))
      eval))
 
 @title{Graphite: A data visualization library}
@@ -33,6 +34,9 @@ structure.
 
 Graphite is built on top of, and does not replace, @racketmodname[plot]. For many applications (e.g.
 3D plotting, continuous data, interactive plots, etc), @racketmodname[plot] will be a far better fit.
+
+All of the data-sets that are referred to in this documentation (@racket[organdata], @racket[oecd], etc)
+are available @hyperlink["https://github.com/ralsei/graphite/tree/master/graphite-doc/data" "here"].
 
 A tutorial on @racketmodname[graphite] is also available;
 @other-doc['(lib "graphite-tutorial/graphite-tutorial.scrbl")].
@@ -372,6 +376,49 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
   (@tt{'count}), or the relative frequency of those observations (@tt{'prop}). @tt{'prop} does not make much
   sense for stacked bar charts (everything is 100% of itself), but it can be useful in some scenarios.
 }
+
+@defproc[(col [#:x-min x-min (or/c rational? #f) #f]
+              [#:x-max x-max (or/c rational? #f) #f]
+              [#:y-min y-min (or/c rational? #f) #f]
+              [#:y-max y-max (or/c rational? #f) #f]
+              [#:color color plot-color/c (rectangle-color)]
+              [#:style style plot-brush-style/c (rectangle-style)]
+              [#:line-color line-color plot-color/c (rectangle-line-color)]
+              [#:line-width line-width (>=/c 0) (rectangle-line-width)]
+              [#:line-style line-style plot-pen-style/c (rectangle-line-style)]
+              [#:alpha alpha (real-in 0 1) (rectangle-alpha)]
+              [#:label label (or/c string? pict? #f) #f]
+              [#:gap gap real? 0]
+              [#:baseline baseline real? 0]
+              [#:mapping local-mapping
+                         (aes-containing/c #:x string?
+                                           #:y string?
+                                           #:discrete-color (or/c string? #f)
+                                           #:facet (or/c string? #f))
+                         (aes)])
+         graphite-renderer?]{
+  Renders a bar chart. Unlike @racket[bar], this treats the specified x and y variables as a collection of
+  variables to be @italic{directly displayed}, rather than doing further calculations (counting/proportions).
+  This means the x-axis and y-axis must both be quantitative variables (for now).
+
+  The optional @racket[#:gap] argument specifies the gap between each bar.
+
+  The optional @racket[#:baseline] argument specifies the baseline of the "x-axis". For example, if you wanted
+  all columns with values above 20 to be above the "x-axis", and all below 20 to be below it, you would set this
+  to be 20.
+
+  @examples[#:eval ev
+    (graph #:data oecd
+           #:mapping (aes #:x "year" #:y "diff")
+           #:title "Difference between US and OECD average life expectancies"
+           #:x-label "Year" #:y-label "Difference (years)"
+           #:y-min -2 #:y-max 2
+           #:width 600 #:height 400
+           #:legend-anchor 'no-legend
+           (col #:mapping (aes #:discrete-color "hi_lo")))
+  ]
+}
+
 
 @defproc[(histogram [#:x-min x-min (or/c rational? #f) #f]
                     [#:x-max x-max (or/c rational? #f) #f]
