@@ -212,11 +212,12 @@
 
 (define (save-pict pict path)
   (define ext (path-get-extension path))
-  (match ext
-    [(or #".png" #".pdf" #".svg")
-     (with-output-to-file path
-       (λ () (write-bytes (convert pict
-                                   (string->symbol
-                                    (string-append (bytes->string/utf-8 (subbytes ext 1))
-                                                   "-bytes"))))))]
-    [_ (error 'save-pict "unsupported extension")]))
+  (void
+   (match ext
+     [(or #".png" #".pdf" #".svg")
+      (with-output-to-file path
+        (λ () (write-bytes (convert pict
+                                    (string->symbol
+                                     (string-append (bytes->string/utf-8 (subbytes ext 1))
+                                                    "-bytes"))))))]
+     [_ (error 'save-pict "unsupported extension")])))
