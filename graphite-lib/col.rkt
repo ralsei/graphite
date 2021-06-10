@@ -31,7 +31,6 @@
                                                       #:facet (or/c string? #f)))
                          graphite-renderer?)]))
 
-; TODO: categorical x-axis
 (define-renderer (col #:kws kws #:kw-args kw-args
                       #:gap [gap 0] #:baseline [baseline 0] #:mapping [local-mapping (aes)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))

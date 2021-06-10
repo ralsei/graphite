@@ -5,8 +5,7 @@
 
 (define organdata (df-read/csv "../data/organdata.csv" #:na "NA"))
 
-(parameterize ([plot-y-ticks no-ticks]                 ; XXX: should be metadata -- but how...?
-               [plot-legend-layout '(rows 1 compact)]) ; TODO: make this part of theming
+(parameterize ([plot-legend-layout '(rows 1 compact)]) ; TODO: make this part of theming
   (graph #:data organdata
          #:mapping (aes #:x "donors" #:y "country")
          #:width 700 #:height 500

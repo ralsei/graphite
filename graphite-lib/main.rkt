@@ -28,6 +28,7 @@
          "histogram.rkt"
          "lines.rkt"
          "points.rkt"
+         "qualitative.rkt"
          "renderer.rkt"
          "themes.rkt"
          "transforms.rkt"
@@ -180,11 +181,16 @@
                      [gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
         (plot-pict-bounds (graph-internal #f render-fns))))
 
+    (define x-qualitative? (qualitative? (hash-ref mapping 'x)))
+    (define y-qualitative? (qualitative? (hash-ref mapping 'y)))
+
     ; overridden by anything
     (define defaults
       (alist plot-x-label (hash-ref mapping 'x #f)
              plot-y-label (hash-ref mapping 'y #f)
              point-sym 'bullet
+             plot-x-ticks (and x-qualitative? no-ticks)
+             plot-y-ticks (and y-qualitative? no-ticks)
              plot-x-far-ticks no-ticks
              plot-y-far-ticks no-ticks))
     ; overrides anything
