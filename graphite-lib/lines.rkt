@@ -1,5 +1,6 @@
 #lang racket/base
-(require fancy-app
+(require data/ddict
+         fancy-app
          pict
          (prefix-in plot: plot/no-gui)
          plot/utils
@@ -29,15 +30,15 @@
                         #:mapping [local-mapping (aes)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 
-  (define tbl (make-hash))
+  (define tbl (make-mutable-ddict))
   (for ([(x y strat facet)
          (in-data-frame* (gr-data) (hash-ref aes 'x) (hash-ref aes 'y)
                          (hash-ref aes 'discrete-color #f) (hash-ref aes 'facet #f))]
         #:when (and x y)
         #:when (equal? facet (gr-group)))
-    (hash-update! tbl strat (cons (vector ((gr-x-conv) x) ((gr-y-conv) y)) _) null))
+    (ddict-update! tbl strat (cons (vector ((gr-x-conv) x) ((gr-y-conv) y)) _) null))
 
-  (for/list ([(strat pts) (in-hash/sort tbl)]
+  (for/list ([(strat pts) (in-ddict tbl)]
              [color-n (in-naturals)])
     (run-renderer #:renderer plot:lines #:kws kws #:kw-args kw-args
                   #:color (->pen-color color-n) #:label strat

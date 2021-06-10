@@ -1,5 +1,6 @@
 #lang racket/base
-(require fancy-app
+(require data/ddict
+         fancy-app
          pict
          (prefix-in plot: plot/no-gui)
          plot/utils
@@ -30,15 +31,15 @@
                  (#:y-label "density")
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 
-  (define tbl (make-hash))
+  (define tbl (make-mutable-ddict))
   (for ([(x strat facet)
          (in-data-frame* (gr-data) (hash-ref aes 'x) (hash-ref aes 'discrete-color #f)
                          (hash-ref aes 'facet #f))]
         #:when x
         #:when (equal? facet (gr-group)))
-    (hash-update! tbl strat (cons ((gr-x-conv) x) _) null))
+    (ddict-update! tbl strat (cons ((gr-x-conv) x) _) null))
 
-  (for/list ([(strat pts) (in-hash/sort tbl)]
+  (for/list ([(strat pts) (in-ddict tbl)]
              [color-n (in-naturals)])
     (run-renderer #:renderer plot:density #:kws kws #:kw-args kw-args
                   #:color (->pen-color color-n) #:label strat

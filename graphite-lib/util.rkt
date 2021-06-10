@@ -2,6 +2,7 @@
 (require (for-syntax racket/base syntax/parse)
          data-frame
          pict
+         plot/no-gui
          plot/utils
          racket/dict
          racket/hash
@@ -11,7 +12,6 @@
          racket/set
          racket/vector
          threading
-         "ordering.rkt"
          "parameters.rkt")
 
 (provide (all-defined-out)
@@ -78,8 +78,7 @@
 (define (in-data-frame* data . series)
   (define generators
     (for/list ([s (in-list series)])
-      (cond [(variable? s) (in-data-frame data (variable-name s))]
-            [s (in-data-frame data s)]
+      (cond [s (in-data-frame data s)]
             [else (in-infinite s)])))
 
   (cond [(empty? generators) (in-parallel '())]
@@ -157,3 +156,5 @@
 
 (define (vl-append-backwards offset pict-a pict-b)
   (lb-superimpose pict-b (inset pict-a 0 0 0 (- (pict-height pict-b) (- offset)))))
+
+(define no-renderer (invisible-rect #f #f #f #f))

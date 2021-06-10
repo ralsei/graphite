@@ -6,7 +6,6 @@
          "aes.rkt"
          "extern/box-and-whiskers.rkt"
          "renderer.rkt"
-         "ordering.rkt"
          "qualitative.rkt"
          "util.rkt")
 (provide
@@ -55,9 +54,9 @@
     (hash-update! list-tbl (if invert? conv-y conv-x)
                   (cons (if invert? conv-x conv-y) _) '()))
 
-  (define-values (sorted q r) (qualitative-iso (hash-ref mapping 'y)))
+  (define-values (vs a b) (qualitative-iso (hash-ref mapping (if invert? 'y 'x))))
 
-  (for/list ([s (in-vector sorted)])
+  (for/list ([s (in-vector vs)])
     (samples->bnw-data (hash-ref list-tbl s) #:iqr-scale iqr-scale)))
 
 (define (do-invert? kws kw-args)
@@ -71,13 +70,12 @@
   (define aes (mapping-override (gr-global-mapping) local-mapping))
   (define invert? (do-invert? kws kw-args))
 
-  (for/list ([v (in-list (make-stats aes iqr-scale invert?))]
-             [c (in-naturals)])
-    (list (run-renderer #:renderer box-and-whiskers
-                        #:kws kws #:kw-args kw-args
-                        #:x c
-                        v)
-          (qualitative-ticks (if (not (variable+ordering? (hash-ref aes 'y)))
-                                 (variable+ordering (hash-ref aes 'y) lexicographic)
-                                 (hash-ref aes 'y))
-                             (if invert? y-ticks x-ticks)))))
+  (cons
+   (qualitative-ticks (hash-ref aes (if invert? 'y 'x))
+                      (if invert? y-ticks x-ticks))
+   (for/list ([v (in-list (make-stats aes iqr-scale invert?))]
+              [c (in-naturals)])
+     (list (run-renderer #:renderer box-and-whiskers
+                         #:kws kws #:kw-args kw-args
+                         #:x c
+                         v)))))

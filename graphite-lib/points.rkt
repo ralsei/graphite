@@ -1,5 +1,5 @@
 #lang racket/base
-(require data-frame
+(require data/ddict
          fancy-app
          pict
          (prefix-in plot: plot/no-gui)
@@ -35,39 +35,53 @@
 (define-renderer (points #:kws kws #:kw-args kw-args
                          #:mapping [local-mapping (aes)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
-  (define discrete-color (hash-ref aes 'discrete-color #f))
-  (define continuous-color (hash-ref aes 'continuous-color #f))
   (define facet-on (hash-ref aes 'facet #f))
 
+  (define discrete-color (hash-ref aes 'discrete-color #f))
+  (define continuous-color (hash-ref aes 'continuous-color #f))
   (when (and discrete-color continuous-color)
     (error 'points "cannot have both discrete and continuous color aesthetics"))
 
-  (define tbl (make-hash))
+  (define x-qualitative? (qualitative? (hash-ref aes 'x)))
+  (define y-qualitative? (qualitative? (hash-ref aes 'y)))
+  (when (and x-qualitative? y-qualitative?)
+    (error 'points "x and y axes cannot both be qualitative variables"))
+
+  (define-values (x-vs x->real real->x) (if x-qualitative?
+                                            (qualitative-iso (hash-ref aes 'x))
+                                            (values #f values values)))
+  (define-values (y-vs y->real real->y) (if y-qualitative?
+                                            (qualitative-iso (hash-ref aes 'y))
+                                            (values #f values values)))
+
+  (define tbl (make-mutable-ddict))
   (for ([(x y strat facet)
          (in-data-frame* (gr-data) (hash-ref aes 'x) (hash-ref aes 'y)
                          (or discrete-color continuous-color) facet-on)]
         #:when (and x y)
         #:when (equal? facet (gr-group)))
-    (hash-update! tbl
-                  strat
-                  (cons (vector ((gr-x-conv) x) ((gr-y-conv) y)) _) null))
+    (ddict-update! tbl
+                   strat
+                   (cons (vector (x->real ((gr-x-conv) x)) (y->real ((gr-y-conv) y))) _) null))
 
   (define continuous-min (and continuous-color
-                              (apply min (hash-keys tbl))))
+                              (apply min (ddict-keys tbl))))
   (define continuous-max (and continuous-color
-                              (apply max (hash-keys tbl))))
+                              (apply max (ddict-keys tbl))))
 
-  (for/list ([(strat pts) (in-hash/sort tbl)]
-             [color-n (in-naturals)])
-    (run-renderer #:renderer plot:points
-                  #:kws kws #:kw-args kw-args
-                  #:color (if continuous-color
-                              (->pen-color
-                               (inexact->exact
-                                (round (convert continuous-min 0
-                                                continuous-max
-                                                (color-map-size (plot-pen-color-map))
-                                                strat))))
-                              (->pen-color color-n))
-                  #:label (and discrete-color strat)
-                  pts)))
+  (list* (if x-qualitative? (qualitative-ticks (hash-ref aes 'x) plot:x-ticks) no-renderer)
+         (if y-qualitative? (qualitative-ticks (hash-ref aes 'y) plot:y-ticks) no-renderer)
+         (for/list ([(strat pts) (in-ddict tbl)]
+                    [color-n (in-naturals)])
+           (run-renderer #:renderer plot:points
+                         #:kws kws #:kw-args kw-args
+                         #:color (if continuous-color
+                                     (->pen-color
+                                      (inexact->exact
+                                       (round (convert continuous-min 0
+                                                       continuous-max
+                                                       (color-map-size (plot-pen-color-map))
+                                                       strat))))
+                                     (->pen-color color-n))
+                         #:label (and discrete-color strat)
+                         pts))))

@@ -27,7 +27,6 @@
          "fit.rkt"
          "histogram.rkt"
          "lines.rkt"
-         "ordering.rkt"
          "points.rkt"
          "renderer.rkt"
          "themes.rkt"
@@ -67,7 +66,6 @@
  (all-from-out "histogram.rkt")
  (all-from-out "fit.rkt")
  (all-from-out "lines.rkt")
- (all-from-out "ordering.rkt")
  (all-from-out "points.rkt")
  (all-from-out "themes.rkt")
  (all-from-out "transforms.rkt"))
@@ -75,8 +73,7 @@
 ; XXX: should we support multiple facets? n facets?
 (define (facet-plot render-fns wrap)
   (define facet (hash-ref (gr-global-mapping) 'facet))
-  (define groups (vector-sort (possibilities (gr-data) facet)
-                              (λ (x y) (string-ci<? (~a x) (~a y)))))
+  (define groups (possibilities (gr-data) facet))
   (define facet-wrap (or wrap (inexact->exact (ceiling (sqrt (vector-length groups))))))
   (define wrapped-groups (vector-reshape groups facet-wrap))
   (define num-blanks (vector-count not (vector-ref wrapped-groups
@@ -185,8 +182,8 @@
 
     ; overridden by anything
     (define defaults
-      (alist plot-x-label (and~> (hash-ref mapping 'x #f) variable-name)
-             plot-y-label (and~> (hash-ref mapping 'y #f) variable-name)
+      (alist plot-x-label (hash-ref mapping 'x #f)
+             plot-y-label (hash-ref mapping 'y #f)
              point-sym 'bullet
              plot-x-far-ticks no-ticks
              plot-y-far-ticks no-ticks))
