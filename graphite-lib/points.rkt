@@ -47,12 +47,8 @@
   (when (and x-qualitative? y-qualitative?)
     (error 'points "x and y axes cannot both be qualitative variables"))
 
-  (define-values (x-vs x->real real->x) (if x-qualitative?
-                                            (qualitative-iso (hash-ref aes 'x))
-                                            (values #f values values)))
-  (define-values (y-vs y->real real->y) (if y-qualitative?
-                                            (qualitative-iso (hash-ref aes 'y))
-                                            (values #f values values)))
+  (define-values (x-vs x->real real->x) (variable-iso (hash-ref aes 'x)))
+  (define-values (y-vs y->real real->y) (variable-iso (hash-ref aes 'y)))
 
   (define tbl (make-mutable-ddict))
   (for ([(x y strat facet)
