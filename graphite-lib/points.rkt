@@ -1,11 +1,13 @@
 #lang racket/base
-(require fancy-app
+(require data-frame
+         fancy-app
          pict
          (prefix-in plot: plot/no-gui)
          plot/utils
          racket/contract/base
          "aes.rkt"
          "renderer.rkt"
+         "qualitative.rkt"
          "util.rkt")
 
 (provide

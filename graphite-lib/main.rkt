@@ -17,6 +17,7 @@
          racket/math
          racket/path
          racket/vector
+         threading
          "aes.rkt"
          "bar.rkt"
          "boxplot.rkt"
@@ -26,6 +27,7 @@
          "fit.rkt"
          "histogram.rkt"
          "lines.rkt"
+         "ordering.rkt"
          "points.rkt"
          "renderer.rkt"
          "themes.rkt"
@@ -65,6 +67,7 @@
  (all-from-out "histogram.rkt")
  (all-from-out "fit.rkt")
  (all-from-out "lines.rkt")
+ (all-from-out "ordering.rkt")
  (all-from-out "points.rkt")
  (all-from-out "themes.rkt")
  (all-from-out "transforms.rkt"))
@@ -182,8 +185,8 @@
 
     ; overridden by anything
     (define defaults
-      (alist plot-x-label (hash-ref mapping 'x #f)
-             plot-y-label (hash-ref mapping 'y #f)
+      (alist plot-x-label (and~> (hash-ref mapping 'x #f) variable-name)
+             plot-y-label (and~> (hash-ref mapping 'y #f) variable-name)
              point-sym 'bullet
              plot-x-far-ticks no-ticks
              plot-y-far-ticks no-ticks))

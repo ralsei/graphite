@@ -4,6 +4,6 @@
 (define organdata (df-read/csv "../data/organdata.csv" #:na "NA"))
 
 (graph #:data organdata
-       #:mapping (aes #:x "donors" #:y "country")
+       #:mapping (aes #:x "donors" #:y (with-ordering "country" (mean-of "donors")))
        #:width 700
        (boxplot #:invert? #t))

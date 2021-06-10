@@ -4,6 +4,6 @@
 (define gss (df-read/csv "../data/gss_sm.csv"))
 
 (graph #:data gss
-       #:mapping (aes #:x "religion" #:facet "bigregion")
+       #:mapping (aes #:x (with-ordering "religion" lexicographic) #:facet "bigregion")
        #:width 700 #:height 700
        (bar #:mode 'prop))

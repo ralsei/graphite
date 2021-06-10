@@ -4,16 +4,18 @@
          pict
          plot/utils
          racket/dict
-         racket/function
          racket/hash
          racket/list
          racket/match
          racket/math
          racket/set
          racket/vector
-         threading)
+         threading
+         "ordering.rkt"
+         "parameters.rkt")
 
-(provide (all-defined-out))
+(provide (all-defined-out)
+         (all-from-out "parameters.rkt"))
 
 (define (keyword->symbol s)
   (string->symbol (keyword->string s)))
@@ -50,24 +52,6 @@
     [`((,k . #f) . ,rst) (alist-remove-false rst)]
     [`(,p . ,rst) (cons p (alist-remove-false rst))]))
 
-(define-syntax (define-parameter stx)
-  (syntax-parse stx
-    [(_ NAME VALUE) #'(define NAME (make-parameter VALUE))]
-    [(_ NAME) #'(define NAME (make-parameter #f))]
-    [_ (raise-syntax-error 'define-parameter
-                           (format "expected a name and a value, or just a name"))]))
-
-(define-parameter gr-data)
-(define-parameter gr-global-mapping)
-(define-parameter gr-x-conv identity)
-(define-parameter gr-y-conv identity)
-(define-parameter gr-group)
-
-(define-parameter gr-x-min)
-(define-parameter gr-x-max)
-(define-parameter gr-y-min)
-(define-parameter gr-y-max)
-
 (define (vector-remove-duplicates vec)
   (define seen (mutable-set))
   (for/vector ([v (in-vector vec)]
@@ -94,7 +78,8 @@
 (define (in-data-frame* data . series)
   (define generators
     (for/list ([s (in-list series)])
-      (cond [s (in-data-frame data s)]
+      (cond [(variable? s) (in-data-frame data (variable-name s))]
+            [s (in-data-frame data s)]
             [else (in-infinite s)])))
 
   (cond [(empty? generators) (in-parallel '())]
@@ -105,14 +90,15 @@
             ([k (in-list keys)])
     (hash-remove ret k)))
 
-(define (in-hash/sort hsh)
-  (define sorted (try-sort-keys (hash->list hsh)))
+(define (in-hash/sort hsh [cmpfn #f])
+  (define sorted (try-sort-keys (hash->list hsh) cmpfn))
   (in-parallel (map car sorted) (map cdr sorted)))
 
 ; straight out of hash.ss
 ; https://github.com/racket/racket/blob/master/racket/src/cs/rumble/hash.ss#L500
-(define (try-sort-keys keys)
-  (cond [(andmap (λ (p) (orderable? (car p))) keys)
+(define (try-sort-keys keys cmpfn)
+  (cond [cmpfn (sort keys cmpfn #:key car)]
+        [(andmap (λ (p) (orderable? (car p))) keys)
          (sort keys orderable<? #:key car)]
         [else keys]))
 
