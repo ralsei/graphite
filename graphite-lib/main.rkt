@@ -182,8 +182,8 @@
                      [gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
         (plot-pict-bounds (graph-internal #f render-fns))))
 
-    (define x-qualitative? (and~> (hash-ref mapping 'x #f) qualitative?))
-    (define y-qualitative? (and~> (hash-ref mapping 'y #f) qualitative?))
+    (define x-qualitative? (and~> (hash-ref mapping 'x #f) (qualitative? #:x? #t)))
+    (define y-qualitative? (and~> (hash-ref mapping 'y #f) (qualitative? #:y? #t)))
 
     ; overridden by anything
     (define defaults

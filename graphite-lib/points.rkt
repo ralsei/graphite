@@ -42,13 +42,13 @@
   (when (and discrete-color continuous-color)
     (error 'points "cannot have both discrete and continuous color aesthetics"))
 
-  (define x-qualitative? (qualitative? (hash-ref aes 'x)))
-  (define y-qualitative? (qualitative? (hash-ref aes 'y)))
+  (define x-qualitative? (qualitative? (hash-ref aes 'x) #:x? #t))
+  (define y-qualitative? (qualitative? (hash-ref aes 'y) #:y? #t))
   (when (and x-qualitative? y-qualitative?)
     (error 'points "x and y axes cannot both be qualitative variables"))
 
-  (define-values (x-vs x->real real->x) (variable-iso (hash-ref aes 'x)))
-  (define-values (y-vs y->real real->y) (variable-iso (hash-ref aes 'y)))
+  (define-values (x-vs x->real real->x) (variable-iso (hash-ref aes 'x) #:x? #t))
+  (define-values (y-vs y->real real->y) (variable-iso (hash-ref aes 'y) #:y? #t))
 
   (define tbl (make-mutable-ddict))
   (for ([(x y strat facet)

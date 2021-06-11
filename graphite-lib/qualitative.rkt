@@ -6,10 +6,12 @@
 (provide qualitative? qualitative-iso qualitative-ticks variable-iso)
 
 ; determines if a variable in the data-frame is qualitative
-(define (qualitative? var)
+(define (qualitative? var #:x? [x? #f] #:y? [y? #f])
   (for/first ([v (in-vector (df-select (gr-data) var))]
               #:when v)
-    (not (real? v))))
+    (not (real? ((cond [x? (gr-x-conv)]
+                       [y? (gr-y-conv)]
+                       [else values]) v)))))
 
 ; creates an isomorphism between the variable and the reals
 (define (qualitative-iso var-name)
@@ -31,6 +33,6 @@
 
 ; creates an isomorphism between the variable and the reals, even if the variable is not
 ; qualitative
-(define (variable-iso var-name)
-  (cond [(qualitative? var-name) (qualitative-iso var-name)]
+(define (variable-iso var-name #:x? [x? #f] #:y? [y? #f])
+  (cond [(qualitative? var-name #:x? x? #:y? y?) (qualitative-iso var-name)]
         [else (values (vector) values values)]))
