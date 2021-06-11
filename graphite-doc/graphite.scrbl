@@ -93,7 +93,7 @@ A tutorial on @racketmodname[graphite] is also available;
 
   The aesthetic @racket[#:facet], specified in the @racket[#:mapping] argument, dictates whether to facet on a
   single categorical variable. If this is selected, Graphite will split the plot into subplots based on that
-  variable, into a grid. This aesthetic does nothing if not applied globally.
+  variable, into a grid. This aesthetic will cause unexpected behavior if not applied globally.
 
   The optional @racket[#:facet-wrap] argument dictates how many columns should be drawn before wrapping to a new
   line. By default, this is the square root of the number of observations in the @racket[#:facet] variable,
@@ -168,8 +168,10 @@ takes an aesthetic mapping using the @racket[#:mapping] keyword.
                                               #:continuous-color (or/c string? #f))
                             (aes)])
          graphite-renderer?]{
-  Returns a renderer that draws a set of points, for example, to draw a (randomized) scatter plot:
-  @examples[#:eval ev #:label #f
+  Returns a renderer that draws a set of points, useful for drawing scatterplots or dot-plots. One of the x/y
+  axes (but not both) can be a qualitative variable, in which case a dot-plot is drawn.
+
+  @examples[#:eval ev
     (define (random-data)
       (build-vector 50 (λ (_) (random -50 50))))
 
@@ -180,12 +182,17 @@ takes an aesthetic mapping using the @racket[#:mapping] keyword.
     (graph #:data df
            #:mapping (aes #:x "x-var" #:y "y-var")
            (points))
+
+    (graph #:data organdata
+           #:mapping (aes #:x "donors" #:y "country")
+           (points))
   ]
 
   The optional @racket[#:discrete-color] aesthetic dictates a variable to split on by color, in discrete groups.
 
   Similarly, the @racket[#:continuous-color] aesthetic dictates a continuous (numeric) variable to split on by
-  color. You likely want to use a continuous colormap for this.
+  color. You likely want to use a continuous colormap (see @racket[theme-continuous]) for this.
+  @bold{Legends for continuous colors are not currently supported. We are working on it.}
 }
 
 @defproc[(fit [#:x-min x-min (or/c rational? #f) #f]
@@ -336,7 +343,8 @@ takes an aesthetic mapping using the @racket[#:mapping] keyword.
                                            #:group (or/c string? #f))
                          (aes)])
          graphite-renderer?]{
-  Renders a bar chart.
+  Renders a bar chart, with calculations done on the data before plotting. For plotting literal data as bars,
+  see @racket[col].
 
   The @racket[#:mode] argument dictates whether the y-axis should be the count of observations by the x-axis
   (@racket['count]), or the relative frequency of those observations (@racket['prop]).
@@ -400,7 +408,8 @@ takes an aesthetic mapping using the @racket[#:mapping] keyword.
          graphite-renderer?]{
   Renders a bar chart. Unlike @racket[bar], this treats the specified x and y variables as a collection of
   variables to be @italic{directly displayed}, rather than doing further calculations (counting/proportions).
-  This means the x-axis and y-axis must both be quantitative variables (for now).
+  The x-axis can be a qualitative variable, but the y-axis must be quantitative.
+
 
   The optional @racket[#:gap] argument specifies the gap between each bar.
 
@@ -409,6 +418,14 @@ takes an aesthetic mapping using the @racket[#:mapping] keyword.
   to be 20.
 
   @examples[#:eval ev
+    (define simple (make-data-frame))
+    (df-add-series! simple (make-series "trt" #:data (vector "a" "b" "c")))
+    (df-add-series! simple (make-series "outcome" #:data (vector 2.3 1.9 3.2)))
+
+    (graph #:data simple
+           #:mapping (aes #:x "trt" #:y "outcome")
+           (col #:gap 0.25))
+
     (graph #:data oecd
            #:mapping (aes #:x "year" #:y "diff")
            #:title "Difference between US and OECD average life expectancies"
@@ -500,7 +517,8 @@ takes an aesthetic mapping using the @racket[#:mapping] keyword.
                                                #:facet (or/c string? #f))
                              (aes)])
         graphite-renderer?]{
-  Renders a box-and-whisker plot.
+  Renders a box-and-whisker plot. One of the axes (x if not inverted, y if inverted) is assumed to be a
+  qualitative variable.
 
   The optional @racket[#:invert?] argument, if true, will draw the box-and-whisker plots lengthwise
   (left-to-right) rather than top-to-bottom. This means that the axes will have to be inverted. For example:
@@ -636,7 +654,7 @@ takes an aesthetic mapping using the @racket[#:mapping] keyword.
 
 @defthing[theme-continuous graphite-theme?]{
   A theme for plotting continuous data. Defined as the default theme, except with the color-map set to
-  @racket['tol-is] from the @tt{colormaps} package.
+  @racket['cb-bupu-9] from the @tt{colormaps} package.
 
   @examples[#:eval ev
     (df-add-derived! gapminder "log-pop" '("pop") (λ (x) (log (first x) 10)))

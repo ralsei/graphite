@@ -43,6 +43,9 @@
 
 
 (define (make-stats mapping iqr-scale invert?)
+  (define-values (vs var->real real->var)
+    (qualitative-iso (hash-ref mapping (if invert? 'y 'x))))
+
   (define list-tbl (make-hash))
   (for ([(x y facet) (in-data-frame* (gr-data) (hash-ref mapping 'x)
                                      (hash-ref mapping 'y)
@@ -53,8 +56,6 @@
     (define conv-y ((gr-y-conv) y))
     (hash-update! list-tbl (if invert? conv-y conv-x)
                   (cons (if invert? conv-x conv-y) _) '()))
-
-  (define-values (vs a b) (qualitative-iso (hash-ref mapping (if invert? 'y 'x))))
 
   (for/list ([s (in-vector vs)])
     (samples->bnw-data (hash-ref list-tbl s) #:iqr-scale iqr-scale)))

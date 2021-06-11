@@ -35,4 +35,5 @@
 ; qualitative
 (define (variable-iso var-name #:x? [x? #f] #:y? [y? #f])
   (cond [(qualitative? var-name #:x? x? #:y? y?) (qualitative-iso var-name)]
-        [else (values (vector) values values)]))
+        [else (values (possibilities (gr-data) var-name)
+                      values values)]))

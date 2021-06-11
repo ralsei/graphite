@@ -59,7 +59,7 @@
                        #:color-map 'set1 #:brush-color-map 'pastel1))
 
 (define theme-continuous
-  (theme-override theme-default #:color-map 'tol-is))
+  (theme-override theme-default #:color-map 'cb-bupu-9))
 
 (define (theme->alist theme)
   (map cons
