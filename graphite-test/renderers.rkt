@@ -68,6 +68,20 @@
          #:title "Happy birthday!"
          (points #:mapping (aes #:discrete-color "stratify-on"))))
 
+(define points-6-data "./test-data/points-6.dat")
+(define points-6
+  (graph #:data points-5-df
+         #:mapping (aes #:x "stratify-on" #:y "y-var")
+         #:title "Dot plot"
+         (points)))
+
+(define points-7-data "./test-data/points-7.dat")
+(define points-7
+  (graph #:data points-5-df
+         #:mapping (aes #:x "x-var" #:y "stratify-on")
+         #:title "Inverted dot plot"
+         (points #:y-jitter 0.15)))
+
 (define-runtime-path lines-1-data "./test-data/lines-1.dat")
 (define lines-1
   (graph #:data points-5-df
@@ -168,6 +182,8 @@
 (define-runtime-path error-bars-1-data "./test-data/error-bars-1.dat")
 (define error-bars-1-df
   (let ()
+    (random-seed 238)
+
     (define int-data (make-data-frame))
     (define (3x^2 x) (* 3.0 (expt x 2.0)))
     (define (add-error y) (+ y (* y (/ (- (random 4) 2) 10.0))))
@@ -265,6 +281,32 @@
          #:mapping (aes #:x "x-var")
          (stacked-bar #:mapping (aes #:group "group-var"))))
 
+(define-runtime-path col-1-data "./test-data/col-1.dat")
+(define col-1-df
+  (let ()
+    (random-seed 5010)
+    (define df (make-data-frame))
+    (df-add-series! df (make-series "x" #:data (build-vector 100 (λ (x) (string (integer->char (+ 33 x)))))))
+    (df-add-series! df (make-series "y" #:data (build-vector 100 (λ _ (random)))))
+    df))
+(define col-1
+  (graph #:data col-1-df
+         #:mapping (aes #:x "x" #:y "y")
+         (col)))
+
+(define-runtime-path col-2-data "./test-data/col-2.dat")
+(define col-2-df
+  (let ()
+    (random-seed 512)
+    (define df (make-data-frame))
+    (df-add-series! df (make-series "x" #:data (build-vector 100 identity)))
+    (df-add-series! df (make-series "y" #:data (build-vector 100 (λ _ (random)))))
+    df))
+(define col-2
+  (graph #:data col-2-df
+         #:mapping (aes #:x "x" #:y "y")
+         (col)))
+
 (define-runtime-path histogram-1-data "./test-data/histogram-1.dat")
 (define histogram-1
   (graph #:data points-5-df
@@ -319,6 +361,8 @@
   (check-draw-steps points-3 points-3-data)
   (check-draw-steps points-4 points-4-data)
   (check-draw-steps points-5 points-5-data)
+  (check-draw-steps points-6 points-6-data)
+  (check-draw-steps points-7 points-7-data)
 
   (check-draw-steps lines-1 lines-1-data)
   (check-draw-steps lines-2 lines-2-data)
@@ -341,6 +385,9 @@
   (check-draw-steps bar-6 bar-6-data)
 
   (check-draw-steps stacked-bar-1 stacked-bar-1-data)
+
+  (check-draw-steps col-1 col-1-data)
+  (check-draw-steps col-2 col-2-data)
 
   (check-draw-steps histogram-1 histogram-1-data)
   (check-draw-steps histogram-2 histogram-2-data)
