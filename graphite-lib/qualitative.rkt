@@ -31,6 +31,7 @@
    (for/list ([v (in-vector vs)])
      (tick (+ start-at (* skip-by (var->real v))) #t v))))
 
+
 ; creates an isomorphism between the variable and the reals, even if the variable is not
 ; qualitative
 (define (variable-iso var-name #:x? [x? #f] #:y? [y? #f])

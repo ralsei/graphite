@@ -100,7 +100,7 @@
 
   (define (run-plot group [with-x-extras? #f] [with-y-extras? #f])
     (parameterize ([plot-x-ticks (if with-x-extras? (plot-x-ticks) no-ticks)]
-                   [gr-bars-add-ticks? with-x-extras?]
+                   [gr-add-ticks? with-x-extras?]
                    [plot-x-label (and with-x-extras? (plot-x-label))]
                    [plot-y-ticks (if with-y-extras? (plot-y-ticks) no-ticks)]
                    [plot-y-label (and with-y-extras? (plot-y-label))])

@@ -43,9 +43,6 @@
 
 
 (define (make-stats mapping iqr-scale invert?)
-  (define-values (vs var->real real->var)
-    (qualitative-iso (hash-ref mapping (if invert? 'y 'x))))
-
   (define list-tbl (make-hash))
   (for ([(x y facet) (in-data-frame* (gr-data) (hash-ref mapping 'x)
                                      (hash-ref mapping 'y)
@@ -57,8 +54,8 @@
     (hash-update! list-tbl (if invert? conv-y conv-x)
                   (cons (if invert? conv-x conv-y) _) '()))
 
-  (for/list ([s (in-vector vs)])
-    (samples->bnw-data (hash-ref list-tbl s) #:iqr-scale iqr-scale)))
+  (for/hash ([(k v) (in-hash list-tbl)])
+    (values k (samples->bnw-data v #:iqr-scale iqr-scale))))
 
 (define (do-invert? kws kw-args)
   (let ([v (assoc '#:invert? (map cons kws kw-args))])
@@ -71,12 +68,15 @@
   (define aes (mapping-override (gr-global-mapping) local-mapping))
   (define invert? (do-invert? kws kw-args))
 
+  (define-values (vs var->real real->var)
+    (variable-iso (hash-ref aes (if invert? 'y 'x))
+                  #:x? (not invert?) #:y? invert?))
+
   (cons
    (qualitative-ticks (hash-ref aes (if invert? 'y 'x))
                       (if invert? y-ticks x-ticks))
-   (for/list ([v (in-list (make-stats aes iqr-scale invert?))]
-              [c (in-naturals)])
+   (for/list ([(k v) (in-hash (make-stats aes iqr-scale invert?))])
      (list (run-renderer #:renderer box-and-whiskers
                          #:kws kws #:kw-args kw-args
-                         #:x c
+                         #:x (var->real k)
                          v)))))
