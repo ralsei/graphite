@@ -42,13 +42,13 @@
   (when (and discrete-color continuous-color)
     (error 'points "cannot have both discrete and continuous color aesthetics"))
 
-  (define x-qualitative? (qualitative? (hash-ref aes 'x) #:x? #t))
-  (define y-qualitative? (qualitative? (hash-ref aes 'y) #:y? #t))
+  (define x-qualitative? (qualitative? aes 'x))
+  (define y-qualitative? (qualitative? aes 'y))
   (when (and x-qualitative? y-qualitative?)
     (error 'points "x and y axes cannot both be qualitative variables"))
 
-  (define-values (x-vs x->real real->x) (variable-iso (hash-ref aes 'x) #:x? #t))
-  (define-values (y-vs y->real real->y) (variable-iso (hash-ref aes 'y) #:y? #t))
+  (define-values (x-vs x->real real->x) (variable-iso aes 'x))
+  (define-values (y-vs y->real real->y) (variable-iso aes 'y))
 
   (define tbl (make-mutable-ddict))
   (for ([(x y strat facet)
@@ -65,8 +65,8 @@
   (define continuous-max (and continuous-color
                               (apply max (ddict-keys tbl))))
 
-  (list* (if x-qualitative? (qualitative-ticks (hash-ref aes 'x) plot:x-ticks) no-renderer)
-         (if y-qualitative? (qualitative-ticks (hash-ref aes 'y) plot:y-ticks) no-renderer)
+  (list* (if x-qualitative? (qualitative-ticks aes 'x plot:x-ticks) no-renderer)
+         (if y-qualitative? (qualitative-ticks aes 'y plot:y-ticks) no-renderer)
          (for/list ([(strat pts) (in-ddict tbl)]
                     [color-n (in-naturals)])
            (run-renderer #:renderer plot:points

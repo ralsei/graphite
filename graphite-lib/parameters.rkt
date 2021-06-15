@@ -2,7 +2,7 @@
 (require (for-syntax racket/base syntax/parse))
 (provide gr-data gr-global-mapping gr-x-conv gr-y-conv gr-group
          gr-x-min gr-x-max gr-y-min gr-y-max
-         gr-add-ticks?)
+         gr-add-x-ticks? gr-add-y-ticks?)
 
 (define-syntax (define-parameter stx)
   (syntax-parse stx
@@ -22,4 +22,5 @@
 (define-parameter gr-y-min)
 (define-parameter gr-y-max)
 
-(define-parameter gr-add-ticks? #t)
+(define-parameter gr-add-x-ticks? #t)
+(define-parameter gr-add-y-ticks? #t)

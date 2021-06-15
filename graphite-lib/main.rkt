@@ -17,7 +17,6 @@
          racket/math
          racket/path
          racket/vector
-         threading
          "aes.rkt"
          "bar.rkt"
          "boxplot.rkt"
@@ -100,9 +99,10 @@
 
   (define (run-plot group [with-x-extras? #f] [with-y-extras? #f])
     (parameterize ([plot-x-ticks (if with-x-extras? (plot-x-ticks) no-ticks)]
-                   [gr-add-ticks? with-x-extras?]
+                   [gr-add-x-ticks? with-x-extras?]
                    [plot-x-label (and with-x-extras? (plot-x-label))]
                    [plot-y-ticks (if with-y-extras? (plot-y-ticks) no-ticks)]
+                   [gr-add-y-ticks? with-y-extras?]
                    [plot-y-label (and with-y-extras? (plot-y-label))])
       (if group
           (plot-with-area (thunk (graph-internal group render-fns)) width height)
@@ -182,8 +182,10 @@
                      [gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
         (plot-pict-bounds (graph-internal #f render-fns))))
 
-    (define x-qualitative? (and~> (hash-ref mapping 'x #f) (qualitative? #:x? #t)))
-    (define y-qualitative? (and~> (hash-ref mapping 'y #f) (qualitative? #:y? #t)))
+    (define x-qualitative? (and (hash-has-key? mapping 'x)
+                                (qualitative? mapping 'x)))
+    (define y-qualitative? (and (hash-has-key? mapping 'y)
+                                (qualitative? mapping 'y)))
 
     ; overridden by anything
     (define defaults

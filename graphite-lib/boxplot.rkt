@@ -69,12 +69,10 @@
   (define invert? (do-invert? kws kw-args))
 
   (define-values (vs var->real real->var)
-    (variable-iso (hash-ref aes (if invert? 'y 'x))
-                  #:x? (not invert?) #:y? invert?))
+    (variable-iso aes (if invert? 'y 'x)))
 
   (cons
-   (qualitative-ticks (hash-ref aes (if invert? 'y 'x))
-                      (if invert? y-ticks x-ticks))
+   (qualitative-ticks aes (if invert? 'y 'x) (if invert? y-ticks x-ticks))
    (for/list ([(k v) (in-hash (make-stats aes iqr-scale invert?))])
      (list (run-renderer #:renderer box-and-whiskers
                          #:kws kws #:kw-args kw-args

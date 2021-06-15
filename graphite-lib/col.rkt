@@ -35,9 +35,9 @@
                       #:gap [gap 0] #:baseline [baseline 0] #:mapping [local-mapping (aes)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
   (define discrete-color (hash-ref aes 'discrete-color #f))
-  (define x-qualitative? (qualitative? (hash-ref aes 'x)))
+  (define x-qualitative? (qualitative? aes 'x))
 
-  (define-values (x-vs x->real real->x) (variable-iso (hash-ref aes 'x)))
+  (define-values (x-vs x->real real->x) (variable-iso aes 'x))
 
   (define tbl (make-hash))
   (for ([(x y strat facet)
@@ -53,7 +53,7 @@
       (vector (ivl (+ x (* 1/2 gap)) (- (add1 x) (* 1/2 gap)))
               (ivl baseline y))))
 
-  (list* (if x-qualitative? (qualitative-ticks (hash-ref aes 'x) x-ticks #:start-at 1/2) no-renderer)
+  (list* (if x-qualitative? (qualitative-ticks aes 'x x-ticks #:start-at 1/2) no-renderer)
          (for/list ([(strat pts) (in-hash/sort tbl)]
                     [color-n (in-naturals)])
            (run-renderer #:renderer rectangles #:kws kws #:kw-args kw-args
