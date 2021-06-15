@@ -27,9 +27,9 @@ This tutorial is modeled around Kieran Healy's work @hyperlink["https://www.socv
 
 @section{Deciding what library to use}
 
-Graphite is implemented @italic{on top} of @racket[plot], and in no way serves as a replacement to it, instead
-serving as a complement. As a consequence, Graphite's functionality is in no way a strict superset of
-@racket[plot].
+Graphite is implemented @italic{on top} of @racketmodname[plot], and in no way serves as a replacement to it,
+instead serving as a complement. As a consequence, Graphite's functionality is in no way a strict superset of
+@racketmodname[plot].
 
 If your data visualization satisfies some of the following criteria, Graphite would be a good fit:
 @itemlist[
@@ -284,15 +284,3 @@ represent religious preferences in that region. In that case:
 ]
 
 Now we've managed to split up our visualization into seperate charts for each region.
-
-We can do this in a similar fashion for the Gapminder plot from before, instead of using @racket[#:discrete-color]:
-@examples[#:eval ev #:label #f
-  (graph #:data gapminder
-         #:title "GDP per capita vs life expectancy"
-         #:x-label "GDP per capita (USD)"
-         #:y-label "Life expectancy (years)"
-         #:mapping (aes #:x "gdpPercap" #:y "lifeExp" #:facet "continent")
-         #:x-transform logarithmic-transform
-         (points #:alpha 0.4)
-         (fit #:width 3))
-]

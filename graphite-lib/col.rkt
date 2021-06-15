@@ -7,6 +7,7 @@
          racket/format
          racket/match
          "aes.rkt"
+         "qualitative.rkt"
          "renderer.rkt"
          "util.rkt")
 (provide
@@ -30,11 +31,13 @@
                                                       #:facet (or/c string? #f)))
                          graphite-renderer?)]))
 
-; TODO: categorical x-axis
 (define-renderer (col #:kws kws #:kw-args kw-args
                       #:gap [gap 0] #:baseline [baseline 0] #:mapping [local-mapping (aes)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
   (define discrete-color (hash-ref aes 'discrete-color #f))
+  (define x-qualitative? (qualitative? aes 'x))
+
+  (define-values (x-vs x->real real->x) (variable-iso aes 'x))
 
   (define tbl (make-hash))
   (for ([(x y strat facet)
@@ -42,7 +45,7 @@
                          discrete-color (hash-ref aes 'facet #f))]
         #:when (and x y)
         #:when (equal? facet (gr-group)))
-    (hash-update! tbl strat (cons (vector ((gr-x-conv) x) ((gr-y-conv) y)) _) null))
+    (hash-update! tbl strat (cons (vector (x->real ((gr-x-conv) x)) ((gr-y-conv) y)) _) null))
 
   (define (build-ivls pts)
     (for/vector ([pt (in-list pts)])
@@ -50,9 +53,10 @@
       (vector (ivl (+ x (* 1/2 gap)) (- (add1 x) (* 1/2 gap)))
               (ivl baseline y))))
 
-  (for/list ([(strat pts) (in-hash/sort tbl)]
-             [color-n (in-naturals)])
-    (run-renderer #:renderer rectangles #:kws kws #:kw-args kw-args
-                  #:color color-n
-                  #:label (and discrete-color (~a strat))
-                  (build-ivls pts))))
+  (list* (if x-qualitative? (qualitative-ticks aes 'x x-ticks #:start-at 1/2) no-renderer)
+         (for/list ([(strat pts) (in-hash/sort tbl)]
+                    [color-n (in-naturals)])
+           (run-renderer #:renderer rectangles #:kws kws #:kw-args kw-args
+                         #:color color-n
+                         #:label (and discrete-color (~a strat))
+                         (build-ivls pts)))))

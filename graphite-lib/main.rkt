@@ -27,6 +27,7 @@
          "histogram.rkt"
          "lines.rkt"
          "points.rkt"
+         "qualitative.rkt"
          "renderer.rkt"
          "themes.rkt"
          "transforms.rkt"
@@ -72,8 +73,7 @@
 ; XXX: should we support multiple facets? n facets?
 (define (facet-plot render-fns wrap)
   (define facet (hash-ref (gr-global-mapping) 'facet))
-  (define groups (vector-sort (possibilities (gr-data) facet)
-                              (λ (x y) (string-ci<? (~a x) (~a y)))))
+  (define groups (possibilities (gr-data) facet))
   (define facet-wrap (or wrap (inexact->exact (ceiling (sqrt (vector-length groups))))))
   (define wrapped-groups (vector-reshape groups facet-wrap))
   (define num-blanks (vector-count not (vector-ref wrapped-groups
@@ -99,8 +99,10 @@
 
   (define (run-plot group [with-x-extras? #f] [with-y-extras? #f])
     (parameterize ([plot-x-ticks (if with-x-extras? (plot-x-ticks) no-ticks)]
+                   [gr-add-x-ticks? with-x-extras?]
                    [plot-x-label (and with-x-extras? (plot-x-label))]
                    [plot-y-ticks (if with-y-extras? (plot-y-ticks) no-ticks)]
+                   [gr-add-y-ticks? with-y-extras?]
                    [plot-y-label (and with-y-extras? (plot-y-label))])
       (if group
           (plot-with-area (thunk (graph-internal group render-fns)) width height)
@@ -180,11 +182,18 @@
                      [gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
         (plot-pict-bounds (graph-internal #f render-fns))))
 
+    (define x-qualitative? (and (hash-has-key? mapping 'x)
+                                (qualitative? mapping 'x)))
+    (define y-qualitative? (and (hash-has-key? mapping 'y)
+                                (qualitative? mapping 'y)))
+
     ; overridden by anything
     (define defaults
       (alist plot-x-label (hash-ref mapping 'x #f)
              plot-y-label (hash-ref mapping 'y #f)
              point-sym 'bullet
+             plot-x-ticks (and x-qualitative? no-ticks)
+             plot-y-ticks (and y-qualitative? no-ticks)
              plot-x-far-ticks no-ticks
              plot-y-far-ticks no-ticks))
     ; overrides anything
@@ -212,11 +221,12 @@
 
 (define (save-pict pict path)
   (define ext (path-get-extension path))
-  (match ext
-    [(or #".png" #".pdf" #".svg")
-     (with-output-to-file path
-       (λ () (write-bytes (convert pict
-                                   (string->symbol
-                                    (string-append (bytes->string/utf-8 (subbytes ext 1))
-                                                   "-bytes"))))))]
-    [_ (error 'save-pict "unsupported extension")]))
+  (void
+   (match ext
+     [(or #".png" #".pdf" #".svg")
+      (with-output-to-file path
+        (λ () (write-bytes (convert pict
+                                    (string->symbol
+                                     (string-append (bytes->string/utf-8 (subbytes ext 1))
+                                                    "-bytes"))))))]
+     [_ (error 'save-pict "unsupported extension")])))

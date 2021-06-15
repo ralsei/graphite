@@ -4,6 +4,7 @@
 (define deps '(("base" #:version "8.1")
                "colormaps"
                "data-frame"
+               "ddict"
                "fancy-app"
                "loess"
                "math-lib"

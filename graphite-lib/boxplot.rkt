@@ -6,6 +6,7 @@
          "aes.rkt"
          "extern/box-and-whiskers.rkt"
          "renderer.rkt"
+         "qualitative.rkt"
          "util.rkt")
 (provide
  (contract-out [boxplot (->* ()
@@ -41,7 +42,7 @@
                              graphite-renderer?)]))
 
 
-(define (make-stat-table mapping iqr-scale invert?)
+(define (make-stats mapping iqr-scale invert?)
   (define list-tbl (make-hash))
   (for ([(x y facet) (in-data-frame* (gr-data) (hash-ref mapping 'x)
                                      (hash-ref mapping 'y)
@@ -67,10 +68,13 @@
   (define aes (mapping-override (gr-global-mapping) local-mapping))
   (define invert? (do-invert? kws kw-args))
 
-  (for/list ([(k v) (in-hash (make-stat-table aes iqr-scale invert?))]
-             [c (in-naturals)])
-    (list (run-renderer #:renderer box-and-whiskers
-                        #:kws kws #:kw-args kw-args
-                        #:x c
-                        v)
-          ((if invert? y-ticks x-ticks) (list (tick c #t k))))))
+  (define-values (vs var->real real->var)
+    (variable-iso aes (if invert? 'y 'x)))
+
+  (cons
+   (qualitative-ticks aes (if invert? 'y 'x) (if invert? y-ticks x-ticks))
+   (for/list ([(k v) (in-hash (make-stats aes iqr-scale invert?))])
+     (list (run-renderer #:renderer box-and-whiskers
+                         #:kws kws #:kw-args kw-args
+                         #:x (var->real k)
+                         v)))))

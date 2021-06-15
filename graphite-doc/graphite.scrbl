@@ -68,7 +68,7 @@ A tutorial on @racketmodname[graphite] is also available;
   The primary graphing procedure, producing a @racket[pict?]. All positional arguments are
   @racket[graphite-renderer?]s to be plotted, as returned by @racket[points], @racket[histogram], et cetera.
 
-  The required argument @tt{#:data} takes a @racket[data-frame?], as provided by the @racketmodname[data-frame]
+  The required argument @racket[#:data] takes a @racket[data-frame?], as provided by the @racketmodname[data-frame]
   library. Note that the data being fed in must be @italic{tidy}, meaning that:
   @itemlist[
     @item{Every column is a variable.}
@@ -76,33 +76,33 @@ A tutorial on @racketmodname[graphite] is also available;
     @item{Every cell is a single value.}
   ]
 
-  The required argument @tt{#:mapping} takes a @racket[aes?] that dictates aesthetics to be applied to
+  The required argument @racket[#:mapping] takes a @racket[aes?] that dictates aesthetics to be applied to
   every renderer in the specified tree. Generally, you will want at least an x-axis (@tt{#:x}).
 
-  The @tt{#:x-conv} and @tt{#:y-conv} arguments, if given, perform pre-processing of the x-axis and y-axis variable
-  (when said variables are not automatically determined). For example, if you wanted to place dates on the
+  The @racket[#:x-conv] and @racket[#:y-conv] arguments, if given, perform pre-processing of the x-axis and y-axis
+  variable (when said variables are not automatically determined). For example, if you wanted to place dates on the
   x-axis, this could be a function converting your preferred date format to seconds since the UNIX epoch.
 
-  The @tt{#:x-transform} and @tt{#:y-transform} arguments, if given, take a @racket[transform?] to adjust the x and
-  y axes, as well as the ticks. For example, if you wanted to place a logarithmic transform on the x-axis, you
-  could specify @racket[logarithmic-transform]. Transforms are applied @italic{after} the respective @tt{#:x-conv}
-  or @racket{#:y-conv} function, if present.
+  The @racket[#:x-transform] and @racket[#:y-transform] arguments, if given, take a @racket[transform?] to adjust
+  the x and y axes, as well as the ticks. For example, if you wanted to place a logarithmic transform on the x-axis,
+  you could specify @racket[logarithmic-transform]. Transforms are applied @italic{after} the respective
+  @racket[#:x-conv] or @racket[#:y-conv] function, if present.
 
-  When given, the @tt{#:x-min} (etc.) arguments determine the bounds of the plot, but not the bounds of the
+  When given, the @racket[#:x-min] (etc.) arguments determine the bounds of the plot, but not the bounds of the
   individual renderers. For this, the data should be trimmed before being passed in.
 
-  The aesthetic @tt{#:facet}, specified in the @tt{#:mapping} argument, dictates whether to facet on a
+  The aesthetic @racket[#:facet], specified in the @racket[#:mapping] argument, dictates whether to facet on a
   single categorical variable. If this is selected, Graphite will split the plot into subplots based on that
-  variable, into a grid. This aesthetic does nothing if not applied globally.
+  variable, into a grid. This aesthetic will cause unexpected behavior if not applied globally.
 
-  The optional @tt{#:facet-wrap} argument dictates how many columns should be drawn before wrapping to a new
-  line. By default, this is the square root of the number of observations in the @tt{#:facet} variable, creating
-  a grid.
+  The optional @racket[#:facet-wrap] argument dictates how many columns should be drawn before wrapping to a new
+  line. By default, this is the square root of the number of observations in the @racket[#:facet] variable,
+  creating a grid.
 }
 
 @defproc[(save-pict [pict pict?]
                     [path path-string?])
-         exact-nonnegative-integer?]{
+         void?]{
   Saves a @racket[pict?] to disk, at the given path. Supports saving as PNG, PDF, or SVG, depending on the file
   extension.
 }
@@ -111,14 +111,15 @@ A tutorial on @racketmodname[graphite] is also available;
 
 Aesthetic mappings are used to map a given "aesthetic" (such as the x-axis, y-axis, or color) to a variable. When
 doing this, the given aesthetic will be "split" on that variable. Every renderer, as well as @racket[graph],
-takes an aesthetic mapping using the @tt{#:mapping} keyword.
+takes an aesthetic mapping using the @racket[#:mapping] keyword.
 
 @defproc[(aes [#:<key> value any/c] ...) aes?]{
-  Creates an aesthetic mapping, with each @tt{#:<key>} being mapped to each value.
+  Creates an aesthetic mapping, with each @racket[#:<key>] being mapped to each value.
 
-  These objects are generally passed with the @tt{#:mapping} keyword to either the @racket[graph] procedure or
-  to each individual @racket[graphite-renderer?] in the render tree. They dictate various aesthetics, dictating
-  how to display the data (such as colors, variables, et cetera), with behavior being dictated by each renderer.
+  These objects are generally passed with the @racket[#:mapping] keyword to either the @racket[graph] procedure
+  or to each individual @racket[graphite-renderer?] in the render tree. They dictate various aesthetics,
+  dictating how to display the data (such as colors, variables, et cetera), with behavior being dictated by each
+  renderer.
 }
 
 @defproc[(aes? [v any/c]) boolean?]{
@@ -126,12 +127,12 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
 }
 
 @defproc[(aes-with/c [#:<key> contract contract?] ...) contract?]{
-  Determines if the aesthetic mapping has each @tt{key}, with each value satisfying
+  Determines if the aesthetic mapping has each @racket[#:<key>], with each value satisfying
   the given contract.
 }
 
 @defproc[(aes-containing/c [#:<key> contract contract?] ...) contract?]{
-  Determines if the aesthetic mapping optionally contains each @tt{key}, and if it does,
+  Determines if the aesthetic mapping optionally contains each @racket[#:<key>], and if it does,
   that each value satisfies the given contract.
 }
 
@@ -167,8 +168,10 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
                                               #:continuous-color (or/c string? #f))
                             (aes)])
          graphite-renderer?]{
-  Returns a renderer that draws a set of points, for example, to draw a (randomized) scatter plot:
-  @examples[#:eval ev #:label #f
+  Returns a renderer that draws a set of points, useful for drawing scatterplots or dot-plots. One of the x/y
+  axes (but not both) can be a qualitative variable, in which case a dot-plot is drawn.
+
+  @examples[#:eval ev
     (define (random-data)
       (build-vector 50 (λ (_) (random -50 50))))
 
@@ -179,12 +182,17 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
     (graph #:data df
            #:mapping (aes #:x "x-var" #:y "y-var")
            (points))
+
+    (graph #:data organdata
+           #:mapping (aes #:x "donors" #:y "country")
+           (points))
   ]
 
-  The optional @tt{#:discrete-color} aesthetic dictates a variable to split on by color, in discrete groups.
+  The optional @racket[#:discrete-color] aesthetic dictates a variable to split on by color, in discrete groups.
 
-  Similarly, the @tt{#:continuous-color} aesthetic dictates a continuous (numeric) variable to split on by
-  color. You likely want to use a continuous colormap for this.
+  Similarly, the @racket[#:continuous-color] aesthetic dictates a continuous (numeric) variable to split on by
+  color. You likely want to use a continuous colormap (see @racket[theme-continuous]) for this.
+  @bold{Legends for continuous colors are not currently supported. We are working on it.}
 }
 
 @defproc[(fit [#:x-min x-min (or/c rational? #f) #f]
@@ -335,13 +343,14 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
                                            #:group (or/c string? #f))
                          (aes)])
          graphite-renderer?]{
-  Renders a bar chart.
+  Renders a bar chart, with calculations done on the data before plotting. For plotting literal data as bars,
+  see @racket[col].
 
-  The @tt{#:mode} argument dictates whether the y-axis should be the count of observations by the x-axis
-  (@tt{'count}), or the relative frequency of those observations (@tt{'prop}).
+  The @racket[#:mode] argument dictates whether the y-axis should be the count of observations by the x-axis
+  (@racket['count]), or the relative frequency of those observations (@racket['prop]).
 
-  The optional @tt{#:group} aesthetic dictates whether the bar should be "dodged", with each bar
-  being broken up into bars based on the group. If this is enabled, the @tt{#:group-gap} argument dictates
+  The optional @racket[#:group] aesthetic dictates whether the bar should be "dodged", with each bar
+  being broken up into bars based on the group. If this is enabled, the @racket[#:group-gap] argument dictates
   the space between each sub-chart.
 }
 
@@ -370,11 +379,11 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
          graphite-renderer?]{
   Renders a stacked bar chart, stratified by group.
 
-  The @italic{mandatory} @tt{#:group} aesthetic dictates what variable each bar should be broken up by.
+  The @italic{mandatory} @racket[#:group] aesthetic dictates what variable each bar should be broken up by.
 
-  The @tt{#:mode} argument dictates whether the y-axis should be the count of observations by the x-axis
-  (@tt{'count}), or the relative frequency of those observations (@tt{'prop}). @tt{'prop} does not make much
-  sense for stacked bar charts (everything is 100% of itself), but it can be useful in some scenarios.
+  The @racket[#:mode] argument dictates whether the y-axis should be the count of observations by the x-axis
+  (@racket['count]), or the relative frequency of those observations (@racket['prop]). @racket['prop] does not
+  make much sense for stacked bar charts (everything is 100% of itself), but it can be useful in some scenarios.
 }
 
 @defproc[(col [#:x-min x-min (or/c rational? #f) #f]
@@ -399,7 +408,8 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
          graphite-renderer?]{
   Renders a bar chart. Unlike @racket[bar], this treats the specified x and y variables as a collection of
   variables to be @italic{directly displayed}, rather than doing further calculations (counting/proportions).
-  This means the x-axis and y-axis must both be quantitative variables (for now).
+  The x-axis can be a qualitative variable, but the y-axis must be quantitative.
+
 
   The optional @racket[#:gap] argument specifies the gap between each bar.
 
@@ -408,6 +418,14 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
   to be 20.
 
   @examples[#:eval ev
+    (define simple (make-data-frame))
+    (df-add-series! simple (make-series "trt" #:data (vector "a" "b" "c")))
+    (df-add-series! simple (make-series "outcome" #:data (vector 2.3 1.9 3.2)))
+
+    (graph #:data simple
+           #:mapping (aes #:x "trt" #:y "outcome")
+           (col #:gap 0.25))
+
     (graph #:data oecd
            #:mapping (aes #:x "year" #:y "diff")
            #:title "Difference between US and OECD average life expectancies"
@@ -440,9 +458,9 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
          graphite-renderer?]{
   Renders a histogram. This is not the same as a bar chart, as the x-axis must be a continuous variable.
 
-  The argument @tt{#:bins} dictates the number of bins on the x-axis.
+  The argument @racket[#:bins] dictates the number of bins on the x-axis.
 
-  The optional @tt{#:y} aesthetic will be the average of every observation in the given x-axis bin. If not
+  The optional @racket[#:y] aesthetic will be the average of every observation in the given x-axis bin. If not
   specified, this will default to the count of the number of elements in the bin. Anecdotally, if you use
   this, you may be better off with @racket[points] or @racket[lines].
 }
@@ -499,10 +517,11 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
                                                #:facet (or/c string? #f))
                              (aes)])
         graphite-renderer?]{
-  Renders a box-and-whisker plot.
+  Renders a box-and-whisker plot. One of the axes (x if not inverted, y if inverted) is assumed to be a
+  qualitative variable.
 
-  The optional @tt{#:invert?} argument, if true, will draw the box-and-whisker plots lengthwise (left-to-right)
-  rather than top-to-bottom. This means that the axes will have to be inverted. For example:
+  The optional @racket[#:invert?] argument, if true, will draw the box-and-whisker plots lengthwise
+  (left-to-right) rather than top-to-bottom. This means that the axes will have to be inverted. For example:
   @examples[#:eval ev #:label #f
     (graph #:data organdata
            #:mapping (aes #:x "country" #:y "donors")
@@ -635,7 +654,7 @@ takes an aesthetic mapping using the @tt{#:mapping} keyword.
 
 @defthing[theme-continuous graphite-theme?]{
   A theme for plotting continuous data. Defined as the default theme, except with the color-map set to
-  @racket['tol-is] from the @tt{colormaps} package.
+  @racket['cb-bupu-9] from the @tt{colormaps} package.
 
   @examples[#:eval ev
     (df-add-derived! gapminder "log-pop" '("pop") (λ (x) (log (first x) 10)))
