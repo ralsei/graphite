@@ -1,4 +1,4 @@
-#lang racket/base
+#lang debug racket/base
 (require data-frame
          fancy-app
          file/convertible
@@ -80,8 +80,8 @@
                                                    (sub1 (vector-length wrapped-groups)))))
 
   (define metrics-plot
-    (parameterize ([gr-global-mapping (hash-remove (gr-global-mapping) 'facet)]
-                   [plot-title "a"]) ; facets always have titles, and we need this to calculate the
+    (parameterize ([gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
+                   ;[plot-title "a"]) ; facets always have titles, and we need this to calculate the
                                      ; top metric
       (graph-internal #f render-fns)))
   (match-define (vector (vector x-min x-max)
@@ -113,7 +113,9 @@
               ([(grp idx) (in-indexed (in-vector group-vector))])
       (define add-x-extras? (or with-x-extras?
                                 (and end-add-x? (< (abs (- grid-q (add1 idx))) num-blanks))))
-      (ht-append plt (run-plot grp add-x-extras? (zero? idx)))))
+      (hb-append plt
+                 (let ([v (run-plot grp add-x-extras? (zero? idx))])
+                   (if (and end-add-x? (not add-x-extras?)) (inset v 0 0 0 bot) v)))))
 
   (define almost
     (parameterize ([gr-x-min (if (not (gr-x-min)) x-min (gr-x-min))]
@@ -140,7 +142,7 @@
              #:x-max (gr-x-max)
              #:y-min (gr-y-min)
              #:y-max (gr-y-max)
-             #:title (or (and group (~a group)) (plot-title))
+             ;#:title (or (and group (~a group)) (plot-title))
              (parameterize ([gr-group group])
                (for/list ([render-fn (in-list render-fns)])
                  (render-fn)))))
@@ -189,8 +191,8 @@
 
     ; overridden by anything
     (define defaults
-      (alist plot-x-label (hash-ref mapping 'x #f)
-             plot-y-label (hash-ref mapping 'y #f)
+      (alist ;plot-x-label (hash-ref mapping 'x #f)
+             ;plot-y-label (hash-ref mapping 'y #f)
              point-sym 'bullet
              plot-x-ticks (and x-qualitative? no-ticks)
              plot-y-ticks (and y-qualitative? no-ticks)

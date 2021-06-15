@@ -24,7 +24,10 @@
                         (app inexact->exact right-extras)
                         (app inexact->exact bot-extras)
                         (app inexact->exact top-extras))
-    (plot-extras-size (plot-thunk)))
+    (plot-extras-size
+     (parameterize ([plot-width area-width]
+                    [plot-height area-height])
+       (plot-thunk))))
 
   (parameterize ([plot-width (+ area-width left-extras right-extras)]
                  [plot-height (+ area-height bot-extras top-extras)])
