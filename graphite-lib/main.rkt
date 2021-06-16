@@ -29,6 +29,7 @@
          "points.rkt"
          "qualitative.rkt"
          "renderer.rkt"
+         "titles.rkt"
          "themes.rkt"
          "transforms.rkt"
          (except-in "util.rkt" convert)
@@ -81,8 +82,6 @@
 
   (define metrics-plot
     (parameterize ([gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
-                   ;[plot-title "a"]) ; facets always have titles, and we need this to calculate the
-                                     ; top metric
       (graph-internal #f render-fns)))
   (match-define (vector (vector x-min x-max)
                         (vector y-min y-max))
@@ -103,9 +102,11 @@
                    [plot-x-label (and with-x-extras? (plot-x-label))]
                    [plot-y-ticks (if with-y-extras? (plot-y-ticks) no-ticks)]
                    [gr-add-y-ticks? with-y-extras?]
-                   [plot-y-label (and with-y-extras? (plot-y-label))])
+                   [plot-y-label (and with-y-extras? (plot-y-label))]
+                   [gr-facet-label group])
       (if group
-          (plot-with-area (thunk (graph-internal group render-fns)) width height)
+          (add-facet-label
+           (plot-with-area (thunk (graph-internal group render-fns)) width height))
           (background-rectangle width (+ height bot top))))) ; only appears at the bottom
 
   (define (plot-row group-vector [with-x-extras? #f] [end-add-x? #f])
@@ -142,7 +143,6 @@
              #:x-max (gr-x-max)
              #:y-min (gr-y-min)
              #:y-max (gr-y-max)
-             ;#:title (or (and group (~a group)) (plot-title))
              (parameterize ([gr-group group])
                (for/list ([render-fn (in-list render-fns)])
                  (render-fn)))))
@@ -191,8 +191,8 @@
 
     ; overridden by anything
     (define defaults
-      (alist ;plot-x-label (hash-ref mapping 'x #f)
-             ;plot-y-label (hash-ref mapping 'y #f)
+      (alist gr-x-label (hash-ref mapping 'x #f)
+             gr-y-label (hash-ref mapping 'y #f)
              point-sym 'bullet
              plot-x-ticks (and x-qualitative? no-ticks)
              plot-y-ticks (and y-qualitative? no-ticks)
@@ -200,11 +200,11 @@
              plot-y-far-ticks no-ticks))
     ; overrides anything
     (define user-data
-      (alist plot-title title
-             plot-width width
+      (alist plot-width width
              plot-height height
-             plot-x-label x-label
-             plot-y-label y-label
+             gr-title title
+             gr-x-label x-label
+             gr-y-label y-label
              plot-x-ticks (and x-transform (get-adjusted-ticks actual/x-min actual/x-max x-transform))
              plot-y-ticks (and y-transform (get-adjusted-ticks actual/y-min actual/y-max y-transform))
              plot-legend-anchor legend-anchor))
@@ -216,10 +216,14 @@
                               user-data)))
 
     (parameterize ([gr-x-conv (get-conversion-function actual/x-min actual/x-max x-conv x-transform)]
-                   [gr-y-conv (get-conversion-function actual/y-min actual/y-max y-conv y-transform)])
+                   [gr-y-conv (get-conversion-function actual/y-min actual/y-max y-conv y-transform)]
+                   [plot-title #f]
+                   [plot-x-label #f]
+                   [plot-y-label #f])
       (with-metadata metadata
-        (cond [(hash-ref mapping 'facet #f) (facet-plot render-fns facet-wrap)]
-              [else (graph-internal #f render-fns)])))))
+        (add-all-titles
+         (cond [(hash-ref mapping 'facet #f) (facet-plot render-fns facet-wrap)]
+               [else (graph-internal #f render-fns)]))))))
 
 (define (save-pict pict path)
   (define ext (path-get-extension path))

@@ -2,7 +2,6 @@
 (require pict
          plot/no-gui
          racket/match)
-
 (provide plot-extras-size plot-with-area)
 
 (define (plot-extras-size plotpict)
