@@ -150,7 +150,7 @@
 (define (graph #:data data #:mapping mapping
                #:width [width (plot-width)]
                #:height [height (plot-height)]
-               #:title [title (plot-title)]
+               #:title [ttitle (plot-title)]
                #:x-label [x-label #f]
                #:x-transform [x-transform #f]
                #:x-conv [x-conv (gr-x-conv)]
@@ -202,7 +202,7 @@
     (define user-data
       (alist plot-width width
              plot-height height
-             gr-title title
+             gr-title ttitle
              gr-x-label x-label
              gr-y-label y-label
              plot-x-ticks (and x-transform (get-adjusted-ticks actual/x-min actual/x-max x-transform))
@@ -221,9 +221,15 @@
                    [plot-x-label #f]
                    [plot-y-label #f])
       (with-metadata metadata
-        (add-all-titles
-         (cond [(hash-ref mapping 'facet #f) (facet-plot render-fns facet-wrap)]
-               [else (graph-internal #f render-fns)]))))))
+        (define fs (inexact->exact (round (pict-height (title "abcdefhi")))))
+        (parameterize ([plot-height (- (plot-height)
+                                       (if (gr-title) fs 0)
+                                       (if (gr-x-label) fs 0))]
+                       [plot-width (- (plot-width)
+                                      (if (gr-y-label) fs 0))])
+          (add-all-titles
+           (cond [(hash-ref mapping 'facet #f) (facet-plot render-fns facet-wrap)]
+                 [else (graph-internal #f render-fns)])))))))
 
 (define (save-pict pict path)
   (define ext (path-get-extension path))

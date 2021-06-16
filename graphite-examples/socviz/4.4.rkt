@@ -6,7 +6,7 @@
 (graph #:data gapminder
        #:mapping (aes #:x "year" #:y "gdpPercap"
                       #:discrete-color "country" #:facet "continent")
-       #:facet-wrap 3 ; maybe this should be called facet-ncol
+       #:facet-wrap 5 ; maybe this should be called facet-ncol
        #:title "GDP per capita across five continents"
        #:x-label "Year" #:y-label "GDP per capita"
        #:y-transform logarithmic-transform

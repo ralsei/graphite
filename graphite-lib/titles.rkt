@@ -1,11 +1,11 @@
-#lang debug racket/base
+#lang racket/base
 (require pict
          plot/no-gui
          racket/match
          racket/math
          "util.rkt"
          "with-area.rkt")
-(provide title add-title add-all-titles add-facet-label)
+(provide px->pt pt->px title add-title add-all-titles add-facet-label)
 
 (define (px->pt px) (* px 4/3))
 (define (pt->px pt) (* pt 3/4))
@@ -15,7 +15,7 @@
 
 (define (title content
                #:style [style #f]
-               #:size [size (+ (plot-font-size) 3)]
+               #:size [size (round (px->pt (plot-font-size)))]
                #:angle [angle 0])
   (if content
       (text content (if style
@@ -70,7 +70,7 @@
         0))
 
   (combiner (inset (title title-text #:angle angle)
-                   #Rleft-offset #Rtop-offset #Rright-offset #Rbot-offset)
+                   left-offset top-offset right-offset bot-offset)
             pct))
 
 (define (add-facet-label plot-pict)
