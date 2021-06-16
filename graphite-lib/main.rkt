@@ -88,13 +88,18 @@
     (plot-pict-bounds metrics-plot))
   (define-values (left right bot top) (plot-extras-size metrics-plot))
 
-  ; p rows x q columns
+  (define title-height (pict-height (title "abcdefg")))
+
+  ; p cols x q rows
   (define grid-p (vector-length wrapped-groups))
   (define grid-q (vector-length (vector-ref wrapped-groups 0)))
 
-  (define width (inexact->exact (round (/ (- (plot-width) left (* grid-q right)) grid-q))))
+  (define width (inexact->exact (round (/ (- (plot-width) left (* grid-q right))
+                                          grid-q))))
   ; FIXME: figure out why height is sporadic
-  (define height (inexact->exact (round (/ (- (plot-height) bot (* grid-p top)) grid-p))))
+  (define height (inexact->exact (round (/ (- (plot-height) bot top
+                                              (* grid-p title-height) title-height)
+                                           grid-p))))
 
   (define (run-plot group [with-x-extras? #f] [with-y-extras? #f])
     (parameterize ([plot-x-ticks (if with-x-extras? (plot-x-ticks) no-ticks)]

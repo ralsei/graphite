@@ -7,15 +7,15 @@
          "with-area.rkt")
 (provide px->pt pt->px title add-title add-all-titles add-facet-label)
 
-(define (px->pt px) (* px 4/3))
-(define (pt->px pt) (* pt 3/4))
+(define (px->pt px) (* px 3/4))
+(define (pt->px pt) (* pt 4/3))
 
 (define (->pict-font-style)
   (or (plot-font-face) (plot-font-family) null))
 
 (define (title content
                #:style [style #f]
-               #:size [size (round (px->pt (plot-font-size)))]
+               #:size [size (round (pt->px (plot-font-size)))]
                #:angle [angle 0])
   (if content
       (text content (if style
