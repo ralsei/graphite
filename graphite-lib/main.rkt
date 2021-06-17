@@ -114,34 +114,20 @@
            (plot-with-area (thunk (graph-internal group render-fns)) width height))
           (background-rectangle width (+ height bot top))))) ; only appears at the bottom
 
-  (define (plot-row group-vector [with-x-extras? #f] [end-add-x? #f])
-    (for/fold ([plt (blank)])
-              ([(grp idx) (in-indexed (in-vector group-vector))])
-      (define add-x-extras? (or with-x-extras?
-                                (and end-add-x? (< (abs (- grid-q (add1 idx))) num-blanks))))
-      (hb-append plt
-                 (let ([v (run-plot grp add-x-extras? (zero? idx))])
-                   (if (and end-add-x? (not add-x-extras?)) (inset v 0 0 0 bot) v)))))
+  (define all-plots
+    (parameterize ([gr-x-min (or (gr-x-min) x-min)]
+                   [gr-x-max (or (gr-x-max) x-max)]
+                   [gr-y-min (or (gr-y-min) y-min)]
+                   [gr-y-max (or (gr-y-max) y-max)])
+      (for*/list ([(grp-vector grp-vector-idx) (in-indexed (in-vector wrapped-groups))]
+                  [(group group-idx) (in-indexed (in-vector grp-vector))])
+        (define offset (- (sub1 grid-p) grp-vector-idx))
+        (define add-x-extras? (or (zero? offset)
+                                  (and (= offset 1) (< (abs (- grid-q (add1 group-idx))) num-blanks))))
+        (define p (run-plot group add-x-extras? (zero? group-idx)))
+        p)))
 
-  (define almost
-    (parameterize ([gr-x-min (if (not (gr-x-min)) x-min (gr-x-min))]
-                   [gr-x-max (if (not (gr-x-max)) x-max (gr-x-max))]
-                   [gr-y-min (if (not (gr-y-min)) y-min (gr-y-min))]
-                   [gr-y-max (if (not (gr-y-max)) y-max (gr-y-max))])
-      (for/fold ([plt (blank)])
-                ([(grp-vector idx) (in-indexed (in-vector wrapped-groups))])
-        (define offset (- (sub1 grid-p) idx))
-        (cond [(zero? offset)
-               (vl-append-backwards (if (not (zero? num-blanks)) (- bot) 0)
-                                    plt
-                                    (plot-row grp-vector #t))]
-              [(= offset 1)
-               (vl-append plt (plot-row grp-vector #f #t))]
-              [else (vl-append plt (plot-row grp-vector))]))))
-
-  (cc-superimpose (background-rectangle (pict-width almost)
-                                        (pict-height almost))
-                  almost))
+  (table grid-q all-plots lb-superimpose lt-superimpose 0 0))
 
 (define (graph-internal group render-fns)
   (plot-pict #:x-min (gr-x-min)

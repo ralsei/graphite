@@ -24,7 +24,7 @@
             size angle)
       (blank)))
 
-(define (add-title title-text side position pct #:offset [offset 0])
+(define (add-title title-text side position pct #:v-offset [v-offset 0] #:h-offset [h-offset 0])
   (define angle
     (match side
       ['left (/ pi 2)]
@@ -48,40 +48,21 @@
       [('bottom 'center) (flip vc-append)]
       [('bottom 'right) (flip vr-append)]))
 
-  (define top-offset
-    (if (and (not (negative? offset))
-             (or (eq? side 'left) (eq? side 'right)))
-        offset
-        0))
-  (define bot-offset
-    (if (and (negative? offset)
-             (or (eq? side 'left) (eq? side 'right)))
-        (- offset)
-        0))
-  (define left-offset
-    (if (and (not (negative? offset))
-             (or (eq? side 'top) (eq? side 'bottom)))
-        offset
-        0))
-  (define right-offset
-    (if (and (negative? offset)
-             (or (eq? side 'top) (eq? side 'bottom)))
-        (- offset)
-        0))
-
   (combiner (inset (title title-text #:angle angle)
-                   left-offset top-offset right-offset bot-offset)
+                   (if (negative? h-offset) (- h-offset) 0)
+                   (if (not (negative? v-offset)) v-offset 0)
+                   (if (not (negative? h-offset)) h-offset 0)
+                   (if (negative? v-offset) (- v-offset) 0))
             pct))
 
 (define (add-facet-label plot-pict)
   (match-define-values ((app inexact->exact left-extras)
-                        (app inexact->exact right-extras) _ _)
+                        (app inexact->exact right-extras)
+                        _ (app inexact->exact top-extras))
     (plot-extras-size plot-pict))
+  (define t (title (gr-facet-label)))
   (define titled
-    (add-title
-     (gr-facet-label) 'top 'center #:offset (- (+ left-extras (pt->px (plot-font-size)))
-                                               right-extras)
-     plot-pict))
+    (vl-append-backwards (- top-extras) t plot-pict))
   (define bg (background-rectangle (pict-width titled) (pict-height titled)))
   (cc-superimpose bg titled))
 
@@ -91,9 +72,9 @@
     (add-title
      (gr-title) 'top 'center
      (add-title
-      (gr-x-label) 'bottom 'right #:offset -30
+      (gr-x-label) 'bottom 'right #:h-offset -30
       (add-title
-       (gr-y-label) 'left 'top #:offset (+ 10 (pt->px (plot-font-size)))
+       (gr-y-label) 'left 'top #:v-offset (+ 10 (pt->px (plot-font-size)))
        regular-pict))))
   (define bg (background-rectangle (pict-width titled) (pict-height titled)))
   (cc-superimpose bg titled))
