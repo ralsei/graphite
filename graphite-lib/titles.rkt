@@ -76,9 +76,9 @@
     (add-title
      (gr-title) 'top 'center
      (add-title
-      (gr-x-label) 'bottom 'right #:h-offset -30
+      (gr-x-label) 'bottom 'center
       (add-title
-       (gr-y-label) 'left 'top #:v-offset (+ 10 (pt->px (plot-font-size)))
+       (gr-y-label) 'left 'center
        regular-pict))))
   (define bg (background-rectangle (pict-width titled) (pict-height titled)))
   (cc-superimpose bg titled))
