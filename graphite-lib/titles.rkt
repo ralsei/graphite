@@ -55,16 +55,20 @@
                    (if (negative? v-offset) (- v-offset) 0))
             pct))
 
+; NOTE on facet labels:
+; when faceting, we want a common baseline to work on.
+; the way facet labels are added, we account for the top-extras in order to _induce_ that baseline.
+; this way we have something common to align on and can use lt-superimpose
+;
+; we also do not add a background because we want transparency for when bottom extras overlap with the
+; facet title. the background gets added at the end of main/facet-plot
 (define (add-facet-label plot-pict)
   (match-define-values ((app inexact->exact left-extras)
-                        (app inexact->exact right-extras)
-                        _ (app inexact->exact top-extras))
+                        _ _
+                        (app inexact->exact top-extras))
     (plot-extras-size plot-pict))
   (define t (title (gr-facet-label)))
-  (define titled
-    (vl-append-backwards (- top-extras) t plot-pict))
-  (define bg (background-rectangle (pict-width titled) (pict-height titled)))
-  (cc-superimpose bg titled))
+  (cb-superimpose plot-pict (inset t left-extras 0 0 (- (pict-height plot-pict) top-extras))))
 
 (define (add-all-titles regular-pict)
   ; XXX: center x/y labels -- this requires metrics info which gets lost!!

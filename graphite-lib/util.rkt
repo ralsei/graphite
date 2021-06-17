@@ -158,3 +158,6 @@
   (lb-superimpose pict-b (inset pict-a 0 0 0 (- (pict-height pict-b) (- offset)))))
 
 (define no-renderer (invisible-rect #f #f #f #f))
+
+(define (build-list* n proc rst)
+  (apply list* (append (build-list n proc) (list rst))))

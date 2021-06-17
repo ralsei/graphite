@@ -1,4 +1,4 @@
-#lang debug racket/base
+#lang racket/base
 (require data-frame
          fancy-app
          file/convertible
@@ -112,7 +112,7 @@
       (if group
           (add-facet-label
            (plot-with-area (thunk (graph-internal group render-fns)) width height))
-          (background-rectangle width (+ height bot top))))) ; only appears at the bottom
+          (blank width (+ height bot top))))) ; only appears at the bottom
 
   (define all-plots
     (parameterize ([gr-x-min (or (gr-x-min) x-min)]
@@ -127,7 +127,12 @@
         (define p (run-plot group add-x-extras? (zero? group-idx)))
         p)))
 
-  (table grid-q all-plots lb-superimpose lt-superimpose 0 0))
+  (table grid-q all-plots cc-superimpose lt-superimpose
+         1 (build-list (sub1 grid-p)
+                       (λ (x) (if (and (not (zero? num-blanks))
+                                       (= x (- grid-p 2)))
+                                  (- 1 bot)
+                                  1)))))
 
 (define (graph-internal group render-fns)
   (plot-pict #:x-min (gr-x-min)
