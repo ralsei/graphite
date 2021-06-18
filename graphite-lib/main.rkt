@@ -9,6 +9,7 @@
                     lines
                     points)
          plot/utils
+         racket/bool
          racket/contract/base
          racket/function
          racket/list
@@ -132,15 +133,12 @@
                                          (= x (- grid-p 2)))
                                     (- (plot-line-width) bot)
                                     (plot-line-width))))))
-  (match-define (vector x-left y-bottom)
-    ((plot-pict-plot->dc metrics-plot) (vector x-min y-min)))
-  (match-define (vector x-right y-top)
-    ((plot-pict-plot->dc metrics-plot) (vector x-max y-max)))
 
   (add-all-titles untitled
-                  #:x-offset (- (plot-width) x-left x-right title-height)
-                  #:y-offset (- (plot-height) y-bottom y-top title-height
-                                (if (gr-title) title-height 0))))
+                  #:x-offset (- (+ right left
+                                   (if (gr-y-label) title-height 0)))
+                  #:y-offset (- (+ top bot
+                                   (if (xor (gr-title) (gr-x-label)) title-height 0)))))
 
 (define (graph-internal group render-fns)
   (plot-pict #:x-min (gr-x-min)
@@ -237,15 +235,12 @@
                                       (if (gr-y-label) fs 0))])
           (cond [(hash-ref mapping 'facet #f) (facet-plot render-fns facet-wrap)]
                 [else
-                 (match-define (vector x-left y-bottom)
-                   ((plot-pict-plot->dc metric-plot) (vector actual/x-min actual/y-min)))
-                 (match-define (vector x-right y-top)
-                   ((plot-pict-plot->dc metric-plot) (vector actual/x-max actual/y-max)))
-
+                 (define-values (left right bottom top) (plot-extras-size metric-plot))
                  (add-all-titles (graph-internal #f render-fns)
-                                 #:x-offset (- (plot-width) x-right x-left fs)
-                                 #:y-offset (- (plot-height) y-top y-bottom fs
-                                               (if (gr-title) fs 0)))]))))))
+                                 #:x-offset (- (+ right left
+                                                  (if (gr-y-label) fs 0)))
+                                 #:y-offset (- (+ top bottom
+                                                  (if (xor (gr-title) (gr-x-label)) fs 0))))]))))))
 
 (define (save-pict pict path)
   (define ext (path-get-extension path))
