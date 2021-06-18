@@ -17,12 +17,15 @@
                #:style [style #f]
                #:size [size (round (pt->px (plot-font-size)))]
                #:angle [angle 0])
-  (if content
-      (text content (if style
-                        (cons style (->pict-font-style))
-                        (->pict-font-style))
-            size angle)
-      (blank)))
+  (cond [content
+         (define initial-title
+           (text content (if style
+                             (cons style (->pict-font-style))
+                             (->pict-font-style))
+                 size))
+         (define w (pict-height initial-title))
+         (rotate (inset initial-title 0 (/ (- (ceiling w) w) 2)) angle)]
+        [else (blank)]))
 
 (define (add-title title-text side position pct #:v-offset [v-offset 0] #:h-offset [h-offset 0])
   (define angle

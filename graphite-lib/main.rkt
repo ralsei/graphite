@@ -10,7 +10,6 @@
                     points)
          plot/utils
          racket/contract/base
-         racket/format
          racket/function
          racket/list
          racket/match
