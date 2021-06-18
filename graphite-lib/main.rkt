@@ -106,12 +106,11 @@
                    [plot-x-label (and with-x-extras? (plot-x-label))]
                    [plot-y-ticks (if with-y-extras? (plot-y-ticks) no-ticks)]
                    [gr-add-y-ticks? with-y-extras?]
-                   [plot-y-label (and with-y-extras? (plot-y-label))]
-                   [gr-facet-label group])
+                   [plot-y-label (and with-y-extras? (plot-y-label))])
       (if group
-          (add-facet-label
-           (plot-with-area (thunk (graph-internal group render-fns)) width height))
-          (blank width (+ height bot top))))) ; only appears at the bottom
+          (cons group
+                (plot-with-area (thunk (graph-internal group render-fns)) width height))
+          (cons #f (blank width (+ height bot top))))))
 
   (define all-plots
     (parameterize ([gr-x-min (or (gr-x-min) x-min)]
@@ -123,15 +122,25 @@
         (define offset (- (sub1 grid-p) grp-vector-idx))
         (define add-x-extras? (or (zero? offset)
                                   (and (= offset 1) (< (abs (- grid-q (add1 group-idx))) num-blanks))))
-        (define p (run-plot group add-x-extras? (zero? group-idx)))
-        p)))
+        (match-define (cons grp plt) (run-plot group add-x-extras? (zero? group-idx)))
+        (if grp (add-facet-label grp plt) plt))))
 
-  (table grid-q all-plots cc-superimpose lt-superimpose
-         1 (build-list (sub1 grid-p)
-                       (λ (x) (if (and (not (zero? num-blanks))
-                                       (= x (- grid-p 2)))
-                                  (- 1 bot)
-                                  1)))))
+  (define untitled
+    (table grid-q all-plots cc-superimpose lt-superimpose
+           0 (build-list (sub1 grid-p)
+                         (λ (x) (if (and (not (zero? num-blanks))
+                                         (= x (- grid-p 2)))
+                                    (- (plot-line-width) bot)
+                                    (plot-line-width))))))
+  (match-define (vector x-left y-bottom)
+    ((plot-pict-plot->dc metrics-plot) (vector x-min y-min)))
+  (match-define (vector x-right y-top)
+    ((plot-pict-plot->dc metrics-plot) (vector x-max y-max)))
+
+  (add-all-titles untitled
+                  #:x-offset (- (plot-width) x-left x-right title-height)
+                  #:y-offset (- (plot-height) y-bottom y-top title-height
+                                (if (gr-title) title-height 0))))
 
 (define (graph-internal group render-fns)
   (plot-pict #:x-min (gr-x-min)
@@ -171,13 +180,17 @@
     (define render-fns (map graphite-renderer-function renderers))
 
     ; calculate bounds, for axis transforms
-    (match-define (vector (vector actual/x-min actual/x-max)
-                          (vector actual/y-min actual/y-max))
-      ; bare minimum params, don't facet
+    (define metric-plot
       (parameterize ([plot-pen-color-map 'set1]
                      [plot-brush-color-map 'set1]
+                     [plot-width width]
+                     [plot-height height]
+                     [plot-title #f] [plot-x-label #f] [plot-y-label #f]
                      [gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
-        (plot-pict-bounds (graph-internal #f render-fns))))
+        (graph-internal #f render-fns)))
+    (match-define (vector (vector actual/x-min actual/x-max)
+                          (vector actual/y-min actual/y-max))
+      (plot-pict-bounds metric-plot))
 
     (define x-qualitative? (and (hash-has-key? mapping 'x)
                                 (qualitative? mapping 'x)))
@@ -222,9 +235,17 @@
                                        (if (gr-x-label) fs 0))]
                        [plot-width (- (plot-width)
                                       (if (gr-y-label) fs 0))])
-          (add-all-titles
-           (cond [(hash-ref mapping 'facet #f) (facet-plot render-fns facet-wrap)]
-                 [else (graph-internal #f render-fns)])))))))
+          (cond [(hash-ref mapping 'facet #f) (facet-plot render-fns facet-wrap)]
+                [else
+                 (match-define (vector x-left y-bottom)
+                   ((plot-pict-plot->dc metric-plot) (vector actual/x-min actual/y-min)))
+                 (match-define (vector x-right y-top)
+                   ((plot-pict-plot->dc metric-plot) (vector actual/x-max actual/y-max)))
+
+                 (add-all-titles (graph-internal #f render-fns)
+                                 #:x-offset (- (plot-width) x-right x-left fs)
+                                 #:y-offset (- (plot-height) y-top y-bottom fs
+                                               (if (gr-title) fs 0)))]))))))
 
 (define (save-pict pict path)
   (define ext (path-get-extension path))

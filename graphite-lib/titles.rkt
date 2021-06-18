@@ -65,23 +65,23 @@
 ;
 ; we also do not add a background because we want transparency for when bottom extras overlap with the
 ; facet title. the background gets added at the end of main/facet-plot
-(define (add-facet-label plot-pict)
+(define (add-facet-label group plot-pict)
   (match-define-values ((app inexact->exact left-extras)
                         _ _
                         (app inexact->exact top-extras))
     (plot-extras-size plot-pict))
-  (define t (title (gr-facet-label)))
+  (define t (title group))
   (cb-superimpose plot-pict (inset t left-extras 0 0 (- (pict-height plot-pict) top-extras))))
 
-(define (add-all-titles regular-pict)
+(define (add-all-titles regular-pict #:x-offset [x-offset 0] #:y-offset [y-offset 0])
   ; XXX: center x/y labels -- this requires metrics info which gets lost!!
   (define titled
     (add-title
      (gr-title) 'top 'center
      (add-title
-      (gr-x-label) 'bottom 'center
+      (gr-x-label) 'bottom 'center #:h-offset x-offset
       (add-title
-       (gr-y-label) 'left 'center
+       (gr-y-label) 'left 'center #:v-offset y-offset
        regular-pict))))
   (define bg (background-rectangle (pict-width titled) (pict-height titled)))
   (cc-superimpose bg titled))

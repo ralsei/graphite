@@ -3,7 +3,7 @@
 (provide gr-data gr-global-mapping gr-x-conv gr-y-conv gr-group
          gr-x-min gr-x-max gr-y-min gr-y-max
          gr-add-x-ticks? gr-add-y-ticks?
-         gr-title gr-x-label gr-y-label gr-facet-label)
+         gr-title gr-x-label gr-y-label)
 
 (define-syntax (define-parameter stx)
   (syntax-parse stx
@@ -29,4 +29,3 @@
 (define-parameter gr-title)
 (define-parameter gr-x-label)
 (define-parameter gr-y-label)
-(define-parameter gr-facet-label)
