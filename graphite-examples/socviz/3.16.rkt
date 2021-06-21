@@ -6,6 +6,6 @@
 (graph #:data gapminder
        #:mapping (aes #:x "gdpPercap" #:y "lifeExp")
        #:x-transform logarithmic-transform
-       #:width 1000 #:height 600
+       #:width 500 #:height 500
        (points #:mapping (aes #:discrete-color "continent"))
        (fit #:method 'loess #:width 3))

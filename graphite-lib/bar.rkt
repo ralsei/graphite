@@ -100,7 +100,7 @@
 (define-renderer (bar #:kws kws #:kw-args kw-args
                       #:group-gap [group-gap 1]
                       #:mode [mode 'count] #:mapping [local-mapping (aes)])
-                 (#:y-label (symbol->string mode))
+                 (#:gr-y-label (symbol->string mode))
   (parameterize ([gr-global-mapping (mapping-override (gr-global-mapping) local-mapping)])
     (cond [(hash-ref (gr-global-mapping) 'group #f) (bar-dodged #:mode mode #:group-gap group-gap
                                                                 #:kws kws #:kw-args kw-args)]
@@ -109,7 +109,7 @@
 
 (define-renderer (stacked-bar #:kws kws #:kw-args kw-args
                               #:mode [mode 'count] #:mapping [local-mapping (aes)])
-                 (#:y-label (symbol->string mode))
+                 (#:gr-y-label (symbol->string mode))
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 
   ; first generate every table based on every group...

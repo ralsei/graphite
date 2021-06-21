@@ -62,9 +62,7 @@
     (and v (cdr v))))
 
 (define-renderer (boxplot #:kws kws #:kw-args kw-args
-                          #:iqr-scale [iqr-scale 1.5] #:mapping [local-mapping (aes)])
-                 (#:x-ticks (and (not (do-invert? kws kw-args)) no-ticks)
-                  #:y-ticks (and (do-invert? kws kw-args) no-ticks))
+                          #:iqr-scale [iqr-scale 1.5] #:mapping [local-mapping (aes)]) ()
   (define aes (mapping-override (gr-global-mapping) local-mapping))
   (define invert? (do-invert? kws kw-args))
 

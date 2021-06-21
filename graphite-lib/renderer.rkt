@@ -21,7 +21,7 @@
         ({~seq KEY:keyword VALUE:expr} ...)
         FN-BODY:expr ...)
      #:with (KEY-PARAM ...) (map (λ (x)
-                                   (format-id x "plot-~a" (keyword->string (syntax->datum x))))
+                                   (format-id x "~a" (keyword->string (syntax->datum x))))
                                  (attribute KEY))
      #'(define/kw (FN-NAME KWS KW-ARGS . ARGS)
          (graphite-renderer (λ () FN-BODY ...)

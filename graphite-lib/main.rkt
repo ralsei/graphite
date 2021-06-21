@@ -9,8 +9,8 @@
                     lines
                     points)
          plot/utils
+         racket/bool
          racket/contract/base
-         racket/format
          racket/function
          racket/list
          racket/match
@@ -29,6 +29,7 @@
          "points.rkt"
          "qualitative.rkt"
          "renderer.rkt"
+         "titles.rkt"
          "themes.rkt"
          "transforms.rkt"
          (except-in "util.rkt" convert)
@@ -80,22 +81,25 @@
                                                    (sub1 (vector-length wrapped-groups)))))
 
   (define metrics-plot
-    (parameterize ([gr-global-mapping (hash-remove (gr-global-mapping) 'facet)]
-                   [plot-title "a"]) ; facets always have titles, and we need this to calculate the
-                                     ; top metric
+    (parameterize ([gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
       (graph-internal #f render-fns)))
   (match-define (vector (vector x-min x-max)
                         (vector y-min y-max))
     (plot-pict-bounds metrics-plot))
   (define-values (left right bot top) (plot-extras-size metrics-plot))
 
-  ; p rows x q columns
+  (define title-height (pict-height (title "abcdefg")))
+
+  ; p cols x q rows
   (define grid-p (vector-length wrapped-groups))
   (define grid-q (vector-length (vector-ref wrapped-groups 0)))
 
-  (define width (inexact->exact (round (/ (- (plot-width) left (* grid-q right)) grid-q))))
+  (define width (inexact->exact (round (/ (- (plot-width) left (* grid-q right))
+                                          grid-q))))
   ; FIXME: figure out why height is sporadic
-  (define height (inexact->exact (round (/ (- (plot-height) bot (* grid-p top)) grid-p))))
+  (define height (inexact->exact (round (/ (- (plot-height) bot top
+                                              (* grid-p title-height) title-height)
+                                           grid-p))))
 
   (define (run-plot group [with-x-extras? #f] [with-y-extras? #f])
     (parameterize ([plot-x-ticks (if with-x-extras? (plot-x-ticks) no-ticks)]
@@ -105,42 +109,42 @@
                    [gr-add-y-ticks? with-y-extras?]
                    [plot-y-label (and with-y-extras? (plot-y-label))])
       (if group
-          (plot-with-area (thunk (graph-internal group render-fns)) width height)
-          (background-rectangle width (+ height bot top))))) ; only appears at the bottom
+          (cons group
+                (plot-with-area (thunk (graph-internal group render-fns)) width height))
+          (cons #f (blank width (+ height bot top))))))
 
-  (define (plot-row group-vector [with-x-extras? #f] [end-add-x? #f])
-    (for/fold ([plt (blank)])
-              ([(grp idx) (in-indexed (in-vector group-vector))])
-      (define add-x-extras? (or with-x-extras?
-                                (and end-add-x? (< (abs (- grid-q (add1 idx))) num-blanks))))
-      (ht-append plt (run-plot grp add-x-extras? (zero? idx)))))
+  (define all-plots
+    (parameterize ([gr-x-min (or (gr-x-min) x-min)]
+                   [gr-x-max (or (gr-x-max) x-max)]
+                   [gr-y-min (or (gr-y-min) y-min)]
+                   [gr-y-max (or (gr-y-max) y-max)])
+      (for*/list ([(grp-vector grp-vector-idx) (in-indexed (in-vector wrapped-groups))]
+                  [(group group-idx) (in-indexed (in-vector grp-vector))])
+        (define offset (- (sub1 grid-p) grp-vector-idx))
+        (define add-x-extras? (or (zero? offset)
+                                  (and (= offset 1) (< (abs (- grid-q (add1 group-idx))) num-blanks))))
+        (match-define (cons grp plt) (run-plot group add-x-extras? (zero? group-idx)))
+        (if grp (add-facet-label grp plt) plt))))
 
-  (define almost
-    (parameterize ([gr-x-min (if (not (gr-x-min)) x-min (gr-x-min))]
-                   [gr-x-max (if (not (gr-x-max)) x-max (gr-x-max))]
-                   [gr-y-min (if (not (gr-y-min)) y-min (gr-y-min))]
-                   [gr-y-max (if (not (gr-y-max)) y-max (gr-y-max))])
-      (for/fold ([plt (blank)])
-                ([(grp-vector idx) (in-indexed (in-vector wrapped-groups))])
-        (define offset (- (sub1 grid-p) idx))
-        (cond [(zero? offset)
-               (vl-append-backwards (if (not (zero? num-blanks)) (- bot) 0)
-                                    plt
-                                    (plot-row grp-vector #t))]
-              [(= offset 1)
-               (vl-append plt (plot-row grp-vector #f #t))]
-              [else (vl-append plt (plot-row grp-vector))]))))
+  (define untitled
+    (table grid-q all-plots cc-superimpose lt-superimpose
+           0 (build-list (sub1 grid-p)
+                         (λ (x) (if (and (not (zero? num-blanks))
+                                         (= x (- grid-p 2)))
+                                    (- (plot-line-width) bot)
+                                    (plot-line-width))))))
 
-  (cc-superimpose (background-rectangle (pict-width almost)
-                                        (pict-height almost))
-                  almost))
+  (add-all-titles untitled
+                  #:x-offset (- (+ right left
+                                   (if (gr-y-label) title-height 0)))
+                  #:y-offset (- (+ top bot
+                                   (if (xor (gr-title) (gr-x-label)) title-height 0)))))
 
 (define (graph-internal group render-fns)
   (plot-pict #:x-min (gr-x-min)
              #:x-max (gr-x-max)
              #:y-min (gr-y-min)
              #:y-max (gr-y-max)
-             #:title (or (and group (~a group)) (plot-title))
              (parameterize ([gr-group group])
                (for/list ([render-fn (in-list render-fns)])
                  (render-fn)))))
@@ -148,7 +152,7 @@
 (define (graph #:data data #:mapping mapping
                #:width [width (plot-width)]
                #:height [height (plot-height)]
-               #:title [title (plot-title)]
+               #:title [ttitle (plot-title)]
                #:x-label [x-label #f]
                #:x-transform [x-transform #f]
                #:x-conv [x-conv (gr-x-conv)]
@@ -174,13 +178,17 @@
     (define render-fns (map graphite-renderer-function renderers))
 
     ; calculate bounds, for axis transforms
-    (match-define (vector (vector actual/x-min actual/x-max)
-                          (vector actual/y-min actual/y-max))
-      ; bare minimum params, don't facet
+    (define metric-plot
       (parameterize ([plot-pen-color-map 'set1]
                      [plot-brush-color-map 'set1]
+                     [plot-width width]
+                     [plot-height height]
+                     [plot-title #f] [plot-x-label #f] [plot-y-label #f]
                      [gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
-        (plot-pict-bounds (graph-internal #f render-fns))))
+        (graph-internal #f render-fns)))
+    (match-define (vector (vector actual/x-min actual/x-max)
+                          (vector actual/y-min actual/y-max))
+      (plot-pict-bounds metric-plot))
 
     (define x-qualitative? (and (hash-has-key? mapping 'x)
                                 (qualitative? mapping 'x)))
@@ -189,8 +197,8 @@
 
     ; overridden by anything
     (define defaults
-      (alist plot-x-label (hash-ref mapping 'x #f)
-             plot-y-label (hash-ref mapping 'y #f)
+      (alist gr-x-label (hash-ref mapping 'x #f)
+             gr-y-label (hash-ref mapping 'y #f)
              point-sym 'bullet
              plot-x-ticks (and x-qualitative? no-ticks)
              plot-y-ticks (and y-qualitative? no-ticks)
@@ -198,11 +206,11 @@
              plot-y-far-ticks no-ticks))
     ; overrides anything
     (define user-data
-      (alist plot-title title
-             plot-width width
+      (alist plot-width width
              plot-height height
-             plot-x-label x-label
-             plot-y-label y-label
+             gr-title ttitle
+             gr-x-label x-label
+             gr-y-label y-label
              plot-x-ticks (and x-transform (get-adjusted-ticks actual/x-min actual/x-max x-transform))
              plot-y-ticks (and y-transform (get-adjusted-ticks actual/y-min actual/y-max y-transform))
              plot-legend-anchor legend-anchor))
@@ -214,10 +222,25 @@
                               user-data)))
 
     (parameterize ([gr-x-conv (get-conversion-function actual/x-min actual/x-max x-conv x-transform)]
-                   [gr-y-conv (get-conversion-function actual/y-min actual/y-max y-conv y-transform)])
+                   [gr-y-conv (get-conversion-function actual/y-min actual/y-max y-conv y-transform)]
+                   [plot-title #f]
+                   [plot-x-label #f]
+                   [plot-y-label #f])
       (with-metadata metadata
-        (cond [(hash-ref mapping 'facet #f) (facet-plot render-fns facet-wrap)]
-              [else (graph-internal #f render-fns)])))))
+        (define fs (inexact->exact (round (pict-height (title "abcdefhi")))))
+        (parameterize ([plot-height (- (plot-height)
+                                       (if (gr-title) fs 0)
+                                       (if (gr-x-label) fs 0))]
+                       [plot-width (- (plot-width)
+                                      (if (gr-y-label) fs 0))])
+          (cond [(hash-ref mapping 'facet #f) (facet-plot render-fns facet-wrap)]
+                [else
+                 (define-values (left right bottom top) (plot-extras-size metric-plot))
+                 (add-all-titles (graph-internal #f render-fns)
+                                 #:x-offset (- (+ right left
+                                                  (if (gr-y-label) fs 0)))
+                                 #:y-offset (- (+ top bottom
+                                                  (if (xor (gr-title) (gr-x-label)) fs 0))))]))))))
 
 (define (save-pict pict path)
   (define ext (path-get-extension path))

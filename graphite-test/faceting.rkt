@@ -20,6 +20,9 @@
 (define facet-1
   (graph #:data facet-1-df
          #:mapping (aes #:x "x-var" #:y "y-var" #:facet "stratify-on")
+         #:title "THIS IS A TITLE"
+         #:x-label "BOTTOM TEXT"
+         #:y-label "LEFT TEXT"
          (points)))
 
 (define-runtime-path facet-2-data "./test-data/facet-2.dat")
