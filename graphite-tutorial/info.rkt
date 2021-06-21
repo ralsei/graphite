@@ -2,7 +2,8 @@
 (define collection "graphite-tutorial")
 (define deps '("base"))
 (define scribblings '(("graphite-tutorial.scrbl" ())))
-(define build-deps '("data-frame"
+(define build-deps '("plot-doc"
+                     "data-frame"
                      "graphite-doc"
                      "graphite-lib"
                      "racket-doc"
