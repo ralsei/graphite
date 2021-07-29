@@ -126,13 +126,23 @@
         (match-define (cons grp plt) (run-plot group add-x-extras? (zero? group-idx)))
         (if grp (add-facet-label grp plt) plt))))
 
+  (define add-left-extras
+    (if (< left right)
+        (- right left)
+        0))
+  (define add-right-extras
+    (if (< right left)
+        (- left right)
+        0))
+
   (define untitled
     (table grid-q all-plots cc-superimpose lt-superimpose
-           0 (build-list (sub1 grid-p)
-                         (λ (x) (if (and (not (zero? num-blanks))
-                                         (= x (- grid-p 2)))
-                                    (- (plot-line-width) bot)
-                                    (plot-line-width))))))
+           (list* (- (+ add-left-extras add-right-extras)) 0)
+           (build-list (sub1 grid-p)
+                       (λ (x) (if (and (not (zero? num-blanks))
+                                       (= x (- grid-p 2)))
+                                  (- (plot-line-width) bot)
+                                  (plot-line-width))))))
 
   (add-all-titles untitled
                   #:x-offset (- (+ right left

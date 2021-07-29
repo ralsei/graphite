@@ -1,6 +1,7 @@
 #lang racket/base
 (require pict
          plot/no-gui
+         racket/format
          racket/match
          racket/math
          "util.rkt"
@@ -19,9 +20,10 @@
                #:angle [angle 0])
   (cond [content
          (define initial-title
-           (text content (if style
-                             (cons style (->pict-font-style))
-                             (->pict-font-style))
+           (text (~a content)
+                 (if style
+                     (cons style (->pict-font-style))
+                     (->pict-font-style))
                  size))
          (define w (pict-height initial-title))
          (rotate (inset initial-title 0 (/ (- (ceiling w) w) 2)) angle)]
@@ -65,13 +67,27 @@
 ;
 ; we also do not add a background because we want transparency for when bottom extras overlap with the
 ; facet title. the background gets added at the end of main/facet-plot
+;
+; we ALSO normalize the left and right extras, so we get a common baseline to work with for
+; cc-superimpose.
 (define (add-facet-label group plot-pict)
   (match-define-values ((app inexact->exact left-extras)
-                        _ _
+                        (app inexact->exact right-extras)
+                        _
                         (app inexact->exact top-extras))
-    (plot-extras-size plot-pict))
+                       (plot-extras-size plot-pict))
+  (define add-left-extras
+    (if (< left-extras right-extras)
+        (- right-extras left-extras)
+        0))
+  (define add-right-extras
+    (if (< right-extras left-extras)
+        (- left-extras right-extras)
+        0))
   (define t (title group))
-  (cb-superimpose plot-pict (inset t left-extras 0 0 (- (pict-height plot-pict) top-extras))))
+  (cb-superimpose (inset plot-pict add-left-extras 0 add-right-extras 0)
+                  (inset t add-left-extras 0 add-right-extras
+                         (- (pict-height plot-pict) top-extras))))
 
 (define (add-all-titles regular-pict #:x-offset [x-offset 0] #:y-offset [y-offset 0])
   ; XXX: center x/y labels -- this requires metrics info which gets lost!!
