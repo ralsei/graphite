@@ -8,7 +8,11 @@
                      "graphite-lib"
                      "racket-doc"
                      "sandbox-lib"
-                     "scribble-lib"))
+                     "sawzall-doc"
+                     "sawzall-lib"
+                     "scribble-lib"
+                     "threading-doc"
+                     "threading-lib"))
 
 (define pkg-desc "A guided tour for graphite")
 (define version "1.0")

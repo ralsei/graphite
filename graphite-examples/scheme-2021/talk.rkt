@@ -150,7 +150,7 @@
                      #:line-width 3
                      #:color "cadet blue"))))
 
-(define (gapminder-example-slides)
+(define (gdpPercap-lifeExp-slides)
   (df-show-slide gapminder "Gapminder" "all_gapminder.csv")
 
   (define gapminder-plot-source (file->string "gapminder-plot.rkt"))
@@ -291,6 +291,41 @@
           (fit #:width 3 #:method 'loess)
           (points #:alpha 0.4))))
 
+(define (year-gdpPercap-slides)
+  (define (make-fig44-example mapping y-trans renderers)
+    (code (graph #:data gapminder
+                 #:mapping #,mapping
+                 #,y-trans
+                 #,renderers)))
+
+  (define initial-example
+    (graph #:data gapminder
+           #:mapping (aes #:x "year"
+                          #:y "gdpPercap")
+           (lines)))
+  (define by-continent-example
+    (graph #:data gapminder
+           #:mapping (aes #:x "year"
+                          #:y "gdpPercap"
+                          #:facet "continent")
+           #:facet-wrap 1
+           #:width (inexact->exact (round (/ (get-client-w) 2.1)))
+           #:height (+ (get-client-h) 150)
+           (lines)))
+
+  (slide/staged
+   [initial by-continent y-transformed fitted]
+   (hc-append
+    (make-fig44-example
+     (code (aes #:x "year"
+                #:y "gdpPercap"
+                #:facet "continent"))
+     (ghost (code #:y-transform logarithmic-transform))
+     (code (lines)))
+    by-continent-example
+    #;initial-example)))
+
+
 ;; could be dead code -- determine if we want to include this later
 ;; it looks nice but doesn't have the "incremental" approach we want
 (define (oecd-example-slides)
@@ -387,8 +422,9 @@
 ;;;; main
 (module+ main
   #;(title-slide)
-  (intro-slides)
-  (gapminder-example-slides)
+  #;(intro-slides)
+  #;(gdpPercap-lifeExp-slides)
+  (year-gdpPercap-slides)
   #;(oecd-example-slides)
   #;(gss-example-slides)
   (end-slide))

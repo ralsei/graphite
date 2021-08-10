@@ -3,26 +3,20 @@
          fancy-app
          file/convertible
          pict
-         (except-in plot/no-gui
-                    density
-                    error-bars
-                    lines
-                    points)
          plot/utils
          racket/bool
          racket/contract/base
-         racket/function
          racket/list
          racket/match
          racket/math
          racket/path
-         racket/vector
          "aes.rkt"
          "bar.rkt"
          "boxplot.rkt"
          "col.rkt"
          "density.rkt"
          "error-bars.rkt"
+         "faceting.rkt"
          "fit.rkt"
          "histogram.rkt"
          "lines.rkt"
@@ -71,94 +65,8 @@
  (all-from-out "themes.rkt")
  (all-from-out "transforms.rkt"))
 
-; XXX: should we support multiple facets? n facets?
-(define (facet-plot render-fns wrap)
-  (define facet (hash-ref (gr-global-mapping) 'facet))
-  (define groups (possibilities (gr-data) facet))
-  (define facet-wrap (or wrap (inexact->exact (ceiling (sqrt (vector-length groups))))))
-  (define wrapped-groups (vector-reshape groups facet-wrap))
-  (define num-blanks (vector-count not (vector-ref wrapped-groups
-                                                   (sub1 (vector-length wrapped-groups)))))
-
-  (define metrics-plot
-    (parameterize ([gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
-      (graph-internal #f render-fns)))
-  (match-define (vector (vector x-min x-max)
-                        (vector y-min y-max))
-    (plot-pict-bounds metrics-plot))
-  (define-values (left right bot top) (plot-extras-size metrics-plot))
-
-  (define title-height (pict-height (title "abcdefg")))
-
-  ; p cols x q rows
-  (define grid-p (vector-length wrapped-groups))
-  (define grid-q (vector-length (vector-ref wrapped-groups 0)))
-
-  (define width (inexact->exact (round (/ (- (plot-width) left (* grid-q right))
-                                          grid-q))))
-  ; FIXME: figure out why height is sporadic
-  (define height (inexact->exact (round (/ (- (plot-height) bot top
-                                              (* grid-p title-height) title-height)
-                                           grid-p))))
-
-  (define (run-plot group [with-x-extras? #f] [with-y-extras? #f])
-    (parameterize ([plot-x-ticks (if with-x-extras? (plot-x-ticks) no-ticks)]
-                   [gr-add-x-ticks? with-x-extras?]
-                   [plot-x-label (and with-x-extras? (plot-x-label))]
-                   [plot-y-ticks (if with-y-extras? (plot-y-ticks) no-ticks)]
-                   [gr-add-y-ticks? with-y-extras?]
-                   [plot-y-label (and with-y-extras? (plot-y-label))])
-      (if group
-          (cons group
-                (plot-with-area (thunk (graph-internal group render-fns)) width height))
-          (cons #f (blank width (+ height bot top))))))
-
-  (define all-plots
-    (parameterize ([gr-x-min (or (gr-x-min) x-min)]
-                   [gr-x-max (or (gr-x-max) x-max)]
-                   [gr-y-min (or (gr-y-min) y-min)]
-                   [gr-y-max (or (gr-y-max) y-max)])
-      (for*/list ([(grp-vector grp-vector-idx) (in-indexed (in-vector wrapped-groups))]
-                  [(group group-idx) (in-indexed (in-vector grp-vector))])
-        (define offset (- (sub1 grid-p) grp-vector-idx))
-        (define add-x-extras? (or (zero? offset)
-                                  (and (= offset 1) (< (abs (- grid-q (add1 group-idx))) num-blanks))))
-        (match-define (cons grp plt) (run-plot group add-x-extras? (zero? group-idx)))
-        (if grp (add-facet-label grp plt) plt))))
-
-  (define add-left-extras
-    (if (< left right)
-        (- right left)
-        0))
-  (define add-right-extras
-    (if (< right left)
-        (- left right)
-        0))
-
-  (define untitled
-    (table grid-q all-plots cc-superimpose lt-superimpose
-           (list* (- (+ add-left-extras add-right-extras)) 0)
-           (build-list (sub1 grid-p)
-                       (λ (x) (if (and (not (zero? num-blanks))
-                                       (= x (- grid-p 2)))
-                                  (- (plot-line-width) bot)
-                                  (plot-line-width))))))
-
-  (add-all-titles untitled
-                  #:x-offset (- (+ right left
-                                   (if (gr-y-label) title-height 0)))
-                  #:y-offset (- (+ top bot
-                                   (if (xor (gr-title) (gr-x-label)) title-height 0)))))
-
-(define (graph-internal group render-fns)
-  (plot-pict #:x-min (gr-x-min)
-             #:x-max (gr-x-max)
-             #:y-min (gr-y-min)
-             #:y-max (gr-y-max)
-             (parameterize ([gr-group group])
-               (for/list ([render-fn (in-list render-fns)])
-                 (render-fn)))))
-
+;; ... all that stuff... -> pict?
+;; runs everything
 (define (graph #:data data #:mapping mapping
                #:width [width (plot-width)]
                #:height [height (plot-height)]
@@ -177,6 +85,7 @@
                #:legend-anchor [legend-anchor (plot-legend-anchor)]
                #:theme [theme theme-default]
                . renderers)
+  ;; parameterize data, mappings, etc
   (parameterize ([gr-data data]
                  [gr-global-mapping mapping]
                  [gr-x-conv x-conv] ; temporary, in case axes are not reals
@@ -188,6 +97,7 @@
     (define render-fns (map graphite-renderer-function renderers))
 
     ; calculate bounds, for axis transforms
+    ; don't bother with titles, since we add our own later
     (define metric-plot
       (parameterize ([plot-pen-color-map 'set1]
                      [plot-brush-color-map 'set1]
@@ -195,11 +105,12 @@
                      [plot-height height]
                      [plot-title #f] [plot-x-label #f] [plot-y-label #f]
                      [gr-global-mapping (hash-remove (gr-global-mapping) 'facet)])
-        (graph-internal #f render-fns)))
+        (graph-internal render-fns)))
     (match-define (vector (vector actual/x-min actual/x-max)
                           (vector actual/y-min actual/y-max))
       (plot-pict-bounds metric-plot))
 
+    ; determine what axes are qualitative. if they are, don't show ticks
     (define x-qualitative? (and (hash-has-key? mapping 'x)
                                 (qualitative? mapping 'x)))
     (define y-qualitative? (and (hash-has-key? mapping 'y)
@@ -225,6 +136,7 @@
              plot-y-ticks (and y-transform (get-adjusted-ticks actual/y-min actual/y-max y-transform))
              plot-legend-anchor legend-anchor))
 
+    ; an alist of parameters
     (define metadata (alist-remove-false
                       (append defaults
                               (append* (map graphite-renderer-metadata renderers))
@@ -246,7 +158,7 @@
           (cond [(hash-ref mapping 'facet #f) (facet-plot render-fns facet-wrap)]
                 [else
                  (define-values (left right bottom top) (plot-extras-size metric-plot))
-                 (add-all-titles (graph-internal #f render-fns)
+                 (add-all-titles (graph-internal render-fns)
                                  #:x-offset (- (+ right left
                                                   (if (gr-y-label) fs 0)))
                                  #:y-offset (- (+ top bottom

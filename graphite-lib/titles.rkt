@@ -86,7 +86,7 @@
         0))
   (define t (title group))
   (cb-superimpose (inset plot-pict add-left-extras 0 add-right-extras 0)
-                  (inset t add-left-extras 0 add-right-extras
+                  (inset t 0 #;add-left-extras 0 0 #; add-right-extras
                          (- (pict-height plot-pict) top-extras))))
 
 (define (add-all-titles regular-pict #:x-offset [x-offset 0] #:y-offset [y-offset 0])

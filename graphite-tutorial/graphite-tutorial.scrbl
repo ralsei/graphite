@@ -1,7 +1,11 @@
 #lang scribble/manual
 
 @(require scribble/example
-          (for-label racket data-frame graphite))
+          (for-label (except-in racket rename)
+                     data-frame
+                     graphite
+                     sawzall
+                     threading))
 
 @(define ev
    (let ([eval (make-base-eval)])
@@ -9,7 +13,9 @@
               (require data-frame
                        graphite
                        plot/utils
-                       threading)))
+                       racket/vector
+                       threading
+                       sawzall)))
      eval))
 
 @title{Graphite: a guided tour}
@@ -111,10 +117,10 @@ for R"]. This data is already tidy and in the format we want, so we merely read 
   (define gapminder (df-read/csv "data/all_gapminder.csv"))
 ]
 
-We can take a quick look at our data using the @racket[df-describe] function, to determine what data we
-actually have:
+We can take a quick look at our data using the @racket[show] form from the @racketmodname[sawzall] library
+(more on that later!), to determine what data we actually have:
 @examples[#:eval ev #:label #f
-  (df-describe gapminder)
+  (show gapminder)
 ]
 
 So, we know that we have GDP per capita and life-expectancy in our dataset. Let's say we wanted to make a
@@ -221,11 +227,11 @@ variety of categorical variables to work with, making it ideal for making bar ch
 Similarly to last time, we load it up and take a gander:
 @examples[#:eval ev #:label #f
   (define gss (df-read/csv "data/gss_sm.csv"))
-  (df-describe gss)
+  (show gss)
 ]
 
-Clearly, we have a lot of data to work with here, but a lot of it is categorical, so @racket[df-describe]'s
-summary statistics aren't particularly useful.
+Clearly, we have a lot of data to work with here, but a lot of it is categorical -- meaning we can make some
+bar charts!
 
 We start off by taking a look at the variable @tt{religion}, which contains a condensed version of the religions
 in the GSS. (The variable @tt{relig} is more descriptive, but has too many categories for simple examples.)
@@ -276,11 +282,140 @@ Faceting is a global aesthetic (used by @racket[graph], and not individual rende
 Take the previous GSS example: let's say we wanted to instead facet on @tt{bigregion}, and then have each subplot
 represent religious preferences in that region. In that case:
 @examples[#:eval ev #:label #f
-  (graph #:data gss
-         #:mapping (aes #:x "religion" #:facet "bigregion")
-         #:width 700 #:height 700
-         #:x-conv (λ (x) (substring x 0 2))
-         (bar #:mode 'prop))
+  (parameterize ([plot-x-tick-label-angle 30]
+                 [plot-x-tick-label-anchor 'top-right])
+    (graph #:data gss
+           #:mapping (aes #:x "religion" #:facet "bigregion")
+           #:width 700 #:height 700
+           (bar #:mode 'prop)))
 ]
 
-Now we've managed to split up our visualization into seperate charts for each region.
+Now we've managed to split up our visualization into seperate charts for each region. In addition, this
+demonstrates that missing functionality in Graphite can be added with the regular @racketmodname[plot] parameters,
+in this case to rotate the labels.
+
+We can also do this for the Gapminder plot, by faceting by continent:
+@examples[#:eval ev #:label #f
+  (graph #:data gapminder
+         #:title "GDP per capita vs life expectancy"
+         #:x-label "GDP per capita (USD)"
+         #:y-label "Life expectancy (years)"
+         #:mapping (aes #:x "gdpPercap" #:y "lifeExp" #:facet "continent")
+         #:x-transform logarithmic-transform
+         #:height 700 #:width 1000
+         (points #:alpha 0.4)
+         (fit #:width 3))
+]
+
+Note that we have to pay attention to the variable we're faceting on, and make sure that that variable makes sense
+to facet on. For example, if we were to facet on @racket["country"], we would get something close to 150 frames!
+
+Let's work up a more complex plot, with faceting in mind. Say we want to take Gapminder, and get data about GDP per
+capita over time. Because this is a time series, it makes sense to use the @racket[lines] renderer. Here's an
+initial attempt:
+@examples[#:eval ev #:label #f
+  (graph #:data gapminder
+         #:mapping (aes #:x "year" #:y "gdpPercap")
+         (lines))
+]
+
+Whoa! So the problem here is that Graphite doesn't know how to handle all the data it's being fed. Namely, we have
+a bunch of different data-points split up by continent. This information is @italic{correct}: but we haven't handled
+it correctly with our renderers.
+
+One way to approach this is to instead get continent-level data, and make a fit for each of them. To first get data
+by continent, we can use a facet, like before. We map color to country, and hide the legend (since there are too many).
+@examples[#:eval ev #:label #f
+  (graph #:data gapminder
+         #:mapping (aes #:x "year" #:y "gdpPercap" #:facet "continent")
+         #:legend-anchor 'no-legend
+         #:height 700 #:width 1000
+         (lines #:mapping (aes #:discrete-color "country")))
+]
+
+This is @italic{better}, but we note that measurements in Asia are dwarfing that of poorer countries. To help offset this,
+we can add a log transform on the y-axis. Also, all these colors suck, so we override it with a global gray, but keep the
+coloring aesthetic so we retain our grouping.
+
+@examples[#:eval ev #:label #f
+  (graph #:data gapminder
+         #:mapping (aes #:x "year" #:y "gdpPercap" #:facet "continent")
+         #:y-transform logarithmic-transform
+         #:legend-anchor 'no-legend
+         #:height 700 #:width 1000
+         (lines #:color "gray" #:mapping (aes #:discrete-color "country")))
+]
+
+Finally, we can add a fit line, so we can know general trends on each continent. We use the nicer LOESS estimation method,
+since some of this data seems non-linear.
+@examples[#:eval ev #:label #f
+  (graph #:data gapminder
+         #:mapping (aes #:x "year" #:y "gdpPercap" #:facet "continent")
+         #:y-transform logarithmic-transform
+         #:legend-anchor 'no-legend
+         #:height 700 #:width 1000
+         (lines #:color "gray" #:mapping (aes #:discrete-color "country"))
+         (fit #:width 3 #:method 'loess))
+]
+
+and there we have it!
+
+@section{Data wrangling, 101}
+
+Graphite does some of the work for us with regards to data processing. Note the @racket['count] and @racket['prop] modes
+in the earlier bar charts: we didn't have to handle that. But Graphite is not a data wrangling library, and oftentimes
+it makes more sense to process our data first.
+
+For example, in the last example, we got GDP per capita summary statistics for each continent. But what if we want the
+@italic{average, global} GDP per capita over time? That's too complex of a transformation for Graphite to do for us.
+
+For this purpose, we need the Sawzall library, whose documentation is available at
+@other-doc['(lib "sawzall-doc/sawzall.scrbl")]. This library is designed to take in data-frames, and produce new ones
+with some transformation applied -- with operations chaning together using the @racketmodname[threading] library.
+
+Let's say we want to perform the above transformation on the Gapminder dataset. Effectively, what we want to do is:
+@itemlist[
+  @item{Take all the data in each year, ignoring country,}
+  @item{average the GDP per capita within each year,}
+  @item{then collect the results of that sum into a new data-frame.}
+]
+
+This translates naturally to the following Sawzall pipeline:
+@examples[#:eval ev #:label #f
+  (define (sum vec) (for/sum ([v (in-vector vec)]) v))
+  (define (avg vec) (/ (sum vec) (vector-length vec)))
+
+  (~> gapminder
+      (group-with "year")
+      (aggregate [avgGdpPercap (gdpPercap) (avg gdpPercap)])
+      show)
+]
+
+Let's break down this code.
+@itemlist[
+  @item{The @racket[~>] operator is effectively "spicy function composition"; @racket[(~> h g f x)] translates at
+        compile-time to @racket[(f (g (h x)))]. We use it here to express the idea of "do-this-then-that".}
+  @item{@racket[(group-with "year")] takes @racket[gapminder], and groups it with respect to the variable @racket["year"].
+        This tells sequential operations that we want to treat each different possibility of year seperately.}
+  @item{@racket[(aggregate [avgGdpPercap (gdpPercap) (avg gdpPercap)])] aggregates each group into a single value.
+        @racket[avgGdpPercap] tells us what the new column name should be, @racket[(gdpPercap)] tells us that we want to
+        bind the variable @racket[gdpPercap] as a vector in the body, and @racket[(avg gdpPercap)] computes the average
+        value of each vector.
+
+        This is a lot to break down, but more or less it takes each year, gets all the GDP per capita values that
+        correspond to it, and averages them.
+
+        This also strips down the group structure, since we now only have one row for each year.}
+  @item{@racket[show] prints out the result, and returns nothing, being the last thing in the pipeline.}
+]
+
+Instead of merely printing out the data, we can use @racket[_] to tell @racket[~>] where to put the next input, and feed
+it directly into @racket[graph], printing out a time series of global GDP per capita:
+@examples[#:eval ev #:label #f
+  (~> gapminder
+      (group-with "year")
+      (aggregate [avgGdpPercap (gdpPercap) (avg gdpPercap)])
+      (graph #:data _
+             #:mapping (aes #:x "year" #:y "avgGdpPercap")
+             (lines)))
+]
