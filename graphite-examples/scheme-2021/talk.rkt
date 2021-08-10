@@ -93,11 +93,11 @@
 
 ;;;; data
 ;;;; likely that some of this is unused by the time the talk rolls around
-(define gapminder (df-read/csv "data/all_gapminder.csv" #:na "NA"))
+(define gapminder (df-read/csv "../data/all_gapminder.csv" #:na "NA"))
 (df-del-series! gapminder "")
-(define oecd (df-read/csv "data/oecd.csv" #:na "NA"))
+(define oecd (df-read/csv "../data/oecd.csv" #:na "NA"))
 (df-del-series! oecd "")
-(define gss-sm (rename (df-read/csv "data/gss_sm.csv" #:na "NA") "" "id"))
+(define gss-sm (rename (df-read/csv "../data/gss_sm.csv" #:na "NA") "" "id"))
 #;(df-del-series! gss-sm "")
 
 ;;;; actual slides

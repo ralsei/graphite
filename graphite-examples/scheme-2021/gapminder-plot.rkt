@@ -5,7 +5,7 @@
          plot/utils)
 (provide gapminder-plot)
 
-(define gapminder (df-read/csv "./data/all_gapminder.csv"))
+(define gapminder (df-read/csv "../data/all_gapminder.csv"))
 
 (define fit
   (df-least-squares-fit gapminder "gdpPercap"

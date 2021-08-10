@@ -3,7 +3,7 @@
 (provide gapminder-graphite)
 
 (define gapminder
-  (df-read/csv "./data/all_gapminder.csv"))
+  (df-read/csv "../data/all_gapminder.csv"))
 
 (define gapminder-graphite
   (graph #:data gapminder
