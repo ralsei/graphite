@@ -1,7 +1,7 @@
 #lang info
 (define collection "graphite-tutorial")
 (define deps '("base"))
-(define scribblings '(("graphite-tutorial.scrbl" ())))
+(define scribblings '(("graphite-tutorial.scrbl" (multi-page))))
 (define build-deps '("plot-doc"
                      "data-frame"
                      "graphite-doc"

@@ -302,28 +302,85 @@
     (graph #:data gapminder
            #:mapping (aes #:x "year"
                           #:y "gdpPercap")
-           (lines)))
+           #:legend-anchor 'no-legend
+           (lines #:mapping (aes #:discrete-color "country"))))
   (define by-continent-example
     (graph #:data gapminder
            #:mapping (aes #:x "year"
                           #:y "gdpPercap"
                           #:facet "continent")
-           #:facet-wrap 1
-           #:width (inexact->exact (round (/ (get-client-w) 2.1)))
-           #:height (+ (get-client-h) 150)
-           (lines)))
+           #:facet-wrap 5
+           #:width (get-client-w)
+           #:height 450
+           #:legend-anchor 'no-legend
+           (lines #:mapping (aes #:discrete-color "country"))))
+  (define y-transformed-example
+    (graph #:data gapminder
+           #:mapping (aes #:x "year"
+                          #:y "gdpPercap"
+                          #:facet "continent")
+           #:facet-wrap 5
+           #:width (get-client-w)
+           #:height 450
+           #:y-transform logarithmic-transform
+           #:legend-anchor 'no-legend
+           (lines #:mapping (aes #:discrete-color "country")
+                  #:color "gray")))
+  (define fitted-example
+    (graph #:data gapminder
+           #:mapping (aes #:x "year"
+                          #:y "gdpPercap"
+                          #:facet "continent")
+           #:facet-wrap 5
+           #:width (get-client-w)
+           #:height 450
+           #:y-transform logarithmic-transform
+           #:legend-anchor 'no-legend
+           (lines #:mapping (aes #:discrete-color "country")
+                  #:color "gray")
+           (fit #:width 3 #:method 'loess)))
 
   (slide/staged
    [initial by-continent y-transformed fitted]
-   (hc-append
-    (make-fig44-example
-     (code (aes #:x "year"
-                #:y "gdpPercap"
-                #:facet "continent"))
-     (ghost (code #:y-transform logarithmic-transform))
-     (code (lines)))
-    by-continent-example
-    #;initial-example)))
+   (vc-append
+    50
+    (pict-case stage-name #:combine lt-superimpose
+               [(initial by-continent)
+                (make-fig44-example
+                 (pict-if #:combine lt-superimpose
+                          (at initial)
+                          (code (aes #:x "year"
+                                     #:y "gdpPercap"))
+                          (code (aes #:x "year"
+                                     #:y "gdpPercap"
+                                     #,(frame (code #:facet "continent")))))
+                 (ghost (code #:y-transform logarithmic-transform))
+                 (code (lines #:mapping (aes #:discrete-color
+                                             "country"))))]
+               [(y-transformed)
+                (make-fig44-example
+                 (code (aes #:x "year"
+                            #:y "gdpPercap"
+                            #:facet "continent"))
+                 (frame (code #:y-transform logarithmic-transform))
+                 (code (lines #:mapping (aes #:discrete-color
+                                             "country")
+                              #,(frame (code #:color "gray")))))]
+               [(fitted)
+                (make-fig44-example
+                 (code (aes #:x "year"
+                            #:y "gdpPercap"
+                            #:facet "continent"))
+                 (code #:y-transform logarithmic-transform)
+                 (code (lines #:mapping (aes #:discrete-color
+                                             "country")
+                              #:color "gray")
+                       #,(frame (code (fit #:width 3 #:method 'loess)))))])
+    (pict-case stage-name #:combine cc-superimpose
+               [(initial) initial-example]
+               [(by-continent) by-continent-example]
+               [(y-transformed) y-transformed-example]
+               [(fitted) fitted-example]))))
 
 
 ;; could be dead code -- determine if we want to include this later
@@ -421,9 +478,9 @@
 
 ;;;; main
 (module+ main
-  #;(title-slide)
-  #;(intro-slides)
-  #;(gdpPercap-lifeExp-slides)
+  (title-slide)
+  (intro-slides)
+  (gdpPercap-lifeExp-slides)
   (year-gdpPercap-slides)
   #;(oecd-example-slides)
   #;(gss-example-slides)

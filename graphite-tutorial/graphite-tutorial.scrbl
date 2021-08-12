@@ -13,6 +13,7 @@
               (require data-frame
                        graphite
                        plot/utils
+                       racket/string
                        racket/vector
                        threading
                        sawzall)))
@@ -47,16 +48,14 @@ If your data visualization satisfies some of the following criteria, Graphite wo
         Graphite's generated plots work great in Scribble, or embedded into any other document by saving
         the file using @racket[save-pict].}
   @item{@bold{Your intended plot is 2D.} Graphite does not support 3D plots, and it probably never will.}
-  @item{@bold{Your data is tidy, and consists of the data you actually want to show.} Graphite assumes that
-        your data is in "tidy" form, with each variable being a column and each observation being a row. Data
-        wrangling is outside of the scope of Graphite's functionality.}
   @item{@bold{You don't know what data visualization method you want to use.} Graphite's main goal is to
         prevent significant structural changes when, for example, switching from a scatter plot to a
         histogram.}
 ]
 
 If your data is untidy, it will require further processing before being read into a @racket[data-frame].
-Anecdotally, this is not particularly easy in Racket. All data in this tutorial is already tidy.
+This will be covered later in the tutorial, and requires the Sawzall library
+(docs at @other-doc['(lib "sawzall-doc/sawzall.scrbl")]), specifically designed to complement Graphite.
 
 If your data is primarily continuous, needs to be interactive, or needs to be 3D, @racket[plot] is likely to
 be a better fit.
@@ -419,3 +418,312 @@ it directly into @racket[graph], printing out a time series of global GDP per ca
              #:mapping (aes #:x "year" #:y "avgGdpPercap")
              (lines)))
 ]
+
+This works, but isn't a very useful example, and doesn't teach us anything about how to work with NA values, et cetera.
+So, for a more complex example, we'll take a look at the GSS again. We saw already that @racket[bar] can plot counts
+and relative frequencies. However, oftentimes it makes more sense to get the data in the shape you want it first, and
+then have Graphite focus its effort on plotting the data, rather than messing with it on-the-fly.
+
+Say we want to plot the row-marginals of region within religion (so, within each region, what is the % of each religion).
+We start from our @racket[gss] table, which has individual-level observations, and go from there. Effectively, what
+we want to do is:
+@itemlist[
+  @item{Take our individual-level data,}
+  @item{group it with respect to region, and then religion within region,}
+  @item{summarize each religion into a count of respondents,}
+  @item{then calculate the percentage of each religion within region.}
+]
+
+Once again, we'll build a Sawzall pipeline, but this time we'll approach it incrementally. First off, we group with
+respect to the variables @racket["bigregion"] and @racket["religion"]. This means that the result is internally
+different, but the result of @racket[show] does not change. It's merely a marker to tell future operations what to
+do.
+@examples[#:eval ev #:label #f
+  (~> gss
+      (group-with "bigregion" "religion")
+      show)
+]
+Note that multiple arguments to @racket[group-with] say "group with respect to the first, then within each possibility
+for the first, group with respect to the second" and so on. Successive calls to @racket[group-with] do not work.
+
+We then want to get the number of observations within each religion. Note that @racket[aggregate] above bound a variable,
+and computed something with it. Here, we just want to compute the length of the input, so we call @racket[vector-length]
+on whatever variable we feel like, and turn it into a new variable @racket["count"].
+@examples[#:eval ev #:label #f
+  (~> gss
+      (group-with "bigregion" "religion")
+      (aggregate [count (bigregion) (vector-length bigregion)])
+      show)
+]
+Note that this both removed a layer of grouping, and significantly stripped down our table. @racket[aggregate] removes all
+columns except groups and the columns created (because where would it put the other observations?).
+
+We then want to take this result, and then create new variables at the current level of grouping (with respect to region),
+telling us the percent preference by region. So, what we want to do is calculate the @italic{frequency} of each religion
+in each region (so the count divided by the total), and then multiply it by 100 (to turn it into a percentage). We
+use Sawzall's @racket[create] operation for this:
+@examples[#:eval ev #:label #f
+  (define (v/ vec c) (vector-map (λ (x) (/ x c)) vec))
+
+  (~> gss
+      (group-with "bigregion" "religion")
+      (aggregate [count (bigregion) (vector-length bigregion)])
+      (create [frequency ([count : vector]) (v/ count (sum count))]
+              [percentage (frequency) (round (* frequency 100))])
+      show)
+]
+
+Let's break down this code a bit:
+@itemlist[
+  @item{@racket[v/] is a helper function to divide every element of a vector by a scalar.}
+  @item{The first clause of this @racket[create], @racket[[frequency ([count : vector]) (v/ count (sum count))]],
+        binds the variable @racket["count"] as a vector (hence the annotation), divides each element by the sum of
+        the entire vector, and returns the vector.
+
+        When every bound variable is of type @racket[vector], the body of that clause should return a vector.}
+  @item{The second clause of this @racket[create], @racket[[percentage (frequency) (round (* frequency 100))]],
+        binds the variable @racket["frequency"] as type @racket[element], which means that the body will map over
+        each element of the vector implicitly. So, @racket[frequency] is bound to a number, and we treat it as such,
+        iterating over every element of the column.
+
+        We couldn't do this for the above, because we needed the entire vector at once in order to get the sum.}
+]
+
+Finally, we strip grouping, save our result as a bare data-frame, and do a sanity check to make sure everything sums
+up to 100%. Try breaking down what this code does on your own, with the knowledge above.
+@examples[#:eval ev #:label #f
+  (define religion-by-region
+    (~> gss
+        (group-with "bigregion" "religion")
+        (aggregate [count (bigregion) (vector-length bigregion)])
+        (create [frequency ([count : vector]) (v/ count (sum count))]
+                [percentage (frequency) (round (* frequency 100))])
+        ungroup))
+  (~> religion-by-region
+      (group-with "bigregion")
+      (aggregate [total (percentage) (sum percentage)])
+      show)
+]
+
+Looks good! Some error was added by rounding, hence the 101s.
+
+We can then feed this data into Graphite, faceting on the variable @racket["bigregion"]. We use the @racket[col]
+renderer, which is like @racket[bar], except it takes its data @italic{literally} -- the value in the data correspponds
+directly to the height of each bar, no computations involved.
+@examples[#:eval ev #:label #f
+  (graph #:data religion-by-region
+         #:mapping (aes #:x "religion" #:y "percentage"
+                        #:fill "religion" #:facet "bigregion")
+         #:x-label "Religion" #:y-label "Percent"
+         #:width 700 #:height 700
+         (col))
+]
+
+Voilà.
+
+@section{Data wrangling, 201: Wrangle harder}
+
+This section of the tutorial is based off of
+@hyperlink["https://r4ds.had.co.nz/tidy-data.html" "R for Data Science Chapter 12"], by Hadley Wickham.
+
+@italic{The Sawzall API in this section is not finalized. There are no guarantees about backwards compatibility.}
+
+Graphite, and the majority of Sawzall's operations, assume three things about the data:
+@itemlist[
+  @item{Each variable has its own column.}
+  @item{Each observation has its own row.}
+  @item{Each value has its own cell.}
+]
+This style of presentation is called "tidy data" (hence the name "tidyverse", the R software collection Graphite
+and Sawzall are inspired by). Data that does not satisfy these properties is called "untidy data", and the process
+of transforming it into tidy data is called "tidying".
+
+Unfortunately, the overwhelming majority of data that you will encounter in the real world™ is untidy. Most data
+is managed through spreadsheet software like Excel, and is optimized for data entry, not analysis or visualization.
+
+Let's take a look at some untidy data. In particular, we're going to look at tuberculosis data broken down by country,
+year, age, gender, and diagnosis method. This data comes from the
+@hyperlink["http://www.who.int/tb/country/data/download/en/" "2014 World Health Organization Global Tuberculosis Report"].
+@examples[#:eval ev #:label #f
+  (define who (df-read/csv "data/who.csv" #:na "NA"))
+  (df-del-series! who "")
+  (show who)
+  (df-series-names who)
+]
+We remove the empty column because it's a column of IDs, which is irrelevant for our purposes.
+
+Anyway, wow. Ouch. This is a pretty typical dataset: it has redundant columns, weird variable codes, and missing values
+abound. Chances are, it was made in spreadsheet software. So, we'll need multiple steps to try and tidy it.
+
+Here's a breakdown of what we can deduce for now:
+@itemlist[
+  @item{@tt{country}, @tt{iso2}, and @tt{iso3} are variables that specify the country, the latter two being country
+        codes. We don't need the latter two, then.}
+  @item{@tt{year} is clearly a variable.}
+  @item{Given names like @tt{newrel_f65} and @tt{new_ep_f4554}, we can reasonably infer that these are values of some
+        mega-variable.}
+]
+
+So, what we want to do is take the names of each @tt{new...}, and the values of each of those columns, and turn them
+into two columns: one representing the former name of the column, and one representing the value. Sawzall provides an
+operation for turning column names that are actually values into a new column: @racket[pivot-longer].
+
+To use @racket[pivot-longer], we need three things: the set of columns whose names are values and not variables
+(in this case, everything starting with @tt{new}), a name of a variable to move the column names to (in this case,
+@tt{key}, since we don't know what these names mean yet), and a name of a variable to move the column values
+to (we know it's TB cases, so we'll call it @tt{cases}).
+
+So, that looks something like this:
+@examples[#:eval ev #:label #f
+  (~> who
+      (pivot-longer (starting-with "new")
+                    #:names-to "key"
+                    #:values-to "cases")
+      show)
+]
+
+We now have significantly fewer columns, and way more rows, since we transformed all of those messy columns into two.
+Note the @racket[(starting-with "new")]: this is a @italic{slice spec}, a domain-specific language for selecting
+columns from data. See @racket[slice]'s documentation for more details.
+
+We can also assume that rows where there are no entered data (so, @racket[#f] is in them) are irrelevant. To get rid of
+them, we can use @racket[drop-na], which does what it says on the tin:
+@examples[#:eval ev #:label #f
+  (~> who
+      (pivot-longer (starting-with "new")
+                    #:names-to "key"
+                    #:values-to "cases")
+      (drop-na "cases")
+      show)
+]
+
+Annoyingly, we don't understand what @tt{key} is supposed to mean. Luckily, I'm basing this tutorial off other people's
+work, who have conveniently provided the information for me. So, here's the anatomy of, for example,
+@racket{new_ep_f4554}:
+@itemlist[
+  @item{The first three letters are either @tt{new} or @tt{old}, denoting new or old cases of TB. We don't have any old
+        cases in the provided data. So, in this case, we have a new case}
+  @item{The next two letters denote the type of TB:
+        @itemlist[
+          @item{@tt{rel} stands for relapse}
+          @item{@tt{ep} stands for extrapulmonary TB (this case)}
+          @item{@tt{sn} stands for pulmonary TB that could not be diagnosed by a pulmonary smear (smear negative)}
+          @item{@tt{sp} stands for pulmonary TB that could be diagnosed by a pulmonary smear (smear positive)}
+        ]}
+  @item{The sixth letter gives the sex of the patient, either @tt{m} or @tt{f} for male and female, respectively.}
+  @item{The remaining numbers give an age group. For example, @tt{014} is 0-14 years old, @tt{4554} is 45-54 years
+        old, and @tt{65} is 65+.}
+]
+
+Unfortunately, the cases of relapse are formatted like @tt{newrel_f65}. So, we'll use @racket[create] to replace all
+instances of @racket["newrel"] with @racket["new_rel"], so we have a common baseline to split our variable on. Note
+that binding the variable and making a new column with the same name shadows the old one:
+@examples[#:eval ev #:label #f
+  (~> who
+      (pivot-longer (starting-with "new")
+                    #:names-to "key"
+                    #:values-to "cases")
+      (drop-na "cases")
+      (create [key (key) (string-replace key "newrel" "new_rel")])
+      show)
+]
+
+Then, we want to split up each variable along the separator @racket["_"], pulling apart each value of @tt{key} into
+three variables: @tt{new}, @tt{type}, and @tt{sex-age} (since, for example, @racket["f4554"]) is both the sex and
+age variable). Sawzall provides the @racket[separate] function for this purpose:
+@examples[#:eval ev #:label #f
+  (~> who
+      (pivot-longer (starting-with "new")
+                    #:names-to "key"
+                    #:values-to "cases")
+      (drop-na "cases")
+      (create [key (key) (string-replace key "newrel" "new_rel")])
+      (separate "key" #:into '("new" "type" "sex-age") #:separator "_")
+      (show ["country" "new" "type" "sex-age"]))
+]
+The @racket[#:into] keyword argument determines what column names to split the variable into, and
+@racket[#:separator] determines a string to split each value on. Also note how @racket[show] also takes a
+@racket[slice]-spec, so we can determine what columns we want to show.
+
+We have some useless variables now. Namely, @tt{new} is just @racket["new"] repeated over and over, and @tt{iso2}
+and @tt{iso3} are country codes, which are irrelevant for our purposes. We can use the @racket[slice] operator,
+alongside a slice-spec that takes everything aside from these variables, to remove them from the data:
+@examples[#:eval ev #:label #f
+  (~> who
+      (pivot-longer (starting-with "new")
+                    #:names-to "key"
+                    #:values-to "cases")
+      (drop-na "cases")
+      (create [key (key) (string-replace key "newrel" "new_rel")])
+      (separate "key" #:into '("new" "type" "sex-age") #:separator "_")
+      (slice (not ["new" "iso2" "iso3"]))
+      show)
+]
+
+Finally, we can seperate the @tt{sex-age} variable into two variables, @tt{sex} and @tt{age}, with the
+@racket[#:separator] @racket[1] -- we can specify a number, in which case the variable will be split at this
+character index.
+@examples[#:eval ev #:label #f
+  (~> who
+      (pivot-longer (starting-with "new")
+                    #:names-to "key"
+                    #:values-to "cases")
+      (drop-na "cases")
+      (create [key (key) (string-replace key "newrel" "new_rel")])
+      (separate "key" #:into '("new" "type" "sex-age") #:separator "_")
+      (slice (not ["new" "iso2" "iso3"]))
+      (separate "sex-age" #:into '("sex" "age") #:separator 1)
+      show)
+]
+
+Finally, we have some tidy data! Let's save it:
+@examples[#:eval ev #:label #f
+  (define tidy-who
+    (~> who
+        (pivot-longer (starting-with "new")
+                      #:names-to "key"
+                      #:values-to "cases")
+        (drop-na "cases")
+        (create [key (key) (string-replace key "newrel" "new_rel")])
+        (separate "key" #:into '("new" "type" "sex-age") #:separator "_")
+        (slice (not ["new" "iso2" "iso3"]))
+        (separate "sex-age" #:into '("sex" "age") #:separator 1)))
+]
+
+Now that we finally have some tidy data, we can make some nice looking plots. Let's turn this into
+a plot of TB cases in Afghanistan. We want to use @racket[where] in order to "filter" down this data
+into just cases for Afghanistan:
+@examples[#:eval ev #:label #f
+  (~> tidy-who
+      (where (country) (string=? country "Afghanistan"))
+      show)
+]
+@racket[where] works similarly to each clause of @racket[create] or @racket[aggregate] -- we bind the
+variable @tt{country} as an element, and then filter the rows of the data-frame for those where the
+body returns true.
+
+Then, if we try to plot this stratified by age, we run into an issue:
+@examples[#:eval ev #:label #f
+  (~> tidy-who
+      (where (country) (string=? country "Afghanistan"))
+      (graph #:data _
+             #:mapping (aes #:x "year" #:y "cases" #:discrete-color "age")
+             (lines)))
+]
+
+This is a giant mess! The issue is the @tt{sex} variable -- Graphite doesn't know what to do with this
+information, since you end up with multiple data-points for year/case. So, we want to group by year and
+age, sum the case data within them, and then ungroup: this effectively eliminates the sex variable.
+@examples[#:eval ev #:label #f
+  (~> tidy-who
+      (where (country) (string=? country "Afghanistan"))
+      (group-with "year" "age")
+      (aggregate [cases (cases) (sum cases)])
+      ungroup
+      (graph #:data _
+             #:mapping (aes #:x "year" #:y "cases" #:discrete-color "age")
+             (lines)))
+]
+
+Finally, we have a plot, and we can determine that Afghanistan had a sudden spike in TB cases among ages
+0-14 in 2010-2013.
