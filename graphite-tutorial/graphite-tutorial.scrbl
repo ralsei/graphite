@@ -134,7 +134,7 @@ Let's break down this code. The main form is @racket[graph], which takes a numbe
 @tt{#:data} keyword argument specifies the data-frame that we want to plot.
 
 The @tt{#:mapping} keyword argument specifies our @racket[aes] (standing for @italic{aesthetics}), which
-dictates how we actually want the dat to be shown on the plot. In this case, our mapping states that we want
+dictates how we actually want the data to be shown on the plot. In this case, our mapping states that we want
 to map the x-axis to the variable @tt{gdpPercap}, and the y-axis to the variable @tt{lifeExp}.
 
 Finally, the rest of our arguments dictate our renderers. In this case, the @racket[points] renderer states

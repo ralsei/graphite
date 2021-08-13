@@ -75,11 +75,11 @@
                         (vector y-min y-max))
     (plot-pict-bounds metrics-plot))
   ;; 2. get padding without y-ticks, so we know how much the x-ticks extend the plot left/right
-  (define-values (_ x-left x-right __ ___)
-    (get-extra-metrics #:x-ticks? #t))
+  (match-define-values (_ x-left x-right _ _)
+                       (get-extra-metrics #:x-ticks? #t))
   ;; 3. get padding without x-ticks, so we know how much the x-ticks extend the plot up/down
-  (define-values (____ _____ ______ y-bot y-top)
-    (get-extra-metrics #:y-ticks? #t))
+  (match-define-values (_ _ _ y-bot y-top)
+                       (get-extra-metrics #:y-ticks? #t))
   ;; 4. get the height of a title pict, which are appended on later
   ;;    (we don't really care about the width)
   (define title-height (pict-height (title "abcdefg")))
@@ -137,7 +137,7 @@
                                  (* (sub1 grid-p)  y-bot))
                               grid-p))))
 
-  ;; string? (boolean?) (boolean?) -> plot-pict?
+  ;; string? (boolean?) (boolean?) -> (values (or/c string? #f) plot-pict?)
   ;; runs a single plot on a single group
   (define (run-plot group [with-x-extras? #f] [with-y-extras? #f])
     (parameterize ([plot-x-ticks (if with-x-extras? (plot-x-ticks) no-ticks)]
@@ -147,23 +147,35 @@
                    [gr-add-y-ticks? with-y-extras?]
                    [plot-y-label (and with-y-extras? (plot-y-label))])
       (if group
-          (cons group
-                (plot-with-area (λ () (graph-internal render-fns group)) width height))
-          (cons #f (blank width (+ height all-bot title-height))))))
+          (values group
+                  (plot-with-area (λ () (graph-internal render-fns group)) width height))
+          (values #f (blank width (+ height all-bot title-height))))))
 
+  ;; runs each plot, turning them into a list of picts
+  ;; first, parameterize the global x-min/x-max, so we have consistent axes
+  ;; NOTE: this is where we'd do disjointness fixes
+  ;;       qualitative variables would need more work
   (define all-plots
     (parameterize ([gr-x-min (or (gr-x-min) x-min)]
                    [gr-x-max (or (gr-x-max) x-max)]
                    [gr-y-min (or (gr-y-min) y-min)]
                    [gr-y-max (or (gr-y-max) y-max)])
+      ;; for each row, and each column within each row...
       (for*/list ([(grp-vector grp-vector-idx) (in-indexed (in-vector wrapped-groups))]
                   [(group group-idx) (in-indexed (in-vector grp-vector))])
+        ;; number of rows off from the end
         (define offset (- (sub1 grid-p) grp-vector-idx))
+        ;; add x extras if we're at the end,
+        ;; or if we're at the bottom and we've reached the blanks
         (define add-x-extras? (or (zero? offset)
-                                  (and (= offset 1) (< (abs (- grid-q (add1 group-idx))) num-blanks))))
-        (match-define (cons grp plt) (run-plot group add-x-extras? (zero? group-idx)))
+                                  (and (= offset 1)
+                                       (< (abs (- grid-q (add1 group-idx))) num-blanks))))
+        ;; add y extras if we're at the first column
+        (define-values (grp plt) (run-plot group add-x-extras? (zero? group-idx)))
+        ;; add facet labels if we have anything but a blank. if we have a blank, don't bother
         (if grp (add-facet-label grp plt) plt))))
 
+  ;; combine all-plots into a table, without adding global titles/axis labels
   (define untitled
     (table grid-q all-plots cc-superimpose lt-superimpose
            (list* 0 (max all-left all-right))
@@ -173,6 +185,7 @@
                                   (- (plot-line-width) all-bot)
                                   (plot-line-width))))))
 
+  ;; add global titles and axis labels to the entire pict
   (add-all-titles untitled
                   #:x-offset (- (+ all-right all-left
                                    (if (gr-y-label) title-height 0)))

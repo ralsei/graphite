@@ -4,6 +4,7 @@
          graphite
          (except-in pict/conditional show)
          (prefix-in pict: pict/conditional)
+         pict/flash
          pict/shadow
          ppict/2
          ppict/slideshow2
@@ -52,6 +53,8 @@
       lst
       (take lst n)))
 
+;; do we need to specify what these are?
+;; we can probably just say it verbally
 (define (v/ vec c) (for/vector ([v (in-vector vec)]) (if v (/ v c) #f)))
 (define (sum vec) (for/sum ([v (in-vector vec)] #:when v) v))
 
@@ -121,8 +124,6 @@
 (define (intro-slides)
   (define ggplot2-logo (scale-to-fit (bitmap "ggplot2-logo.png") 200 200))
   (define racket-logo (scale-to-fit (bitmap "racket-logo.png") 200 200))
-
-  (define gapminder-source (file->string "gapminder-plot.rkt"))
 
   (with-text-style
     #:defaults [#:face *global-font*]
@@ -409,7 +410,56 @@
           #:legend-anchor 'no-legend
           (col #:mapping (aes #:discrete-color "hi_lo")))))
 
-(define (gss-example-slides)
+(define (sawzall-intro-slides)
+  (define dplyr-logo (scale-to-fit (bitmap "dplyr-logo.png") 200 200))
+  (define tidyr-logo (scale-to-fit (bitmap "tidyr-logo.png") 200 200))
+  (define racket-logo (scale-to-fit (bitmap "racket-logo.png") 200 200))
+
+  (define bang (cc-superimpose (colorize (filled-flash 100 100) "red")
+                               (colorize (filled-flash 70 70) "orange")))
+  (define dplyr+tidyr+bang (vc-append 50 (hc-append 30 dplyr-logo tidyr-logo) bang))
+  (define dplyr+tidyr->bang
+    (pin-arrow-line 30 (pin-arrow-line 30 dplyr+tidyr+bang
+                                       dplyr-logo cc-find
+                                       bang ct-find
+                                       #:under? #t
+                                       #:line-width 3
+                                       #:color "cadet blue")
+                    tidyr-logo cc-find
+                    bang ct-find
+                    #:under? #t
+                    #:line-width 3
+                    #:color "cadet blue"))
+  (define dplyr+tidyr->bang->racket
+    (pin-arrow-line 30 (vc-append 50 dplyr+tidyr->bang racket-logo)
+                    dplyr+tidyr->bang cb-find
+                    racket-logo ct-find
+                    #:line-width 3
+                    #:color "cadet blue"))
+
+  (with-text-style
+    #:defaults [#:face *global-font*]
+    ([title #:size 50 #:bold? #t]
+     [titleit #:size 50 #:bold? #t #:italic? #t]
+     [t #:size 25]
+     [ti #:size 25
+         #:transform (λ (p) (t #:h-append hc-append #:left-pad 30 "• " p))]
+     [tt #:size 25 #:face *mono-font*])
+
+    (pslide
+     #:go (coord 0.05 0.05 'lt)
+     @title{What is Sawzall?}
+     #:go (coord 0.05 0.5 'lc)
+     (vl-append
+      (current-line-sep)
+      @ti{a Racket library for data manipulation}
+      @ti{like map/filter/fold, but for tabular data}
+      @ti{designed to be compositional, with the @tt{~>} operator}
+      @ti{inspired by R's dplyr+tidyr and Julia's DataFrames.jl})
+     #:go (coord 0.75 0.5 'cc)
+     dplyr+tidyr->bang->racket)))
+
+(define (gss-pipeline-slides)
   (df-show-slide gss-sm "gss-sm" "gss_sm.csv"
                  '("bigregion" "religion" "kids" "ageq" "sex" "marital"))
 
@@ -446,8 +496,8 @@
      (pict:show
       (vc-append
        @df-title{
-         Percent religious preference
-         by census region
+          Percent religious preference
+          by census region
        }
        (show-pict (~> gss-sm
                       (group-with "bigregion" "religion")
@@ -462,6 +512,49 @@
      (pict:show the-arrow (at/after step-2))
      #:go (coord 0.675 0.5 'cc)
      (pict:show the-arrow (at/after step-3)))))
+
+(define (gss-example-slides)
+  (define (make-gss-example level)
+    (code
+     (~> gss-sm
+         (group-with "bigregion" "religion")
+         #,(pict:show (code (aggregate [count (bigregion) (vector-length bigregion)]))
+                      (>= level 2))
+         #,(pict:show (code (create [frequency ([count : vector]) (v/ count (sum count))]
+                                    #,(pict:show (code [percent (frequency) (round (* frequency 100))])
+                                                 (>= level 4))))
+                      (>= level 3))
+         ungroup
+         show)))
+
+  (slide/staged
+   [initial agg create-1 create-2]
+   (vc-append
+    50
+    (make-gss-example stage)
+    (pict-case stage-name #:combine lc-superimpose
+               [(initial) (show-pict (~> gss-sm
+                                         (group-with "bigregion" "religion")
+                                         ungroup)
+                                     '("id" "bigregion" "religion"))]
+               [(agg) (show-pict (~> gss-sm
+                                     (group-with "bigregion" "religion")
+                                     (aggregate [count (bigregion) (vector-length bigregion)])
+                                     ungroup)
+                                 '("bigregion" "religion" "count"))]
+               [(create-1) (show-pict (~> gss-sm
+                                          (group-with "bigregion" "religion")
+                                          (aggregate [count (bigregion) (vector-length bigregion)])
+                                          (create [frequency ([count : vector]) (v/ count (sum count))])
+                                          ungroup)
+                                      '("bigregion" "religion" "count" "frequency"))]
+               [(create-2) (show-pict (~> gss-sm
+                                          (group-with "bigregion" "religion")
+                                          (aggregate [count (bigregion) (vector-length bigregion)])
+                                          (create [frequency ([count : vector]) (v/ count (sum count))]
+                                                  [percent (frequency) (round (* frequency 100))])
+                                          ungroup)
+                                      '("bigregion" "religion" "count" "frequency" "percent"))]))))
 
 (define (end-slide)
   (with-text-style
@@ -482,6 +575,7 @@
   (intro-slides)
   (gdpPercap-lifeExp-slides)
   (year-gdpPercap-slides)
-  #;(oecd-example-slides)
-  #;(gss-example-slides)
+  (sawzall-intro-slides)
+  (gss-pipeline-slides)
+  (gss-example-slides)
   (end-slide))
