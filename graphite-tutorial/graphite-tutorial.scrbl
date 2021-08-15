@@ -88,8 +88,8 @@ data to map it to. If a value is not present and not mandatory, it is read as @r
 to positional aesthetics (the x-axis with @racket[#:x], and the y-axis with @racket[#:y]), colorings
 (such as @racket[#:discrete-color] to @racket[points]), or another required variable
 (such as @racket[#:perc-error] to @racket[error-bars]). The most important thing is that aesthetic mappings only
-correspond to mapping an aesthetic to a @italic{variable}: if you want to set it as a constant, you likely want
-a regular keyword argument.
+correspond to mapping an aesthetic to a @italic{variable}: if you want to set some visual element of the plot
+without respect to some variable, you likely want a keyword argument passed directly to one of your renderers.
 
 @racket[graph] takes a global aesthetic mapping, and each renderer takes its own aesthetic mapping as well,
 all with the @racket[#:mapping] keyword. When a renderer is called, it inherits aesthetics from both the global
@@ -131,9 +131,9 @@ scatterplot of these two variables versus each other. Using Graphite, that would
 ]
 
 Let's break down this code. The main form is @racket[graph], which takes a number of keyword arguments. The
-@tt{#:data} keyword argument specifies the data-frame that we want to plot.
+@racket[#:data] keyword argument specifies the data-frame that we want to plot.
 
-The @tt{#:mapping} keyword argument specifies our @racket[aes] (standing for @italic{aesthetics}), which
+The @racket[#:mapping] keyword argument specifies our @racket[aes] (standing for @italic{aesthetics}), which
 dictates how we actually want the data to be shown on the plot. In this case, our mapping states that we want
 to map the x-axis to the variable @tt{gdpPercap}, and the y-axis to the variable @tt{lifeExp}.
 
@@ -150,13 +150,14 @@ already has a log transform predefined:
          (points))
 ]
 
-The @tt{#:x-transform} keyword argument specifies a @racket[transform?], which combines a @racketmodname[plot]
+The @racket[#:x-transform] keyword argument specifies a @racket[transform?], which combines a @racketmodname[plot]
 transform and ticks. In this case, we use the @racket[logarithmic-transform] function, which is already defined.
 
-This plot is starting to look nicer, but it's pretty unenlightening. We don't know anything about each country
+This plot is starting to look nicer, but it's still pretty unenlightening. We don't know anything about each country
 or how they're stratified, we can't figure out how many countries are present at any given point, we can't
-extrapolate a meaningful relationship aside from "probably linear-ish", and we haven't labeled our axes. We
-can start by adding labels, and setting the alpha value of the renderer to see where more countries are present:
+extrapolate a meaningful relationship aside from "probably logarithmic-ish" (given our transform), and we haven't
+labeled our axes. We can start by adding labels, and setting the alpha value of the renderer to see where more
+countries are present:
 @examples[#:eval ev #:label #f
   (graph #:data gapminder
          #:title "GDP per capita vs life expectancy"
@@ -183,8 +184,11 @@ fit to our plot. Then, we can use the @racket[fit] renderer:
          (fit #:width 3))
 ]
 
+Note, crucially, that @racket[fit] takes into account our transform: despite the fit looking linear here, it is
+actually a logarithmic fit, since it fits on the transformed data.
+
 @racket[fit] defaults to a linear fit (of degree 1), but you can instead do a fit using a higher-degree
-polynomial with the optional @tt{#:degree} argument:
+polynomial with the optional @racket[#:degree] argument:
 @examples[#:eval ev #:label #f
   (graph #:data gapminder
          #:title "GDP per capita vs life expectancy"
@@ -198,8 +202,8 @@ polynomial with the optional @tt{#:degree} argument:
 but this is ill-advised for the relationship we see here.
 
 Finally, let's try and extrapolate different relationships for each continent. We can stratify the points alone
-by using the aesthetic @tt{#:discrete-color} to @racket[points], which lets us pick a categorical variable
-to change the color on, in this case @tt{"continent"}. Each renderer also takes its own mapping, which can be
+by using the aesthetic @racket[#:discrete-color] to @racket[points], which lets us pick a categorical variable
+to change the color on, in this case @tt{continent}. Each renderer also takes its own mapping, which can be
 used to map some aesthetic to a variable.
 @examples[#:eval ev #:label #f
   (graph #:data gapminder
@@ -243,9 +247,9 @@ We use the @racket[bar] renderer, with no arguments, to take a look at the count
 ]
 
 Let's say that we wanted to, instead, look at the @italic{proportion} of each religion
-among the whole, rather than its individual count. We can specify this with the @tt{#:mode} argument of
-@racket[bar], which can either be @tt{'count} or @tt{'prop}, with @tt{'count} being the default behavior
-we saw before.
+among the whole, rather than its individual count. We can specify this with the @racket[#:mode] argument of
+@racket[bar], which can either be @racket['count] or @racket['prop], with @racket['count] being the default
+behavior we saw before.
 @examples[#:eval ev #:label #f
   (graph #:data gss
          #:title "Religious preferences, GSS 2016"
@@ -256,8 +260,8 @@ we saw before.
 With the y-axis representing proportions from 0 to 1, we now have a good idea of what's going on here. Similarly
 to the last example with Gapminder, let's say that we wanted to split on each region, cross-classifying between
 the categorical variables of @tt{religion} and @tt{bigregion} (Northeast/Midwest/South/West, in the US). To
-accomplish this, we can make the x-axis region, and then "dodge" on the variable @tt{religion} -- effectively,
-making each individual region its own bar chart. To do this, we use the aesthetic @tt{#:group}, and adjust
+accomplish this, we can make the x-axis region, and then group with respect to the variable @tt{religion} -- effectively,
+making each individual region its own bar chart. To do this, we use the aesthetic @racket[#:group], and adjust
 the plot size:
 @examples[#:eval ev #:label #f
   (graph #:data gss
@@ -267,8 +271,19 @@ the plot size:
          (bar #:mode 'prop))
 ]
 
-But this is pretty difficult to read as well! There's a lot of bars in each section, and you're forced to consult
-the legend for the bar colors for each one. To mitigate this, we can introduce another concept...
+Another way of laying out this data is to use a stacked bar chart, in which each bar itself is stratified by its
+variable. Graphite supports this by simply changing @racket[bar] to @racket[stacked-bar]:
+@examples[#:eval ev #:label #f
+  (graph #:data gss
+         #:title "Religious preferences among regions, GSS 2016"
+         #:mapping (aes #:x "bigregion" #:group "religion")
+         #:width 600 #:height 400
+         (stacked-bar #:mode 'prop))
+]
+
+But both of these methods of presentation, while they have their uses, are still difficult to read. Both of them
+require consulting the legend in order to determine the bar type, and furthermore, the stacked bar makes it somewhat
+difficult to compare different categories within each region. To remedy this, we need to introduce another concept...
 
 @section{Faceting}
 
@@ -277,7 +292,7 @@ visualization. Let's say we instead wanted to make things more clear. In this ca
 to our visualization, which creates multiple plots in different panels.
 
 Faceting is a global aesthetic (used by @racket[graph], and not individual renderers), dictated by the keyword
-@tt{#:facet}. To use it, we specify it to be a variable, and @racket[graph] will split the plot up for us.
+@racket[#:facet]. To use it, we specify it to be a variable, and @racket[graph] will split the plot up for us.
 Take the previous GSS example: let's say we wanted to instead facet on @tt{bigregion}, and then have each subplot
 represent religious preferences in that region. In that case:
 @examples[#:eval ev #:label #f
@@ -301,10 +316,14 @@ We can also do this for the Gapminder plot, by faceting by continent:
          #:y-label "Life expectancy (years)"
          #:mapping (aes #:x "gdpPercap" #:y "lifeExp" #:facet "continent")
          #:x-transform logarithmic-transform
-         #:height 700 #:width 1000
+         #:height 900 #:width 700
+         #:facet-wrap 2
          (points #:alpha 0.4)
          (fit #:width 3))
 ]
+
+The @racket[#:facet-wrap] keyword argument determines how many columns the resulting facet will have (so, how many
+frames we have until we wrap). This is set to 2 for all the plots in this document, because of mobile.
 
 Note that we have to pay attention to the variable we're faceting on, and make sure that that variable makes sense
 to facet on. For example, if we were to facet on @racket["country"], we would get something close to 150 frames!
@@ -328,7 +347,8 @@ by continent, we can use a facet, like before. We map color to country, and hide
   (graph #:data gapminder
          #:mapping (aes #:x "year" #:y "gdpPercap" #:facet "continent")
          #:legend-anchor 'no-legend
-         #:height 700 #:width 1000
+         #:height 900 #:width 700
+         #:facet-wrap 2
          (lines #:mapping (aes #:discrete-color "country")))
 ]
 
@@ -341,7 +361,8 @@ coloring aesthetic so we retain our grouping.
          #:mapping (aes #:x "year" #:y "gdpPercap" #:facet "continent")
          #:y-transform logarithmic-transform
          #:legend-anchor 'no-legend
-         #:height 700 #:width 1000
+         #:height 900 #:width 700
+         #:facet-wrap 2
          (lines #:color "gray" #:mapping (aes #:discrete-color "country")))
 ]
 
@@ -352,7 +373,8 @@ since some of this data seems non-linear.
          #:mapping (aes #:x "year" #:y "gdpPercap" #:facet "continent")
          #:y-transform logarithmic-transform
          #:legend-anchor 'no-legend
-         #:height 700 #:width 1000
+         #:height 900 #:width 700
+         #:facet-wrap 2
          (lines #:color "gray" #:mapping (aes #:discrete-color "country"))
          (fit #:width 3 #:method 'loess))
 ]
@@ -370,7 +392,7 @@ For example, in the last example, we got GDP per capita summary statistics for e
 
 For this purpose, we need the Sawzall library, whose documentation is available at
 @other-doc['(lib "sawzall-doc/sawzall.scrbl")]. This library is designed to take in data-frames, and produce new ones
-with some transformation applied -- with operations chaning together using the @racketmodname[threading] library.
+with some transformation applied -- with operations chaining together using the @racketmodname[threading] library.
 
 Let's say we want to perform the above transformation on the Gapminder dataset. Effectively, what we want to do is:
 @itemlist[
@@ -508,7 +530,7 @@ up to 100%. Try breaking down what this code does on your own, with the knowledg
 Looks good! Some error was added by rounding, hence the 101s.
 
 We can then feed this data into Graphite, faceting on the variable @racket["bigregion"]. We use the @racket[col]
-renderer, which is like @racket[bar], except it takes its data @italic{literally} -- the value in the data correspponds
+renderer, which is like @racket[bar], except it takes its data @italic{literally} -- the value in the data corresponds
 directly to the height of each bar, no computations involved.
 @examples[#:eval ev #:label #f
   (graph #:data religion-by-region
@@ -617,7 +639,7 @@ work, who have conveniently provided the information for me. So, here's the anat
 
 Unfortunately, the cases of relapse are formatted like @tt{newrel_f65}. So, we'll use @racket[create] to replace all
 instances of @racket["newrel"] with @racket["new_rel"], so we have a common baseline to split our variable on. Note
-that binding the variable and making a new column with the same name shadows the old one:
+that binding the variable and making a new column with the same name replaces the old one:
 @examples[#:eval ev #:label #f
   (~> who
       (pivot-longer (starting-with "new")
