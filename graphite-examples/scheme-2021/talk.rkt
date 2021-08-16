@@ -554,7 +554,32 @@
                                           (create [frequency ([count : vector]) (v/ count (sum count))]
                                                   [percent (frequency) (round (* frequency 100))])
                                           ungroup)
-                                      '("bigregion" "religion" "count" "frequency" "percent"))]))))
+                                      '("bigregion" "religion" "count" "frequency" "percent"))])))
+
+  (define religion-by-region
+    (~> gss-sm
+        (group-with "bigregion" "religion")
+        (aggregate [count (bigregion) (vector-length bigregion)])
+        (create [frequency ([count : vector]) (v/ count (sum count))]
+                [percent (frequency) (round (* frequency 100))])
+        ungroup))
+
+  (define the-graph
+    (graph #:data religion-by-region
+           #:mapping (aes #:x "religion"
+                          #:y "percent"
+                          #:facet "bigregion")
+           #:width 700 #:height 700
+           (col)))
+
+  (slide
+   (code (graph #:data religion-by-region
+                #:mapping (aes #:x "religion"
+                               #:y "percent"
+                               #:facet "bigregion")
+                #:width 700 #:height 700
+                (col))))
+  (slide the-graph))
 
 (define (end-slide)
   (with-text-style
@@ -571,11 +596,11 @@
 
 ;;;; main
 (module+ main
-  (title-slide)
-  (intro-slides)
-  (gdpPercap-lifeExp-slides)
-  (year-gdpPercap-slides)
-  (sawzall-intro-slides)
-  (gss-pipeline-slides)
+  ;; (title-slide)
+  ;; (intro-slides)
+  ;; (gdpPercap-lifeExp-slides)
+  ;; (year-gdpPercap-slides)
+  ;; (sawzall-intro-slides)
+  ;; (gss-pipeline-slides)
   (gss-example-slides)
   (end-slide))
