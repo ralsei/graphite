@@ -2,6 +2,7 @@
 (require data-frame
          iu-pict
          graphite
+         math/statistics
          (except-in pict/conditional show)
          (prefix-in pict: pict/conditional)
          pict/flash
@@ -70,7 +71,7 @@
      #:go (coord 0.05 0.05 'lt)
      (code
       (define #,defined-to
-        (df-read/csv #,(string-append "data/" csv-file)
+        (df-read/csv #,(string-append "../data/" csv-file)
                      #:na "NA")))
      #:go (coord 0.95 0.95 'rb)
      (show-pict df lst))))
@@ -101,7 +102,21 @@
 (define oecd (df-read/csv "../data/oecd.csv" #:na "NA"))
 (df-del-series! oecd "")
 (define gss-sm (rename (df-read/csv "../data/gss_sm.csv" #:na "NA") "" "id"))
-#;(df-del-series! gss-sm "")
+(define billboard (df-read/csv "../data/billboard.csv" #:na "NA"))
+(define organdata (df-read/csv "../data/organdata.csv" #:na "NA"))
+(define anscombe
+  (row-df [x1 x2 x3 x4 y1    y2   y3    y4]
+          10  10 10 8  8.04  9.14 7.46  6.58
+          8   8  8  8  6.95  8.14 6.77  5.76
+          13  13 13 8  7.58  8.74 12.74 7.71
+          9   9  9  8  8.81  8.77 7.11  8.84
+          11  11 11 8  8.33  9.26 7.81  8.47
+          14  14 14 8  9.96  8.10 8.84  7.04
+          6   6  6  8  7.24  6.13 6.08  5.25
+          4   4  4  19 4.26  3.10 5.39  12.50
+          12  12 12 8  10.84 9.13 8.15  5.56
+          7   7  7  8  4.82  7.26 6.42  7.91
+          5   5  5  8  5.68  4.74 5.73  6.89))
 
 ;;;; actual slides
 (define (title-slide)
@@ -154,10 +169,7 @@
 (define (gdpPercap-lifeExp-slides)
   (df-show-slide gapminder "Gapminder" "all_gapminder.csv")
 
-  (define gapminder-plot-source (file->string "gapminder-plot.rkt"))
-  (define gapminder-graphite-source (file->string "gapminder-graphite.rkt"))
-
-  (define (make-gapminder-example x-lab y-lab trans points fit [facet (blank)])
+  (define (make-gapminder-example x-lab y-lab trans points fit)
     (code
      (graph #:data gapminder
             #:mapping (aes #:x "gdpPercap"
@@ -187,20 +199,6 @@
            #:x-transform logarithmic-transform
            (points #:alpha 0.4 #:mapping (aes #:discrete-color "continent"))
            (fit #:width 3 #:method 'loess)))
-  (with-text-style
-    #:defaults [#:face *global-font*]
-    ([title #:size 50 #:bold? #t]
-     [titleit #:size 50 #:bold? #t #:italic? #t]
-     [t #:size 25]
-     [ti #:size 25
-         #:transform (λ (p) (t #:h-append hc-append #:left-pad 30 "• " p))])
-    (pslide
-     #:go (coord 0.05 0.05 'lt)
-     @title{@titleit{Why} is Graphite?}
-     (parameterize ([get-current-code-font-size (thunk 12)])
-       (codeblock-pict gapminder-plot-source))
-     #:go (coord 0.95 0.5 'rc)
-     gapminder-plot))
 
   (slide/staged
    [initial log-transformed colorized]
@@ -234,18 +232,83 @@
     (pict-case stage-name #:combine cc-superimpose
                [(initial) initial-example]
                [(log-transformed) log-transformed-example]
-               [(colorized) colorized-example])))
+               [(colorized) colorized-example]))))
+
+(define (prior-work-slides)
+  (define ggplot2-logo (scale-to-fit (bitmap "ggplot2-logo.png") 150 150))
+  (define racket-logo (scale-to-fit (bitmap "racket-logo.png") 150 150))
+
+  (define gapminder-plot-source (file->string "gapminder-plot.rkt"))
+  (define gapminder-graphite-source (file->string "gapminder-graphite.rkt"))
+  (define gapminder-ggplot2-source (file->lines "gapminder-r.r"))
 
   (with-text-style
     #:defaults [#:face *global-font*]
     ([title #:size 50 #:bold? #t]
      [titleit #:size 50 #:bold? #t #:italic? #t]
+     [titlett #:size 50 #:bold? #t #:face *mono-font*]
      [t #:size 25]
-     [it #:size 25 #:italic? #t])
+     [tt #:size 15 #:face *mono-font*]
+     [tit #:size 25 #:italic? #t]
+     [ti #:size 25
+         #:transform (λ (p) (t #:h-append hc-append #:left-pad 30 "• " p))]
+     [cred #:size 10])
+    (pslide
+     #:go (coord 0.05 0.05 'lt)
+     @title{@titlett{ggplot2} and R}
+     (vl-append
+      (current-line-sep)
+      @ti{a popular R library for data visualization}
+      @ti{designed around the grammar of graphics}
+      @ti{part of the @tit{tidyverse}, a software package based around @tit{tidy data}})
+     #:go (coord 0.03 0.55 'lc)
+     (apply vl-append
+            (for/list ([v (in-list gapminder-ggplot2-source)])
+              (tt v)))
+     #:go (coord 0.97 0.55 'rc)
+     (parameterize ([get-current-code-font-size (thunk 15)])
+       (codeblock-pict gapminder-graphite-source))
+     #:go (coord 0.25 0.97 'cb)
+     ggplot2-logo
+     #:go (coord 0.75 0.97 'cb)
+     racket-logo)
+
+    (pslide/staged
+     [none one two three]
+     #:go (coord 0.05 0.05 'lt)
+     @title{What is tidy data?}
+     #:go (coord 0.5 0.2 'ct)
+     (vl-append
+      (current-line-sep)
+      @ti{@tit{Idea:} data-frames are just a record of vectors...}
+      @ti{...and we work with data by-variable...}
+      @ti{...so you should be able to get a variable by selecting from the record.})
+     #:go (coord 0.05 0.66 'lc)
+     (vl-append
+      (current-line-sep)
+      @ti{@tit{To accomplish this:}}
+      (pict:show @ti{Every column is exactly one variable.}
+                 (at/after one))
+      (pict:show @ti{Every row is exactly one observation.}
+                 (at/after two))
+      (pict:show @ti{Every cell is exactly one value.}
+                 (at/after three)))
+     #:go (coord 0.95 0.66 'rc)
+     (vc-append
+      (scale-to-fit
+       (pict-case stage-name #:combine cc-superimpose
+                  [(none) (blank)]
+                  [(one) (bitmap "tidy-0-0.png")]
+                  [(two) (bitmap "tidy-1-0.png")]
+                  [(three) (bitmap "tidy-2-0.png")])
+       310 300)
+      (pict:show @cred{Credit: R for Data Science, chapter 12}
+                 (after none))))
+
     (pslide/staged
      [no-boxes one-box two-box]
      #:go (coord 0.05 0.05 'lt)
-     @title{@titleit{That's} why.}
+     @title{Racket plot vs Graphite}
      (cc-superimpose
       (parameterize ([get-current-code-font-size (thunk 12)])
         (codeblock-pict gapminder-plot-source))
@@ -254,7 +317,7 @@
         (shadow-frame @t{41 LOC})
         (* pi 1/8))
        (at/after one-box)))
-     #:go (coord 0.95 0.56 'rc)
+     #:go (coord 0.99 0.56 'rc)
      (cc-superimpose
       (parameterize ([get-current-code-font-size (thunk 15)])
         (codeblock-pict gapminder-graphite-source))
@@ -263,34 +326,11 @@
         (shadow-frame
          @t{
            18 LOC!
-           @it{(and way less cognitive load)}
+           @tit{(and way less cognitive load)}
          })
         (* pi 1/8))
-       (at/after two-box)))))
+       (at/after two-box))))))
 
-  (slide
-   (code
-    (graph #:data gapminder
-           #:mapping (aes #:x "gdpPercap"
-                          #:y "lifeExp"
-                          #,(frame (code #:facet "continent")))
-           #:x-label "GDP per capita (USD)"
-           #:y-label "Life expectancy (years)"
-           #:x-transform logarithmic-transform
-           (fit #:width 3 #:method 'loess)
-           (points #:alpha 0.4))))
-  (slide
-   (graph #:data gapminder
-          #:mapping (aes #:x "gdpPercap"
-                         #:y "lifeExp"
-                         #:facet "continent")
-          #:x-label "GDP per capita (USD)"
-          #:y-label "Life expectancy (years)"
-          #:x-transform logarithmic-transform
-          ;; the dreaded layout engine bug...
-          #:width (- (get-client-w) 100) #:height (- (get-client-h) 100)
-          (fit #:width 3 #:method 'loess)
-          (points #:alpha 0.4))))
 
 (define (year-gdpPercap-slides)
   (define (make-fig44-example mapping y-trans renderers)
@@ -382,33 +422,6 @@
                [(by-continent) by-continent-example]
                [(y-transformed) y-transformed-example]
                [(fitted) fitted-example]))))
-
-
-;; could be dead code -- determine if we want to include this later
-;; it looks nice but doesn't have the "incremental" approach we want
-(define (oecd-example-slides)
-  (df-show-slide oecd "oecd" "oecd.csv")
-
-  (pslide
-   #:go (coord 0.5 0.05 'ct)
-   (code
-    (graph #:data oecd
-           #:mapping (aes #:x "year" #:y "diff")
-           #:title "Difference between US and OECD average life expectancies"
-           #:x-label "Year" #:y-label "Difference (years)"
-           #:y-min -2 #:y-max 2
-           #:width 600 #:height 400
-           #:legend-anchor 'no-legend
-           (col #:mapping (aes #:discrete-color "hi_lo"))))
-   #:go (coord 0.5 0.95 'cb)
-   (graph #:data oecd
-          #:mapping (aes #:x "year" #:y "diff")
-          #:title "Difference between US and OECD average life expectancies"
-          #:x-label "Year" #:y-label "Difference (years)"
-          #:y-min -2 #:y-max 2
-          #:width 600 #:height 400
-          #:legend-anchor 'no-legend
-          (col #:mapping (aes #:discrete-color "hi_lo")))))
 
 (define (sawzall-intro-slides)
   (define dplyr-logo (scale-to-fit (bitmap "dplyr-logo.png") 200 200))
@@ -581,6 +594,157 @@
                 (col))))
   (slide the-graph))
 
+(define (billboard-example-slides)
+  (df-show-slide billboard "billboard" "billboard.csv"
+                 '("track" "artist" "date.entered" "wk1" "wk2" "wk3"))
+
+  (define (make-billboard-example pivot create)
+    (code (~> billboard
+              #,pivot
+              #,create
+              show)))
+
+  (pslide/staged
+   [initial pivoted created]
+   (vc-append
+    50
+    (make-billboard-example
+     (pict:show (code (pivot-longer (starting-with "wk")
+                                    #:names-to "week"
+                                    #:values-to "ranking"))
+                (at/after pivoted))
+     (pict:show (code (create [week (week) (string->number (substring week 2))]))
+                (at/after created)))
+    (pict-case stage-name #:combine lc-superimpose
+               [(initial) (show-pict billboard '("track" "artist" "date.entered" "wk1" "wk2" "wk3"))]
+               [(pivoted) (show-pict (~> billboard
+                                         (pivot-longer (starting-with "wk")
+                                                       #:names-to "week"
+                                                       #:values-to "ranking")
+                                         (reorder "week")) ; for display purposes, avoiding #fs
+                                     '("track" "artist" "date.entered" "week" "ranking"))]
+               [(created) (show-pict (~> billboard
+                                         (pivot-longer (starting-with "wk")
+                                                       #:names-to "week"
+                                                       #:values-to "ranking")
+                                         (reorder "week")
+                                         (create [week (week) (string->number (substring week 2))]))
+                                     '("track" "artist" "date.entered" "week" "ranking"))])))
+
+  (define tidy-billboard
+    (~> billboard
+        (pivot-longer (starting-with "wk")
+                      #:names-to "week"
+                      #:values-to "ranking")
+        (create [week (week) (string->number (substring week 2))])))
+
+  (define (make-billboard-graph-example where drop-na sorting ending)
+    (code (~> tidy-billboard
+              #,where
+              #,drop-na
+              #,sorting
+              #,ending)))
+
+  (pslide/staged
+   [initial filtered dropped graphed]
+   (vc-append
+    50
+    (pict-case stage-name #:combine lt-superimpose
+               [(initial filtered dropped)
+                (make-billboard-graph-example
+                 (pict:show (code (where (artist) (string=? artist "Blink-182")))
+                            (at/after filtered))
+                 (pict:show (code (drop-na "ranking"))
+                            (at/after dropped))
+                 (pict:show (code (reorder "week"))
+                            (at/after dropped))
+                 (code show))]
+               [(graphed)
+                (make-billboard-graph-example
+                 (code (where (artist) (string=? artist "Blink-182")))
+                 (code (drop-na "ranking"))
+                 (code (reorder "week"))
+                 (code (graph #:data _
+                              #:mapping (aes #:x "week" #:y "ranking")
+                              (lines))))])
+    (pict-case stage-name #:combine cc-superimpose
+               [(initial) (show-pict tidy-billboard)]
+               [(filtered) (show-pict (~> tidy-billboard
+                                          (where (artist) (string=? artist "Blink-182"))))]
+               [(dropped) (show-pict (~> tidy-billboard
+                                         (where (artist) (string=? artist "Blink-182"))
+                                         (drop-na "ranking")
+                                         (reorder "week")))]
+               [(graphed) (~> tidy-billboard
+                              (where (artist) (string=? artist "Blink-182"))
+                              (drop-na "ranking")
+                              (reorder "week")
+                              (graph #:data _
+                                     #:mapping (aes #:x "week" #:y "ranking")
+                                     (lines)))]))))
+
+(define (bunch-of-plots-slide)
+  (define (scale-to-4-panel p)
+    (scale-to-fit p (/ (get-client-w) 2) (/ (get-client-h) 2)))
+
+  (define oecd-plot
+    (scale-to-4-panel
+     (graph #:data oecd
+            #:mapping (aes #:x "year" #:y "diff")
+            #:title "Difference between US and OECD average life expectancies"
+            #:x-label "Year" #:y-label "Difference (years)"
+            #:y-min -2 #:y-max 2
+            #:width 600 #:height 400
+            #:legend-anchor 'no-legend
+            (col #:mapping (aes #:discrete-color "hi_lo")))))
+
+  (define anscombe-facetable
+    (~> anscombe
+        (create [nrow ([x1 : vector]) (build-vector (vector-length x1) (λ (x) x))])
+        (pivot-longer (not "nrow") #:names-to "name" #:values-to "val")
+        (separate "name" #:into '("x-or-y" "quadrant") #:separator 1)
+        (pivot-wider #:names-from "x-or-y" #:values-from "val")
+        (slice (not "nrow"))))
+  (define anscombe-plot
+    (scale-to-4-panel
+     (graph #:data anscombe-facetable
+            #:mapping (aes #:x "x" #:y "y" #:facet "quadrant")
+            #:width 600 #:height 470    ; weh
+            #:title "Anscombe's Quartet"
+            (points)
+            (fit #:width 3))))
+
+  (define another-gss-plot
+    (scale-to-4-panel
+     (graph #:data gss-sm
+            #:title "Religious preferences among regions, GSS 2016"
+            #:mapping (aes #:x "bigregion" #:group "religion")
+            #:width 600 #:height 400
+            (stacked-bar #:mode 'prop))))
+
+  (define sorted-countries
+    (~> organdata
+        (group-with "country")
+        (aggregate [med (donors) (median < (vector-filter identity donors))])
+        (reorder "med")
+        (df-select "country")))
+  (define organdata-sorted
+    (reorder organdata (cons "country" (by-vector sorted-countries))))
+  (define organdata-plot
+    (scale-to-4-panel
+     (graph #:data organdata-sorted
+            #:title "Organ donation count by country, over time"
+            #:mapping (aes #:x "donors" #:y "country")
+            #:width 600 #:height 400
+            (boxplot #:invert? #t))))
+
+  (pslide
+   #:go (tile 2 2)
+   oecd-plot
+   anscombe-plot
+   another-gss-plot
+   organdata-plot))
+
 (define (end-slide)
   (with-text-style
     #:defaults [#:face *global-font*]
@@ -596,11 +760,14 @@
 
 ;;;; main
 (module+ main
-  ;; (title-slide)
-  ;; (intro-slides)
-  ;; (gdpPercap-lifeExp-slides)
-  ;; (year-gdpPercap-slides)
-  ;; (sawzall-intro-slides)
-  ;; (gss-pipeline-slides)
+  (title-slide)
+  #;(intro-slides)
+  (gdpPercap-lifeExp-slides)
+  (prior-work-slides)
+  (year-gdpPercap-slides)
+  (sawzall-intro-slides)
+  (gss-pipeline-slides)
   (gss-example-slides)
+  (billboard-example-slides)
+  (bunch-of-plots-slide)
   (end-slide))
