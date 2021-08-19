@@ -1,6 +1,5 @@
 #lang at-exp slideshow
 (require data-frame
-         iu-pict
          graphite
          math/statistics
          (except-in pict/conditional show)
@@ -33,6 +32,14 @@
        (~a val))))
 
 ;;;; helper functions
+;; i am so tired
+(define (frame p)
+  (refocus (cc-superimpose
+            p
+            (rounded-rectangle (* 1.2 (pict-width p))
+                               (* 1.2 (pict-height p))))
+           p))
+
 (define-syntax-rule (pslide/staged [name ...] arg ...)
   (staged [name ...] (pslide arg ...)))
 
@@ -104,6 +111,7 @@
 (define gss-sm (rename (df-read/csv "../data/gss_sm.csv" #:na "NA") "" "id"))
 (define billboard (df-read/csv "../data/billboard.csv" #:na "NA"))
 (define organdata (df-read/csv "../data/organdata.csv" #:na "NA"))
+(define midwest (df-read/csv "../data/midwest.csv" #:na "NA"))
 (define anscombe
   (row-df [x1 x2 x3 x4 y1    y2   y3    y4]
           10  10 10 8  8.04  9.14 7.46  6.58
@@ -120,21 +128,28 @@
 
 ;;;; actual slides
 (define (title-slide)
+  (define midwest-plot
+    (graph #:data midwest
+           #:mapping (aes #:x "area")
+           #:width (get-client-w) #:height (get-client-h)
+           (density #:mapping (aes #:discrete-color "state"))))
+
   (with-text-style
     #:defaults [#:face *global-font*]
     ([heading #:size 50 #:bold? #t]
      [subheading #:size 30 #:color "firebrick"])
 
+    ;; make the thing the fucking Thing the
     (pslide
-     #:name "Title"
+     (cc-superimpose
+      (filled-rectangle (get-client-w) (get-client-h)
+                        #:draw-border? #f
+                        #:color "white")
+      (cellophane midwest-plot 0.1))
      #:go (coord 0.5 0.4 'cc)
      @heading{Graphite: A Library for Data Visualization}
-     (blank)
-     @subheading{Implementing the grammar of graphics in Racket}
      #:go (coord 0.5 0.6 'cc)
-     (authors '("Hazel Levine" "Sam Tobin-Hochstadt") "Indiana University")
-     #:go (coord 0.95 0.95 'rb)
-     (iu-logo 60))))
+     (authors '("Hazel Levine" "Sam Tobin-Hochstadt") "Indiana University"))))
 
 (define (intro-slides)
   (define ggplot2-logo (scale-to-fit (bitmap "ggplot2-logo.png") 200 200))

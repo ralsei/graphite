@@ -4,7 +4,6 @@
 (define midwest (df-read/csv "./data/midwest.csv"))
 
 (graph #:data midwest
-       #:title "I suck at titles?"
        #:x-label "area"
        #:y-label "density"
        #:mapping (aes #:x "area")
