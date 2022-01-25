@@ -29,6 +29,7 @@
              #:add-ticks? boolean?
              #:far-ticks? boolean?
              #:mode (or/c 'count 'prop)
+             #:sort-by (or/c (-> any/c any/c boolean?) #f)
              #:group-gap (>=/c 0)
              #:mapping (aes-containing/c #:x string?
                                          #:facet (or/c string? #f)
@@ -65,7 +66,7 @@
         #:when x
         #:when (equal? strat group)
         #:when (equal? facet (gr-group)))
-    (hash-update! count-tbl ((gr-x-conv) x) add1 1))
+    (hash-update! count-tbl ((gr-x-conv) x) add1 0))
 
   (match mode
     ['count count-tbl]
@@ -73,7 +74,7 @@
            (for/hash ([(k c) (in-hash count-tbl)])
              (values k (/ c total)))]))
 
-(define (bar-dodged #:mode mode #:group-gap group-gap #:kws kws #:kw-args kw-args)
+(define (bar-dodged #:mode mode #:sort-by ord #:group-gap group-gap #:kws kws #:kw-args kw-args)
   (define strats (possibilities (gr-data) (hash-ref (gr-global-mapping) 'group)))
   (for/list ([var (in-vector strats)]
              [i (in-naturals)])
@@ -82,34 +83,43 @@
                   #:x-min i
                   #:group var
                   #:mode mode
+                  #:sort-by ord
                   #:kws kws #:kw-args kw-args))))
 
-(define (bar-simple #:mode mode #:skip [skip (discrete-histogram-skip)]
+(define (bar-simple #:mode mode #:sort-by ord
+                    #:skip [skip (discrete-histogram-skip)]
                     #:x-min [x-min 0] #:group [group #f]
                     #:kws kws #:kw-args kw-args)
   (define tbl (make-count-table mode group))
+  (define to-plot
+    (if ord
+        (for/vector ([var-cnt (in-list (sort (hash->list tbl) ord #:key car))])
+          (vector (car var-cnt) (cdr var-cnt)))
+        (for/vector ([(var cnt) (in-hash tbl)])
+          (vector var cnt))))
 
   (run-renderer
    #:renderer discrete-histogram
    #:kws kws #:kw-args kw-args
    #:skip skip #:x-min x-min #:label group
    #:add-ticks? (gr-add-x-ticks?)
-   (for/vector ([(var cnt) (in-hash tbl)])
-     (vector var cnt))))
+   to-plot))
 
 (define-renderer (bar #:kws kws #:kw-args kw-args
                       #:group-gap [group-gap 1]
-                      #:mode [mode 'count] #:mapping [local-mapping (aes)])
-                 (#:gr-y-label (symbol->string mode))
+                      #:sort-by [ord #f]
+                      #:mode [mode 'count]
+                      #:mapping [local-mapping (aes)])
+  (#:gr-y-label (symbol->string mode))
   (parameterize ([gr-global-mapping (mapping-override (gr-global-mapping) local-mapping)])
-    (cond [(hash-ref (gr-global-mapping) 'group #f) (bar-dodged #:mode mode #:group-gap group-gap
+    (cond [(hash-ref (gr-global-mapping) 'group #f) (bar-dodged #:mode mode #:sort-by ord #:group-gap group-gap
                                                                 #:kws kws #:kw-args kw-args)]
-          [else (bar-simple #:mode mode
+          [else (bar-simple #:mode mode #:sort-by ord
                             #:kws kws #:kw-args kw-args)])))
 
 (define-renderer (stacked-bar #:kws kws #:kw-args kw-args
                               #:mode [mode 'count] #:mapping [local-mapping (aes)])
-                 (#:gr-y-label (symbol->string mode))
+  (#:gr-y-label (symbol->string mode))
   (define aes (mapping-override (gr-global-mapping) local-mapping))
 
   ; first generate every table based on every group...
