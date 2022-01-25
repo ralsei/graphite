@@ -65,7 +65,7 @@
         #:when x
         #:when (equal? strat group)
         #:when (equal? facet (gr-group)))
-    (hash-update! count-tbl ((gr-x-conv) x) add1 1))
+    (hash-update! count-tbl ((gr-x-conv) x) add1 0))
 
   (match mode
     ['count count-tbl]
