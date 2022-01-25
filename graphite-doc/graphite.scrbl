@@ -336,6 +336,7 @@ takes an aesthetic mapping using the @racket[#:mapping] keyword.
               [#:add-ticks? add-ticks? boolean? #t]
               [#:far-ticks? far-ticks? boolean? #f]
               [#:mode mode (or/c 'count 'prop) 'count]
+              [#:sort-by less-than? (or/c (-> any/c any/c boolean?) #f) #f]
               [#:group-gap group-gap (>=/c 0) 1]
               [#:mapping local-mapping
                          (aes-containing/c #:x string?
@@ -348,6 +349,9 @@ takes an aesthetic mapping using the @racket[#:mapping] keyword.
 
   The @racket[#:mode] argument dictates whether the y-axis should be the count of observations by the x-axis
   (@racket['count]), or the relative frequency of those observations (@racket['prop]).
+
+  The @racket[#:sort-by] indicates whether the bars should be sorted by their x-axis values, and if so, what
+  procedure to sort by, just as with @racket[sort].
 
   The optional @racket[#:group] aesthetic dictates whether the bar should be "dodged", with each bar
   being broken up into bars based on the group. If this is enabled, the @racket[#:group-gap] argument dictates

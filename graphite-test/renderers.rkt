@@ -273,7 +273,7 @@
 (define bar-6
   (graph #:data bar-6-df
          #:mapping (aes #:x "x-var")
-         (bar #:mode 'prop #:mapping (aes #:group "group-var"))))
+         (bar #:mode 'prop #:sort-by string<? #:mapping (aes #:group "group-var"))))
 
 (define-runtime-path stacked-bar-1-data "./test-data/stacked-bar-1.dat")
 (define stacked-bar-1
