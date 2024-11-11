@@ -2,13 +2,13 @@
 (define collection "graphite-doc")
 (define deps '("base"))
 (define scribblings '(("graphite.scrbl" ())))
-(define build-deps '("loess"
+(define build-deps '("graphite-tutorial"
+                     "loess"
                      "draw-doc"
                      "plot-gui-lib"
                      "simple-polynomial"
                      "data-frame"
                      "graphite-lib"
-                     "graphite-tutorial"
                      "pict-doc"
                      "pict-lib"
                      "plot-doc"
