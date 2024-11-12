@@ -23,7 +23,7 @@
      eval))
 
 @title{Graphite: A data visualization library}
-@author{@(author+email "Hazel Levine" "hazel@knightsofthelambdacalcul.us")}
+@author{@(author+email "Tulip Amalie" "tulip@bicompact.space")}
 
 @defmodule[graphite]
 
